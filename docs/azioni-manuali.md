@@ -22,13 +22,6 @@ Ordine dei lavori di riferimento: [analisi §7](superpowers/specs/2026-09-20-tem
 | 8 | Dominio custom per le foto | niente d'altro, ma `r2.dev` è rate-limited |
 | 9 | I due secret del form: `TURNSTILE_SECRET` e `CONTACT_NOTIFY_URL` | la protezione antispam e le notifiche |
 
-### 📢 Pubblicazione — la strada per darlo agli amici
-
-| # | Azione | Blocca |
-|---|---|---|
-| 2 | Decidere cosa fare di `docs/` | la pubblicazione |
-| 3 | Rendere pubblico il repo | la condivisione con gli amici |
-
 ### 🖼️ Vetrina — quello che manca a chi arriva sul repo
 
 | # | Azione | Blocca |
@@ -54,46 +47,6 @@ finché non viene eseguita, tutto ciò che abbiamo costruito su Cloudflare — b
 Access, dominio custom, Turnstile — è **scritto e validato ma mai provato contro
 l'API vera**. Ogni lavoro aggiunto sopra allunga ciò che si scoprirebbe tutto insieme
 al primo `apply`.
-
----
-
-### 2. Decidere cosa fare di `docs/` prima della pubblicazione
-
-**Il fatto:** i documenti in `docs/superpowers/` citano il nome del tuo team Access,
-gli identificativi AUD delle due applicazioni Access e gli URL pubblici dei tuoi due
-bucket R2.
-
-**Non sono credenziali.** L'AUD è un identificativo pubblico e gli URL `r2.dev` sono
-endpoint già raggiungibili da chiunque. Nessuno di questi valori permette di fare
-qualcosa che non si potrebbe fare senza. Ma legano in modo permanente un repo
-pubblico al tuo account Cloudflare, e finiscono nei motori di ricerca.
-
-**Tre vie:**
-
-- **Lasciarli.** Zero lavoro. I documenti restano leggibili come storia del progetto,
-  che è parte del valore per chi clona.
-- **Sostituirli con segnaposto anche nei documenti.** Mezz'ora. I documenti perdono
-  un po' di concretezza (le spiegazioni citano valori veri come evidenza) ma restano
-  comprensibili.
-- **Tenere `docs/superpowers/` fuori dal template.** I documenti restano solo nel tuo
-  repo privato. Il template perde la sua storia progettuale, che per un pubblico di
-  sviluppatori è probabilmente la parte più interessante.
-
-**Da decidere prima del punto 3**, perché rendere pubblico non si annulla: ciò che è
-stato visto resta visto.
-
----
-
-### 3. Rendere pubblico il repo template
-
-**Dove:** GitHub → `PhotoPortfolioTemplate` → Settings → Danger Zone → Change visibility.
-
-**Perché serve:** un repo privato non si può forkare da fuori il tuo account. Senza
-questo, la decisione "si entra col fork" non funziona per nessuno dei tuoi amici.
-
-**Prerequisito:** il punto 2 deciso e applicato.
-
-**Fatto quando:** il repo è raggiungibile da un browser in incognito.
 
 ---
 
@@ -138,7 +91,16 @@ risoluzione del conflitto è andata storta.
 
 ### 6. Accesso in scrittura alla deploy key di `photoportfolio`
 
-**Dove:** GitHub → `photoportfolio` → Settings → Deploy keys → "Allow write access".
+**Dove:** GitHub → `photoportfolio` → Settings → Deploy keys.
+
+> ⚠️ **GitHub non permette di cambiare i permessi di una deploy key esistente**: nella
+> pagina non c'è un interruttore, c'è solo *Delete*. Per dare la scrittura bisogna
+> **rimuovere la chiave e riaggiungerla** spuntando *Allow write access*. È
+> probabilmente il motivo per cui un tentativo di abilitarla non ha avuto effetto.
+>
+> Verificato il 21 settembre 2026: un `git push --dry-run` risponde ancora
+> `Permission to davidetarsi/photoportfolio.git denied to deploy key`. La stessa
+> chiave ha invece scrittura su `PhotoPortfolioTemplate`.
 
 **Perché è solo opzionale:** la chiave di questa VPS ha accesso in sola lettura a
 `photoportfolio`, e il push dei documenti è stato rifiutato. Ma quei commit sono
@@ -303,6 +265,12 @@ Non sono azioni da fare, ma scelte che servono a lavori già pianificati.
 
 ## Fatte
 
+- **Voce 3 — repo reso pubblico**, 21 settembre 2026. Verificato dall'API GitHub:
+  `private: false`, licenza MIT riconosciuta.
+- **Voce 2 — `docs/` lasciata com'è**, 21 settembre 2026. Il team domain Access e gli
+  URL dei bucket restano visibili nei documenti di progetto: non sono credenziali, e
+  la storia del progetto è parte del valore per chi clona. Gli AUD delle applicazioni
+  Access non compaiono da nessuna parte.
 - **Voce 4 — spunta "Template repository" tolta**, 21 settembre 2026. Il repo non
   mostra più il bottone verde "Use this template", che creava repo senza antenati
   comuni e incapaci di ricevere aggiornamenti. Ora l'unica via d'ingresso visibile è
