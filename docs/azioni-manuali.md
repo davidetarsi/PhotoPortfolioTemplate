@@ -284,9 +284,7 @@ eliminano senza toccare altro.
 
 ## Decisioni ancora aperte
 
-Non sono azioni da fare, ma scelte che prima o poi vanno prese. Le prime tre servono a
-lavori già pianificati; le ultime due sono stonature note di cui hai il diritto di
-decidere che non ti importano.
+Non sono azioni da fare, ma scelte che servono a lavori già pianificati.
 
 - **Nome del repo template** una volta pubblico. `PhotoPortfolioTemplate` va bene, ma è
   il momento buono per cambiarlo: dopo, gli URL nel README e nei fork sarebbero da
@@ -295,18 +293,20 @@ decidere che non ti importano.
   Cloudflare. Serve alla voce 8.
 - **Stato Terraform**: locale, come raccomandato, oppure backend su R2. Serve alla
   voce 7; in assenza di indicazioni si procede con quello locale.
-- **L'URL `/contatti` in un template inglese.** Chi forka si ritrova
-  `suosito.com/contatti`. Cambiarlo tocca routing, navigazione, testi e test — non è
-  una sostituzione di testo — e va deciso **prima** di distribuire: dopo, romperebbe i
-  link già condivisi.
-- **I commenti nel codice sono in italiano.** In un template rivolto a sviluppatori
-  internazionali è una stonatura vera, ma tradurli tutti significa toccare codice
-  funzionante per una ragione estetica. Se si fa, è un punto a sé con revisione seria.
 
 ---
 
 ## Decise, e chiuse
 
+- **La rotta `/contatti` è diventata `/about`** (21 settembre 2026), con un redirect
+  301 dal vecchio indirizzo perché i link già condivisi continuino a funzionare. Il
+  nome descrive la pagina che sarà, una volta fusa con la presentazione.
+- **I commenti del codice sono in inglese** (21 settembre 2026), insieme al JSDoc su
+  tutte le funzioni esportate. La convenzione che li governa sta in `CONTRIBUTING.md`,
+  compreso l'elenco dei commenti che non vanno mai rimossi.
+- **Le stringhe di diagnostica sono in inglese** (21 settembre 2026): errori, output
+  dei comandi e la notifica che arriva sul telefono. Il copy del sito in
+  `config/texts.config.js` resta in italiano: è una decisione a parte, ancora aperta.
 - **Niente link di donazione, per ora** (21 settembre 2026). Un progetto senza
   utenti e senza costi ricorrenti che elenca tre modi per donare dice di sé qualcosa
   che non è ancora vero. In questa fase il segnale utile non sono i soldi: sono una
