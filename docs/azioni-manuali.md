@@ -28,7 +28,6 @@ Ordine dei lavori di riferimento: [analisi §7](superpowers/specs/2026-09-20-tem
 |---|---|---|
 | 2 | Decidere cosa fare di `docs/` | la pubblicazione |
 | 3 | Rendere pubblico il repo | la condivisione con gli amici |
-| 4 | Togliere la spunta "Template repository" | niente, ma vanifica la scelta del fork |
 
 ### 🖼️ Vetrina — quello che manca a chi arriva sul repo
 
@@ -95,20 +94,6 @@ questo, la decisione "si entra col fork" non funziona per nessuno dei tuoi amici
 **Prerequisito:** il punto 2 deciso e applicato.
 
 **Fatto quando:** il repo è raggiungibile da un browser in incognito.
-
----
-
-### 4. Togliere la spunta "Template repository"
-
-**Dove:** GitHub → `PhotoPortfolioTemplate` → Settings → General → deseleziona
-*Template repository*.
-
-**Perché:** finché è attiva, GitHub mostra il bottone verde "Use this template", che
-è esattamente la strada che abbiamo deciso di non far prendere a nessuno — crea repo
-senza antenati comuni, incapaci di ricevere aggiornamenti. È la stessa cosa che ha
-lasciato questo template indietro di un'architettura intera.
-
-Il README spiega di forkare, ma un bottone verde vince su un paragrafo.
 
 ---
 
@@ -318,6 +303,10 @@ Non sono azioni da fare, ma scelte che servono a lavori già pianificati.
 
 ## Fatte
 
+- **Voce 4 — spunta "Template repository" tolta**, 21 settembre 2026. Il repo non
+  mostra più il bottone verde "Use this template", che creava repo senza antenati
+  comuni e incapaci di ricevere aggiornamenti. Ora l'unica via d'ingresso visibile è
+  il fork, che è quella giusta.
 - **Voce 1 — PR del bootstrap**, mergiata il 2026-09-20. Ha richiesto una
   seconda PR perché la prima era stata unita con uno squash, che aveva
   scartato la parentela git col sito.
