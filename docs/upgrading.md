@@ -73,39 +73,25 @@ does not have. From then on your branch is genuinely divergent, merges are real 
 After the merge, **do not run `npm run migrate`**. It would push the empty seed over your
 real content.
 
-## Test on staging before production
+## Verify the production update
 
-An update is not a code review, it is a deployment: the moment you push, Cloudflare builds
-and your visitors get it. The template ships two environments precisely so this step costs
-you nothing — `staging` is a separate Worker with its own bucket, so nothing you do there
-can touch production.
+Before pushing the updated `main` branch, run the production checks:
 
 ```bash
-git checkout staging
-git merge upstream/main
-#   ...restore wrangler.json and commit, as above...
-
-npm test && npm run build && head -2 dist/_headers
+npm test
+npm run build
+head -2 dist/_headers
 ```
 
-Read that CSP line. It must contain **your** R2 URL. If it contains `pub-xxxxxxxx`, the
-restore failed — stop, do not push.
+The CSP line must contain your real production R2 URL. If it contains `pub-xxxxxxxx`, stop:
+the restored `wrangler.json` is still using a placeholder. Once the check passes, push the
+production branch:
 
 ```bash
-git push origin staging
-```
-
-Now open your staging site and click through it: the home page, an album, `/admin`, and the
-contact form. When you are satisfied:
-
-```bash
-git checkout main && git merge staging    # fast-forward: the same bytes you just tested
 git push origin main
 ```
 
-The second merge resolves nothing a second time. `staging` already contains everything, so
-production gets exactly the bytes you verified — not a second hand-made resolution that
-might differ from the first.
+[Optional: test the deployment on staging](staging.md).
 
 ## Updates after the first one
 
@@ -122,6 +108,19 @@ right for values, wrong for keys the new code expects to exist.
 
 ## When an update changes behaviour
 
+### Existing staging users: preserve it before planning
+
+Staging is now opt-in. If your current Terraform state already contains a staging
+bucket, managed domain, or Access application, add this to `infra/terraform.tfvars`
+before running the first `terraform plan` after the update:
+
+```hcl
+enable_staging = true
+```
+
+Without it, the default is `false` and Terraform proposes destroying those three
+staging resources. Stop if the plan contains those destroys.
+
 Some updates move more than code. Before merging, skim what is coming:
 
 ```bash
@@ -135,7 +134,7 @@ Two kinds of change deserve a second look, because tests pass either way:
   check.
 - **An integration was replaced.** If a feature moved from a third-party service to the
   Worker, it may now need configuration that did not exist before. Secrets are the usual
-  case, and they are per-environment: setting one for production leaves staging without it.
+  case.
   See the [runbook](runbook-cloudflare.md#9-contact-form-notifications-and-spam-protection),
   which spells out which values must be set together and what breaks when only one is.
 

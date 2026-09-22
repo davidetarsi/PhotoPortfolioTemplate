@@ -1,6 +1,6 @@
 # Cloudflare infrastructure runbook
 
-The [README](../README.md) is the canonical entry point for setup. This runbook contains the detailed Cloudflare procedures behind it: Terraform, existing-resource imports, an isolated smoke test, the permanent dashboard-only path, custom image domains and contact-form secrets.
+The [README](../README.md) is the canonical entry point for setup. This runbook contains the detailed Cloudflare procedures behind it: Terraform, existing-resource imports, an isolated smoke test, the permanent dashboard-only production path, custom image domains and contact-form secrets.
 
 Choose one starting path:
 
@@ -69,10 +69,9 @@ cp terraform.tfvars.example terraform.tfvars
 | Variable | What to enter | Where to find it |
 |---|---|---|
 | `account_id` | The Cloudflare account that owns the resources | Account Home → `Cmd/Ctrl+K` → **Copy account ID**, or Workers & Pages → Account Details. [Official guide](https://developers.cloudflare.com/fundamentals/account/find-account-and-zone-ids/) |
-| `project_name` | Base resource name. Production bucket uses it exactly; staging adds `-staging` | Choose a new lowercase, hyphenated name, or use the exact existing bucket prefix when importing |
+| `project_name` | Base resource name. The production bucket uses it exactly | Choose a new lowercase, hyphenated name, or use the exact existing bucket prefix when importing |
 | `access_team_domain` | Existing Zero Trust domain, without `https://` | Zero Trust → Settings → Team name and domain. Format: `team.cloudflareaccess.com`. [Official guide](https://developers.cloudflare.com/cloudflare-one/faq/getting-started-faq/#what-is-a-team-domainteam-name) |
 | `prod_hostname` | Production hostname without scheme or trailing slash | Real public hostname for a deployment; unused subdomain for an isolated smoke test |
-| `staging_hostname` | Staging hostname without scheme or trailing slash | Workers & Pages → staging Worker → Settings → Domains & Routes; see [first-deploy constraint](#4-order-constraint-staging_hostname-isnt-known-before-first-deploy) |
 | `admin_emails` | One or more addresses allowed into `/admin` | Decide who administers the portfolio; every listed address becomes an Access include rule |
 | `custom_photo_domain` | Optional production hostname for R2 images | Choose a subdomain such as `img.example.com`; leave empty during initial setup |
 | `photo_domain_zone_id` | Zone ID for `custom_photo_domain` | Domain Overview → API section → Zone ID. [Official guide](https://developers.cloudflare.com/fundamentals/account/find-account-and-zone-ids/#copy-your-zone-id) |
@@ -118,7 +117,7 @@ This path validates the Terraform code against the real Cloudflare API without t
 > **Live validation status:** the full lifecycle below was verified on 22 September 2026 with Terraform 1.16.3 and Cloudflare provider 5.13.0. It created all eight expected resources, converged to `No changes`, generated `wrangler.json`, passed the production build, destroyed the six directly removable resources, and left no smoke resources in the Cloudflare dashboard. The two `r2.dev` managed-domain wrappers required the documented manual disable and state-removal steps.
 
 1. Use a unique name such as `photo-portfolio-template-smoke-YYYYMMDD`.
-2. Use two unused subdomains from a zone you control for `prod_hostname` and `staging_hostname`. Do not create DNS records and do not use the live hostname.
+2. Set `enable_staging = true` and use two unused subdomains from a zone you control for `prod_hostname` and `staging_hostname`. Do not create DNS records and do not use the live hostname.
 3. Leave `custom_photo_domain` and `photo_domain_zone_id` empty; keep `keep_managed_domain` and `enable_turnstile` true.
 4. Run `terraform fmt -check`, `terraform validate`, then inspect `terraform plan`.
 
@@ -141,7 +140,7 @@ Provider v5 warns that `cloudflare_r2_managed_domain` cannot be destroyed throug
 2. Remove only the two non-destroyable wrappers from local state:
 
    ```bash
-   terraform state rm cloudflare_r2_managed_domain.prod cloudflare_r2_managed_domain.staging
+   terraform state rm cloudflare_r2_managed_domain.prod 'cloudflare_r2_managed_domain.staging[0]'
    ```
 
 3. Run `terraform destroy` and verify that its plan contains only resources whose names use the smoke prefix.
@@ -152,30 +151,9 @@ Provider v5 warns that `cloudflare_r2_managed_domain` cannot be destroyed throug
 
 The buckets must remain empty. Terraform refuses to delete a non-empty R2 bucket.
 
-## 4. Order constraint: `staging_hostname` isn't known before first deploy
+## 4. Optional second environment
 
-Cloudflare assigns a `workers.dev` hostname (e.g., `mario-portfolio-staging.xxxxx.workers.dev`) only after the Worker's first deploy. So on first deploy you don't know this value yet — you can't write it in `terraform.tfvars` and run `terraform apply` straight away.
-
-Solution: apply **only the buckets** on first pass:
-
-```bash
-terraform apply -target=cloudflare_r2_bucket.prod -target=cloudflare_r2_bucket.staging
-```
-
-Then do the first deploy (see [Git integration](#git-integration--connect-repository) below). After deploy, read the assigned `workers.dev` domain from Cloudflare dashboard:
-
-```bash
-# Cloudflare dashboard → Workers & Pages → photo-portfolio-staging → Settings → Domains & Routes
-# Copy the URL in format mario-portfolio-staging.xxxxx.workers.dev
-```
-
-Fill the value in `terraform.tfvars` and run the full apply:
-
-```bash
-terraform apply  # Now apply everything, including Access and r2.dev managed domains
-```
-
-If you use the manual path (without Terraform), this constraint doesn't apply — Access applications are created manually step by step.
+See [the staging guide](staging.md) for the optional environment and its two-step hostname setup.
 
 ## 5. Manual path — Creating resources from Cloudflare dashboard
 
@@ -186,15 +164,13 @@ If you use the manual path (without Terraform), this constraint doesn't apply �
 3. Replica region: no (optional, only for geographic redundancy)
 4. Create
 
-Repeat for the staging bucket, named `{project_name}-staging` (e.g. `mario-portfolio-staging`).
-
 ### R2 managed domains (r2.dev)
 
 1. Dashboard → **R2 → select prod bucket → Settings → Public access → Edit**
 2. Enable public access
 3. Copy the shown domain (format `pub-xxxxxxxx.r2.dev`)
 
-Repeat for staging bucket. These domains expose photos — they're rate-limited and uncached, suitable only for development. Before production, consider a custom domain (see section 8).
+These domains expose photos — they're rate-limited and uncached, suitable only for development. Before production, consider a custom domain (see section 8).
 
 ### Access application for `/admin` (custom domain only)
 
@@ -215,7 +191,7 @@ If using a real domain (not `workers.dev`), Cloudflare Access can scope to speci
 7. Save and create application
 8. Copy the **Audience (AUD) Tag** value from the application page
 
-If using `workers.dev` for staging, Access can't do path-scoping on that domain — it protects the entire subdomain. Create a separate application that protects all of `mario-portfolio-staging.xxxxx.workers.dev`.
+For the optional second environment on `workers.dev`, Access protects the entire subdomain; see the [staging guide](staging.md).
 
 ### Zero Trust team domain
 
@@ -229,46 +205,31 @@ On the Terraform path this widget is created for you. Here you create it by hand
 
 1. Cloudflare dashboard → **Turnstile → Add widget**
 2. Name: e.g. `mario-portfolio contact form`
-3. **Hostnames:** add the production hostname *and* the staging one (e.g. `mario.com` and `mario-portfolio-staging.xxxxx.workers.dev`). One widget covers both. A hostname that isn't listed fails validation, so a staging form pointed at a prod-only widget answers `CHALLENGE_FAILED` every time.
+3. **Hostnames:** add the production hostname (e.g. `mario.com`). A hostname that isn't listed fails validation.
 4. Widget Mode: **Managed**
 5. Create
 
-The staging hostname isn't known before the first deploy (see section 4). Create the widget with production only, and add staging once Cloudflare has assigned it.
+To add a second hostname later, follow the [staging guide](staging.md).
 
 The widget page then shows two values, and they go to **two different places** — never both into `wrangler.json`:
 
 | Value | Where it goes | Why |
 |---|---|---|
-| **Site Key** | `wrangler.json`, as `vars.TURNSTILE_SITEKEY`, and again under `env.staging.vars` | it ends up in the HTML; it is not a secret |
-| **Secret Key** | `wrangler secret put`, once per environment | the Worker validates tokens with it; it must never reach git |
+| **Site Key** | `wrangler.json`, as `vars.TURNSTILE_SITEKEY` | it ends up in the HTML; it is not a secret |
+| **Secret Key** | `npx wrangler secret put TURNSTILE_SECRET` for production | the Worker validates tokens with it; it must never reach git |
 
 ```bash
 npx wrangler secret put TURNSTILE_SECRET
-npx wrangler secret put TURNSTILE_SECRET --env staging
 ```
 
-Secrets are per-environment, and a missing one fails **open**, not closed: `verifyTurnstile` reads an absent secret as "Turnstile isn't in use here" and accepts every submission. So setting it only for production doesn't break staging — it silently leaves it unguarded, with the widget still drawn on the page if the staging sitekey is set. Nothing in the UI tells you. Set it in both environments, or decide deliberately that staging goes without.
+Secrets are per-environment, and a missing one fails **open**, not closed: `verifyTurnstile` reads an absent secret as "Turnstile isn't in use here" and accepts every submission. With the sitekey present but no secret, the widget is drawn on the page but nothing validates behind it. Nothing in the UI tells you. Set the production secret, or decide deliberately to use the honeypot alone. The [staging guide](staging.md) explains the separate secret for a second environment.
 
 ## 6. Git integration — Connect repository
 
-Cloudflare lets you deploy the Worker directly from Git — no GitHub Actions needed, it's native.
-
-1. Cloudflare dashboard → **Workers & Pages → Create application → Pages**
-2. Connect your GitHub account (if not done yet)
-3. Select the portfolio repository
-4. Configure the build:
-   - **Build command:** `npm test && npm run build`
-   - **Build output directory:** `dist`
-   - **Root directory:** `/` (leave default)
-5. Environment: add environment variables only if your fork requires them; the standard template reads its non-secret Cloudflare configuration from `wrangler.json`.
-6. **Production branch:** `main` (for production Worker)
-7. **Staging branch:** `staging` (for staging Worker)
-
-Cloudflare creates two Workers automatically:
-- `{project-name}` from `main` branch (reachable on `{project-name}.{account-subdomain}.workers.dev` and linked to custom domain if configured)
-- `{project-name}-staging` from `staging` branch (reachable on `{project-name}-staging.{account-subdomain}.workers.dev`)
-
-Every push triggers a new deploy automatically.
+Connect the repository to Cloudflare's Git integration and set `main` as the production
+branch. Use `npm test && npm run build` as the build command and `dist` as the output
+directory. The production Worker deploys on pushes to `main`. For a second deployment,
+see the [staging guide](staging.md).
 
 ## 7. Import existing infrastructure
 
@@ -278,20 +239,11 @@ If you've already created buckets, public domains, or Access applications manual
 # Import production bucket
 terraform import cloudflare_r2_bucket.prod {account_id}/{bucket-name}
 
-# Import staging bucket
-terraform import cloudflare_r2_bucket.staging {account_id}/{bucket-name}-staging
-
 # Import production managed domain (find ID on R2 dashboard, "Public access domain ID" field)
 terraform import cloudflare_r2_managed_domain.prod {account_id}/{domain-id}
 
-# Import staging managed domain
-terraform import cloudflare_r2_managed_domain.staging {account_id}/{domain-id}
-
 # Import production Access application (copy ID from dashboard Access → Applications → Settings)
 terraform import cloudflare_zero_trust_access_application.prod {account_id}/{app-id}
-
-# Import staging Access application
-terraform import cloudflare_zero_trust_access_application.staging {account_id}/{app-id}
 
 # Import Access policy (copy ID from application page → Access policies)
 terraform import cloudflare_zero_trust_access_policy.solo_admin {account_id}/{policy-id}
@@ -301,6 +253,9 @@ terraform import cloudflare_zero_trust_access_policy.solo_admin {account_id}/{po
 # resource has a count, so it lives at index 0.
 terraform import 'cloudflare_turnstile_widget.contact[0]' {account_id}/{sitekey}
 ```
+
+For the optional second environment, use the counted import addresses in the
+[staging guide](staging.md).
 
 Import the widget rather than letting Terraform create one: without the import, the next `apply` adds a *second* widget with a different sitekey, and the form keeps validating against the old one until you sync `wrangler.json`.
 
@@ -395,8 +350,6 @@ Once DNS propagates (a few minutes), follow these steps **in exact order**: the 
 
 7. **If you have r2.dev links circulating,** consider postponing step 6 until it's safe to let them die (e.g. after 1-3 months). You can keep it on as long as you want — `keep_managed_domain` allows it.
 
-Staging doesn't change: it has no custom domain, so its `r2.dev` stays on forever.
-
 ---
 
 ## 9. Contact form: notifications and spam protection
@@ -443,10 +396,12 @@ Terraform creates it (`enable_turnstile = true`, the default); on the manual pat
 
 | Value | Where | Why |
 |---|---|---|
-| **sitekey** | `wrangler.json`, as a `var` — written by `npm run infra:sync` | it ends up in the HTML; it is not a secret |
-| **secret** | `npx wrangler secret put TURNSTILE_SECRET` | the Worker validates tokens with it; it must never reach git |
+| **sitekey** | `wrangler.json`, as `vars.TURNSTILE_SITEKEY` — written by `npm run infra:sync` | it ends up in the HTML; it is not a secret |
+| **secret** | `npx wrangler secret put TURNSTILE_SECRET` for production | the Worker validates tokens with it; it must never reach git |
 
-Take the secret from the Cloudflare dashboard, under Turnstile, on your widget's page.
+Take the secret from the Cloudflare dashboard, under Turnstile, on your widget's page. If
+you enable a second environment, follow the [staging guide](staging.md) for its hostname
+and separate secret.
 
 > ⚠️ **Set both, or neither.** A half-configuration breaks in one of two opposite ways.
 > With the sitekey but no secret, Turnstile fails **open**: the widget is drawn and
@@ -463,14 +418,16 @@ Visitors see nothing: the widget is configured `interaction-only`, so it only ap
 
 ## Manual path flow summary
 
-1. Create the two R2 buckets and their r2.dev managed domains from the dashboard.
-2. Create the Access application (`/admin` + `/api/admin/*`) with Allow policy for your email.
+1. Create the production R2 bucket and its r2.dev managed domain from the dashboard.
+2. Create the production Access application (`/admin` + `/api/admin/*`) with Allow policy for your email.
 3. Copy team domain + AUD from the dashboard.
-4. (Optional) Create the Turnstile widget and set `TURNSTILE_SECRET` for both environments.
+4. (Optional) Create the Turnstile widget and set `TURNSTILE_SECRET` for production.
 5. Populate `wrangler.json` manually (copy `wrangler.example.json`, fill bucket name, public R2 URL, team domain, AUD, Turnstile sitekey).
-6. Connect repository to Cloudflare Workers & Pages with `main` and `staging` branches.
-7. Push to trigger first deploy. Read the assigned `workers.dev` hostname. Add it to the Turnstile widget's hostnames.
-8. If using Terraform later, import existing resources with `terraform import`.
+6. Connect the repository to Cloudflare and set `main` as the production branch.
+7. Push to trigger the first production deploy.
+8. If using Terraform later, import existing production resources with `terraform import`.
 9. (Optional) Enable a custom domain for photos before going live.
+
+The optional second environment is documented in the [staging guide](staging.md).
 
 Both with Terraform and manually, CSP in `dist/_headers` is generated from `wrangler.json` during build — it's not hardcoded, so it stays correct whichever path you choose.

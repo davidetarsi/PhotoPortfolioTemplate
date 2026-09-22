@@ -32,6 +32,7 @@ resource "cloudflare_zero_trust_access_application" "prod" {
 # Staging: dominio workers.dev, dove Access non sa fare path-scoping.
 # Protegge tutto, ed e accettabile perche staging non ha pubblico.
 resource "cloudflare_zero_trust_access_application" "staging" {
+  count            = var.enable_staging ? 1 : 0
   account_id       = var.account_id
   name             = "${var.project_name} admin (staging)"
   type             = "self_hosted"

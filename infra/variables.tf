@@ -20,7 +20,14 @@ variable "prod_hostname" {
 
 variable "staging_hostname" {
   type        = string
-  description = "Hostname di staging, tipicamente su workers.dev. Noto solo dopo il primo deploy: vedi il runbook."
+  default     = ""
+  description = "Staging hostname without a scheme. Required only when enable_staging is true."
+}
+
+variable "enable_staging" {
+  type        = bool
+  default     = false
+  description = "Create the second environment (bucket, managed domain, Access application)."
 }
 
 variable "admin_emails" {

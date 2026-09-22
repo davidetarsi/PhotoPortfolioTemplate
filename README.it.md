@@ -105,7 +105,7 @@ I conflitti, se ci sono, cadranno su `config/`, `theme/` e `wrangler.json` — c
 
 `wrangler.json` in particolare andrà in conflitto quasi sempre, perché il template lo distribuisce coi segnaposto e tu ci hai messo i tuoi valori: risolvi tenendo la tua versione, con `git checkout --ours wrangler.json`.
 
-> ⚠️ **A meno che non vada in conflitto per niente.** Se non hai ancora committato nulla di tuo, git fa un fast-forward invece di un merge: niente conflitti, nessun avviso, e il tuo `wrangler.json` viene sostituito dai segnaposto in silenzio. Un comando ti dice in quale dei due casi sei, e [**docs/upgrading.md**](docs/upgrading.md) è la procedura completa — compreso come provare un aggiornamento su `staging` prima che lo vedano i visitatori.
+> ⚠️ **A meno che non vada in conflitto per niente.** Se non hai ancora committato nulla di tuo, git fa un fast-forward invece di un merge: niente conflitti, nessun avviso, e il tuo `wrangler.json` viene sostituito dai segnaposto in silenzio. Un comando ti dice in quale dei due casi sei, e [**docs/upgrading.md**](docs/upgrading.md) è la procedura normale per aggiornare la produzione.
 
 > 💡 Preferisci un repo privato e slegato dal fork? Allora `git clone` di questo repo, poi ripunta `origin` sul tuo e aggiungi `upstream` come sopra: il risultato per gli aggiornamenti è identico.
 
@@ -201,9 +201,10 @@ Collega il repository a Cloudflare Workers & Pages (vedi [runbook](docs/runbook-
 - Build command: `npm test && npm run build`
 - Build output directory: `dist`
 - Branch di produzione: `main`
-- Branch di staging: `staging` *(facoltativo ma consigliato)*
 
-Cloudflare crea due Worker che si deployano da soli a ogni push.
+Cloudflare crea un Worker di produzione da `main`, che si deploya a ogni push.
+
+Un secondo ambiente isolato è disponibile ma disattivato per impostazione predefinita; attivalo solo se ti servono verifiche sul deployment, seguendo [`docs/staging.md`](docs/staging.md).
 
 ## 🖼️ Come si usa il sito una volta online
 

@@ -4,6 +4,7 @@ resource "cloudflare_r2_bucket" "prod" {
 }
 
 resource "cloudflare_r2_bucket" "staging" {
+  count      = var.enable_staging ? 1 : 0
   account_id = var.account_id
   name       = "${var.project_name}-staging"
 }
@@ -20,8 +21,9 @@ resource "cloudflare_r2_managed_domain" "prod" {
 }
 
 resource "cloudflare_r2_managed_domain" "staging" {
+  count       = var.enable_staging ? 1 : 0
   account_id  = var.account_id
-  bucket_name = cloudflare_r2_bucket.staging.name
+  bucket_name = cloudflare_r2_bucket.staging[0].name
   enabled     = true
 }
 

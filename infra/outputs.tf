@@ -7,7 +7,7 @@ output "bucket_prod" {
 }
 
 output "bucket_staging" {
-  value = cloudflare_r2_bucket.staging.name
+  value = var.enable_staging ? cloudflare_r2_bucket.staging[0].name : ""
 }
 
 # Se e stato configurato un dominio custom vince quello: e l'unico
@@ -17,7 +17,7 @@ output "r2_public_url_prod" {
 }
 
 output "r2_public_url_staging" {
-  value = "https://${cloudflare_r2_managed_domain.staging.domain}"
+  value = var.enable_staging ? "https://${cloudflare_r2_managed_domain.staging[0].domain}" : ""
 }
 
 output "access_aud_prod" {
@@ -25,7 +25,7 @@ output "access_aud_prod" {
 }
 
 output "access_aud_staging" {
-  value = cloudflare_zero_trust_access_application.staging.aud
+  value = var.enable_staging ? cloudflare_zero_trust_access_application.staging[0].aud : ""
 }
 
 # Non nasce da una risorsa: rimanda alla variabile omonima. Sta qui

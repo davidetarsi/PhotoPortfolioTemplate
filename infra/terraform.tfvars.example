@@ -11,22 +11,30 @@
 account_id = "paste-your-cloudflare-account-id"
 
 # Base name for resources created by Terraform. It becomes the production R2
-# bucket name; staging is automatically named "<project_name>-staging".
+# bucket name.
 # Use the exact existing bucket prefix when importing live infrastructure.
 # For a disposable test, choose a unique name such as
 # "photo-portfolio-template-smoke-20260922".
+# Maintainers running the real smoke test must set enable_staging = true.
 project_name = "your-portfolio"
 
 # Existing Zero Trust team domain, without https://. Dashboard:
 # Zero Trust -> Settings -> Team name and domain.
 access_team_domain = "your-team.cloudflareaccess.com"
 
-# Public hostnames protected by Access, without https:// or a trailing slash.
-# For a real site, use its real production hostname and the workers.dev staging
-# hostname. For an isolated smoke test, use two unused subdomains from a zone
-# you control; no DNS records are required for that test.
-prod_hostname    = "portfolio.example.com"
-staging_hostname = "portfolio-staging.example.workers.dev"
+# Public production hostname protected by Access, without https:// or a
+# trailing slash. For an isolated smoke test, use an unused subdomain from a
+# zone you control; no DNS record is required for that test.
+prod_hostname = "portfolio.example.com"
+
+# Staging is optional and disabled by default. If an existing installation
+# already has staging resources, set this to true BEFORE the first plan after
+# upgrading, or Terraform will propose destroying them.
+enable_staging = false
+
+# Required only when enable_staging is true. Leave empty for production-only
+# installations; see ../docs/staging.md for the two-step first deployment.
+staging_hostname = ""
 
 # Every address listed here can sign in to /admin through Cloudflare Access.
 admin_emails = ["you@example.com"]
