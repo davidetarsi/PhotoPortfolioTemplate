@@ -57,8 +57,41 @@ describe('album pages', () => {
     expect(await res.text()).toContain('<title>Sport</title>');
   });
 
+  it('missing site.json → the album title alone', async () => {
+    const res = await run('/sport', { '_data/albums.json': albums });
+    expect(await res.text()).toContain('<title>Sport</title>');
+  });
+
   it('trailing slash is the same album', async () => {
     const res = await run('/sport/', { '_data/albums.json': albums, '_site/site.json': site });
     expect(await res.text()).toContain('<title>Sport — Davide</title>');
+  });
+});
+
+describe('album page headers', () => {
+  const assetsWithHeaders = {
+    async fetch() {
+      return new Response(albumHtml, {
+        status: 200,
+        headers: { 'Content-Type': 'text/html', 'Content-Length': '999', ETag: '"asset-etag"', 'X-Extra': 'kept' },
+      });
+    },
+  };
+  const data = { '_data/albums.json': albums, '_site/site.json': site };
+  const request = path => worker.fetch(
+    new Request(`https://example.com${path}`),
+    { ASSETS: assetsWithHeaders, BUCKET: makeFakeBucket(data), R2_PUBLIC_URL: 'https://photos.example.com' },
+  );
+
+  it.each([
+    ['/sport', 200],
+    ['/non-esiste', 404],
+  ])('%s drops the asset ETag and Content-Length and keeps its other headers', async (path, status) => {
+    const res = await request(path);
+    expect(res.status).toBe(status);
+    expect(res.headers.get('ETag')).toBeNull();
+    expect(res.headers.get('Content-Length')).not.toBe('999');
+    expect(res.headers.get('X-Extra')).toBe('kept');
+    expect(res.headers.get('Cache-Control')).toBe('no-store');
   });
 });
