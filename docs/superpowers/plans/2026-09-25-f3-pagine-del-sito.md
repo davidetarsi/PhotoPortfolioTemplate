@@ -42,6 +42,8 @@
 
 **Why first:** on `6b0d6db` three lists already disagree. `RESERVED_SLUGS` (`src/shared/content-rules.js`, used by the dashboard and `validateAlbumsShape`) lacks `contatti`, while `src/worker.js` redirects `/contatti` to `/about` before the album branch and `RESERVED_PATHS` in `src/utils/devRouteFallback.js` includes it: the dashboard can create an album `contatti` that production never serves. This plan would add two more lists (the template pages in `sitePages.js`, `SITE_RESERVED_SLUGS`). Unify first.
 
+Two more slugs are shadowed before the Worker runs (verified on workerd during the F4 review): `/album` is served statically as `album.html`, and `/index` answers 307 → `/`. Neither is in `RESERVED_SLUGS`, so an album named `album` never gets per-album meta and `/album` never answers 404, and an album named `index` is unreachable. The unified list must include both.
+
 **Direction** (detail with complete code when F3 starts):
 - Export from `src/shared/content-rules.js` the template paths the Worker handles before the album branch (`about`, `admin`, `contatti`) alongside the reserved prefixes (`api`, `assets`), and derive `RESERVED_SLUGS` from them.
 - Make `src/worker.js` (`STATIC_PAGES` and the redirect), `devRouteFallback` (`RESERVED_PATHS`) and `sitePages.js` (Task 2) read that export instead of declaring their own.

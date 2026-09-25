@@ -282,7 +282,7 @@ If you fixed something in your own fork, consider opening a pull request — the
 Where this is likely to go next. These are intentions, not promises:
 
 - **Preview before publishing.** Today, uploading, reordering and deleting photos take effect immediately. The plan is to let those changes sit as a draft you can look at before they go live — the way editing name and bio already works.
-- **Per-album social previews.** Right now every shared link shows the same site-wide preview image, because static hosting can't generate one per album. Solvable, but it needs the Worker to render the meta tags.
+- **Social previews for home and about.** Album links already show their own title and cover. Home and about still use the values baked in at build time; serving them through the Worker would let them follow dashboard edits too, at the cost of a Worker call on every visit to the home page.
 - **A light theme preset.** Now that every color lives in `theme/tokens.css`, shipping a second ready-made palette is mostly a matter of choosing good values.
 - 🃏 **More card variants**, if the three that ship turn out not to cover what people want.
 
