@@ -191,12 +191,15 @@ It generates WebP at 1900px on the long side, quality 85 — the same settings t
 
 ## Social previews (Open Graph)
 
-Title, description, and preview image (WhatsApp, Instagram DM, LinkedIn, iMessage…) are injected into HTML **at build time** by `site.config.js`, with the image URL built from the photo domain declared in `wrangler.json`: no need to touch HTML files.
+Title, description, and preview image (WhatsApp, Instagram DM, LinkedIn, iMessage…) come from two places:
+
+- **Album pages** (`/<album>`): the Worker writes the album's own title, description and cover into the page, read live from R2. A change made in the dashboard is used by the next share — social networks may still show their cached copy for a while. An album without a cover uses the site hero; an album without a description uses the site bio. An address that is not an album answers 404.
+- **Home and about**: injected **at build time** from `site.config.js`, with the image URL built from the photo domain declared in `wrangler.json`. These pages are static files served before the Worker runs, so they keep the build-time values.
 
 Two limits to know:
 
-- Any link on the site shared — including links to individual albums — always shows the generic site preview (title and hero image from `site.config.js`). Social crawlers don't run JavaScript, so they can't know the album's content. This is a limit of pure static hosting, accepted by design.
-- If `heroImage` is empty, the preview has no image.
+- On a fresh install, before the dashboard has saved any album, album pages keep the build-time preview.
+- If `heroImage` is empty, home and about have no preview image.
 
 ---
 
