@@ -85,6 +85,16 @@ describe('album pages', () => {
     expect(await res.text()).toContain('<title>Sport</title>');
   });
 
+  it('asset not found → that response, untouched', async () => {
+    const assets = { async fetch() { return new Response('missing', { status: 404 }); } };
+    const res = await worker.fetch(
+      new Request('https://example.com/sport'),
+      { ASSETS: assets, BUCKET: makeFakeBucket({ '_data/albums.json': albums }), R2_PUBLIC_URL: 'https://photos.example.com' },
+    );
+    expect(res.status).toBe(404);
+    expect(await res.text()).toBe('missing');
+  });
+
   it('trailing slash is the same album', async () => {
     const res = await run('/sport/', { '_data/albums.json': albums, '_site/site.json': site });
     expect(await res.text()).toContain('<title>Sport — Davide</title>');
