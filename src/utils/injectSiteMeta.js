@@ -1,16 +1,5 @@
 import { resolveHeroUrl } from './resolveHeroUrl.js';
-
-const ESCAPE_MAP = {
-  '&': '&amp;',
-  '<': '&lt;',
-  '>': '&gt;',
-  '"': '&quot;',
-  "'": '&#39;',
-};
-
-function escapeHtml(value) {
-  return String(value).replace(/[&<>"']/g, ch => ESCAPE_MAP[ch]);
-}
+import { escapeHtml } from '../shared/html.js';
 
 /**
  * Injects site metadata placeholders into HTML templates.
