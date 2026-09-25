@@ -62,6 +62,29 @@ describe('album pages', () => {
     expect(await res.text()).toContain('<title>Sport</title>');
   });
 
+  it('R2 read failure → page unchanged, 200', async () => {
+    const bucket = { async get() { throw new Error('R2 unavailable'); } };
+    const res = await worker.fetch(
+      new Request('https://example.com/sport'),
+      { ASSETS: makeFakeAssets({ '/album.html': albumHtml }), BUCKET: bucket, R2_PUBLIC_URL: 'https://photos.example.com' },
+    );
+    expect(res.status).toBe(200);
+    expect(await res.text()).toBe(albumHtml);
+  });
+
+  it('site.json read failure → the album title alone', async () => {
+    const store = makeFakeBucket({ '_data/albums.json': albums });
+    const bucket = {
+      get: key => (key === '_site/site.json' ? Promise.reject(new Error('R2 unavailable')) : store.get(key)),
+    };
+    const res = await worker.fetch(
+      new Request('https://example.com/sport'),
+      { ASSETS: makeFakeAssets({ '/album.html': albumHtml }), BUCKET: bucket, R2_PUBLIC_URL: 'https://photos.example.com' },
+    );
+    expect(res.status).toBe(200);
+    expect(await res.text()).toContain('<title>Sport</title>');
+  });
+
   it('trailing slash is the same album', async () => {
     const res = await run('/sport/', { '_data/albums.json': albums, '_site/site.json': site });
     expect(await res.text()).toContain('<title>Sport — Davide</title>');

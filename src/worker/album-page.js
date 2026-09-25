@@ -3,13 +3,14 @@ import { albumMeta, rewriteHead } from './page-meta.js';
 
 /**
  * Reads a JSON document from R2.
- * @returns {Promise<unknown>} The parsed value, or null when missing or not JSON.
+ * A failed read counts as a missing document: the page must never break
+ * because R2 is unavailable.
+ * @returns {Promise<unknown>} The parsed value, or null when missing, not JSON, or unreadable.
  */
 async function readJson(bucket, key) {
-  const obj = await bucket.get(key);
-  if (!obj) return null;
   try {
-    return await obj.json();
+    const obj = await bucket.get(key);
+    return obj ? await obj.json() : null;
   } catch {
     return null;
   }
