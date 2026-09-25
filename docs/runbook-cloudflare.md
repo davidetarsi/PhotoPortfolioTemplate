@@ -375,7 +375,7 @@ Two things are optional, and both are configured with **secrets, not `vars`**.
 
 ### Notification when a message arrives
 
-Without this, messages still arrive and are still readable in the dashboard — you just have to go and look. With it, you get a push.
+Without this, messages still arrive and are still readable in the dashboard — you just have to go and look. With it, the Worker attempts a push. A successful form response confirms that R2 stored the message, **not** that the notification arrived.
 
 ```bash
 npx wrangler versions secret put CONTACT_NOTIFY_URL
@@ -384,25 +384,21 @@ npx wrangler versions secret put CONTACT_NOTIFY_URL
 Run the secret command on the top-level Worker without `--env staging`: secrets do not
 belong to a separate Worker created from the Wrangler environment name.
 
-The Worker sends a `POST` to that URL. Any service that accepts one works; here are three.
+The current Worker sends plain text as the body of a `POST` to that URL. Only an endpoint that accepts that exact payload format is compatible with `CONTACT_NOTIFY_URL`; accepting a `POST` alone is not enough. HTTP 4xx/5xx responses and network errors are recorded in Worker logs as `notification failed: HTTP <status>` or `notification failed: request error`, without the URL or message content. The contact form still reports success because the message has already been saved in R2.
 
-**ntfy.sh — no account, nothing to sign up for**
+**ntfy.sh — compatible payload, but not a reliable default from Cloudflare Workers**
 
-Pick a topic name, install the [ntfy app](https://ntfy.sh/), subscribe to the topic. Your URL is `https://ntfy.sh/your-topic-name`.
+Pick a topic name, install the [ntfy app](https://ntfy.sh/), subscribe to the topic. Your URL is `https://ntfy.sh/your-topic-name`. The hosted service [rate-limits publishers](https://docs.ntfy.sh/publish/#limitations). A [reported Cloudflare Workers case](https://github.com/binwiederhier/ntfy/issues/1726) describes HTTP 429 at low personal volume, potentially due to shared outbound IPs; that mechanism has not been confirmed for this template. A successful `curl` from your laptop does **not** prove that the Worker can publish. Do not assume a different topic will fix a 429.
 
 > Public ntfy topics are readable by **anyone who guesses the name**. Use something long and random — `portfolio-msg-7f3a9c2b1e`, not `portfolio`. The notification deliberately contains only the sender's name and a link, never the message itself, precisely because this channel may not be private.
 
-**Telegram — a bot you talk to**
+**Telegram, Discord and Slack are not configured by this URL alone**
 
-Create a bot with [@BotFather](https://t.me/botfather), get its token, then get your chat id by messaging the bot and opening `https://api.telegram.org/bot<TOKEN>/getUpdates`. Your URL:
+The current plain-text POST is not a ready-to-use integration with these services. Telegram's [`sendMessage`](https://core.telegram.org/bots/api#sendmessage) requires `chat_id` and a non-empty `text` parameter; a raw POST body is not that parameter. [Discord webhooks](https://docs.discord.com/developers/resources/webhook#execute-webhook) require a supported content field; [Slack incoming webhooks](https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks/) require a JSON payload. Implement and test a provider-specific adapter before using one of these services. Do not paste a bot token or webhook URL into `wrangler.json`.
 
-```
-https://api.telegram.org/bot<TOKEN>/sendMessage?chat_id=<CHAT_ID>&text=
-```
+**Required end-to-end check before relying on notifications**
 
-**Discord or Slack — one webhook**
-
-Server Settings → Integrations → Webhooks (Discord), or an incoming webhook app (Slack). Copy the URL as-is.
+After setting the secret and uploading a staging version, submit a neutral canary through the **staging form**. Confirm separately that it appears in `/admin` and that the notification arrives in the subscribed app. If it does not, inspect the staging Worker's logs for `notification failed:`. HTTP 429 means the provider rejected the request as rate-limited; `request error` means the request failed before a usable HTTP response. Neither result is repaired by another successful local `curl`. Repeat the canary on production only after staging passes. Keep checking `/admin` while notifications are unverified.
 
 ### Turnstile, the spam protection
 

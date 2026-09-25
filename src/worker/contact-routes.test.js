@@ -101,6 +101,41 @@ describe('handleContactRequest', () => {
     expect(env.BUCKET.store.size).toBe(1);
   });
 
+  it('registra un HTTP 429 del provider senza perdere il messaggio o esporre il secret', async () => {
+    const env = makeEnv({ CONTACT_NOTIFY_URL: 'https://ntfy.sh/topic-segreto' });
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(null, { status: 429 }));
+    const logSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      const res = await post(env, VALIDO, makeDeps({ notify: undefined }));
+      expect(res.status).toBe(200);
+      expect(env.BUCKET.store.size).toBe(1);
+      expect(fetchSpy).toHaveBeenCalledOnce();
+      expect(logSpy).toHaveBeenCalledWith('notification failed:', 'HTTP 429');
+      expect(JSON.stringify(logSpy.mock.calls)).not.toContain('topic-segreto');
+    } finally {
+      fetchSpy.mockRestore();
+      logSpy.mockRestore();
+    }
+  });
+
+  it('non registra URL o token se la richiesta di notifica genera un errore di rete', async () => {
+    const env = makeEnv({ CONTACT_NOTIFY_URL: 'https://ntfy.sh/topic-segreto' });
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockRejectedValue(
+      new Error('request to https://ntfy.sh/topic-segreto failed'),
+    );
+    const logSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      const res = await post(env, VALIDO, makeDeps({ notify: undefined }));
+      expect(res.status).toBe(200);
+      expect(env.BUCKET.store.size).toBe(1);
+      expect(logSpy).toHaveBeenCalledWith('notification failed:', 'request error');
+      expect(JSON.stringify(logSpy.mock.calls)).not.toContain('topic-segreto');
+    } finally {
+      fetchSpy.mockRestore();
+      logSpy.mockRestore();
+    }
+  });
+
   it('rifiuta un corpo enorme, senza toccare R2', async () => {
     const env = makeEnv();
     const res = await post(env, { ...VALIDO, message: 'x'.repeat(100_000) });

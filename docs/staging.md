@@ -156,6 +156,7 @@ both into `wrangler.json`:
 | **Secret Key** | `npx wrangler versions secret put TURNSTILE_SECRET` on the connected Worker | the Worker validates tokens with it; it must never reach git |
 
 ```bash
+# Optional: only for an endpoint that accepts a plain-text POST
 npx wrangler versions secret put CONTACT_NOTIFY_URL
 npx wrangler versions secret put TURNSTILE_SECRET
 ```
@@ -163,6 +164,10 @@ npx wrangler versions secret put TURNSTILE_SECRET
 These commands must omit `--env staging`: the secrets remain attached to the top-level
 Worker and are then retained by versions uploaded to that Worker. The staging environment
 selects the version's public bindings, not a second set of secrets.
+
+`CONTACT_NOTIFY_URL` is optional. If you set it, follow the runbook's
+[Worker-origin notification check](runbook-cloudflare.md#notification-when-a-message-arrives)
+before relying on pushes: a successful local `curl` or contact form response alone is not proof of delivery.
 
 Production and the staging version URL belong to the same Worker. Configure the secret
 bindings on that Worker and upload the staging version with:

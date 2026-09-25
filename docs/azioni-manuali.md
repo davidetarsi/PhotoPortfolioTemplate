@@ -293,12 +293,13 @@ non si vede navigando il sito, ed è proprio quello che il punto 2 serviva a sis
 
 **Dove:** sul tuo computer, dopo la voce 7.
 
-Il form scrive i messaggi su R2 da solo, ma due cose restano da configurare, **entrambe
-come secret e non come `vars`**:
+Il form scrive i messaggi su R2 da solo. Protezione Turnstile e notifiche sono
+configurazioni opzionali; se le attivi, i loro valori privati vanno **nei secret e non
+nelle `vars`**:
 
 ```bash
 npx wrangler versions secret put TURNSTILE_SECRET      # dal pannello Turnstile
-npx wrangler versions secret put CONTACT_NOTIFY_URL    # dove vuoi ricevere le notifiche
+npx wrangler versions secret put CONTACT_NOTIFY_URL    # opzionale: endpoint compatibile con POST di testo
 ```
 
 Questi comandi devono restare senza `--env staging`: i secret sono configurati sul Worker
@@ -355,17 +356,22 @@ verificato.
 > ⚠️ **Non metterli in `wrangler.json`**, che è versionato: un URL Telegram contiene il
 > token del bot, e finirebbe su GitHub.
 
-Per le notifiche la via più rapida è [ntfy.sh](https://ntfy.sh/): nessun account, scegli
-un nome di topic **lungo e casuale** e installi l'app. Le tre ricette stanno nella
+Per le notifiche, [ntfy.sh](https://ntfy.sh/) accetta il POST di testo del Worker, ma
+**non considerarlo affidabile senza un test dal Worker stesso**: sul servizio ospitato
+può rispondere HTTP 429 anche quando una `curl` dal Mac funziona. Il topic deve essere
+**lungo e casuale**. Telegram, Discord e Slack richiedono invece un adattatore dedicato:
+non basta inserire il loro URL in `CONTACT_NOTIFY_URL`. Dettagli e procedura nella
 [sezione 9 del runbook](runbook-cloudflare.md#9-contact-form-notifications-and-spam-protection).
 
 **Fatto quando:** staging e produzione accettano ciascuna un invio neutro protetto da
-Turnstile, lo salvano in `/admin` e consegnano una notifica ntfy che non contiene né
-email né corpo del messaggio.
+Turnstile e lo salvano in `/admin`. Se configuri `CONTACT_NOTIFY_URL`, verifica anche
+che la notifica arrivi davvero dall'invio del form in entrambi gli ambienti. Il 200 del
+form conferma il salvataggio, non la consegna del push; se manca, controlla i log del
+Worker per `notification failed: HTTP <status>` o `notification failed: request error`.
 
-**E la verifica che nessun test può fare al posto tuo:** controlla che la notifica
-ricevuta **non contenga il testo del messaggio**. C'è un test automatico che lo
-garantisce, ma questa è l'unica prova sul canale reale.
+**E la verifica che nessun test può fare al posto tuo:** se attivi le notifiche,
+controlla che quella ricevuta **non contenga il testo del messaggio**. C'è un test
+automatico che lo garantisce, ma questa è l'unica prova sul canale reale.
 
 ---
 

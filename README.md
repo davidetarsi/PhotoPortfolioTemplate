@@ -132,6 +132,8 @@ Create the R2 buckets, Access applications and Turnstile widget through one of t
 
 Maintaining the template itself? Use the runbook's [isolated Terraform smoke test](docs/runbook-cloudflare.md#35-isolated-smoke-test-for-template-maintainers), which never targets a live hostname. The complete create, convergence, build and cleanup lifecycle was verified against the real Cloudflare API on 22 September 2026.
 
+Contact notifications are optional. Before relying on them, follow the runbook's [Worker-origin staging canary](docs/runbook-cloudflare.md#notification-when-a-message-arrives): a successful contact form submission proves the message was saved, not that a push arrived. The current plain-text webhook supports only compatible endpoints; Telegram, Discord and Slack need separate adapters.
+
 Either way, the CSP is generated automatically from `wrangler.json` during the build.
 
 ### 2. Configuring `wrangler.json`

@@ -12,6 +12,13 @@ import { verifyTurnstile } from './turnstile.js';
 const MAX_BODY = 16 * 1024;
 const NOTIFY_TIMEOUT_MS = 3000;
 
+class NotificationHttpError extends Error {
+  constructor(status) {
+    super('notification endpoint rejected the request');
+    this.status = status;
+  }
+}
+
 function randSuffix() {
   return Math.random().toString(36).slice(2, 8).padEnd(6, '0');
 }
@@ -19,11 +26,12 @@ function randSuffix() {
 async function inviaNotifica(env, messaggio, adminUrl) {
   const url = env.CONTACT_NOTIFY_URL;
   if (!url) return;
-  await fetch(url, {
+  const response = await fetch(url, {
     method: 'POST',
     body: notifyBody(messaggio, adminUrl),
     signal: AbortSignal.timeout(NOTIFY_TIMEOUT_MS),
   });
+  if (!response.ok) throw new NotificationHttpError(response.status);
 }
 
 /**
@@ -84,7 +92,8 @@ export async function handleContactRequest(request, env, deps = {}) {
     const adminUrl = new URL('/admin', request.url).href;
     await notify(env, messaggio, adminUrl);
   } catch (err) {
-    console.error('notification failed:', err?.message);
+    console.error('notification failed:',
+      err instanceof NotificationHttpError ? `HTTP ${err.status}` : 'request error');
   }
 
   return jsonResponse({ ok: true });
