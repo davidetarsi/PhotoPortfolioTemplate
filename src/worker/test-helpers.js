@@ -46,11 +46,13 @@ export function makeFakeBucket(initial = {}) {
 }
 
 /**
- * Creates a fake Assets (Workers KV-like) binding for testing.
- * Records fetch calls for verification.
+ * Creates a fake Assets binding for testing.
+ * Records fetch calls for verification. `pages` maps a pathname to the HTML body
+ * to return; any other path answers `ASSET:<path>`.
+ * @param {Record<string, string>} [pages] - Bodies to return, by pathname.
  * @returns {Object} Fake assets with calls array and fetch method.
  */
-export function makeFakeAssets() {
+export function makeFakeAssets(pages = {}) {
   const calls = [];
   return {
     calls,
@@ -60,7 +62,8 @@ export function makeFakeAssets() {
       const href = typeof urlOrRequest === 'string' ? urlOrRequest : (urlOrRequest.url ?? urlOrRequest.href);
       const u = new URL(href);
       calls.push(u.pathname);
-      return new Response(`ASSET:${u.pathname}`, { status: 200 });
+      const body = pages[u.pathname] ?? `ASSET:${u.pathname}`;
+      return new Response(body, { status: 200, headers: { 'Content-Type': 'text/html' } });
     },
   };
 }
