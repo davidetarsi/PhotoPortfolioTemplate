@@ -53,6 +53,21 @@ run "staging_disabled_by_default" {
     )
     error_message = "All staging outputs must be empty when staging is disabled."
   }
+
+  assert {
+    condition     = output.messages_bucket_prod == "test-portfolio-messages" && output.messages_bucket_staging == ""
+    error_message = "Production must have a private message bucket; staging must have none by default."
+  }
+
+  assert {
+    condition     = length(cloudflare_r2_bucket.messages_staging) == 0
+    error_message = "The staging message bucket must not exist by default."
+  }
+
+  assert {
+    condition     = cloudflare_r2_managed_domain.prod.bucket_name == "test-portfolio"
+    error_message = "Only the photo bucket may be public: the managed domain must stay on it."
+  }
 }
 
 run "staging_enabled_explicitly" {
@@ -75,5 +90,10 @@ run "staging_enabled_explicitly" {
   assert {
     condition     = output.bucket_staging == "test-portfolio-staging"
     error_message = "The enabled staging bucket output must use the project suffix."
+  }
+
+  assert {
+    condition     = output.messages_bucket_staging == "test-portfolio-messages-staging"
+    error_message = "Enabled staging must have its own private message bucket."
   }
 }

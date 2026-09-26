@@ -38,3 +38,16 @@ resource "cloudflare_r2_custom_domain" "prod" {
   zone_id     = var.photo_domain_zone_id
   enabled     = true
 }
+
+# Messaggi del form di contatto: bucket privato, senza dominio r2.dev né custom.
+# Solo il Worker li legge, tramite il binding MESSAGES_BUCKET.
+resource "cloudflare_r2_bucket" "messages_prod" {
+  account_id = var.account_id
+  name       = "${var.project_name}-messages"
+}
+
+resource "cloudflare_r2_bucket" "messages_staging" {
+  count      = var.enable_staging ? 1 : 0
+  account_id = var.account_id
+  name       = "${var.project_name}-messages-staging"
+}
