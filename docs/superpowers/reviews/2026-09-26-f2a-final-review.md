@@ -15,6 +15,7 @@ F2a è integrata nel `main` locale con merge commit `8f3b4d8785fa840c5c311a73390
 - Sul commit `13bd30f`, il maintainer ha verificato `custom.example/` copiata in una directory temporanea `custom/`: `npm test` 60 file, 472 passati, 1 saltato; build con `ALLOW_PLACEHOLDER_CSP=1` riuscita.
 - Sul worktree finale dopo l’esclusione: `npm test` 59 file, 470 passati, 1 saltato; `ALLOW_PLACEHOLDER_CSP=1 npm run build` riuscita.
 - Sul merge `8f3b4d8785fa840c5c311a73390c398c5721dee0` in `main`: `npm test` 59 file, 470 passati, 1 saltato; `ALLOW_PLACEHOLDER_CSP=1 npm run build` riuscita; `git diff --check` pulito.
+- Il maintainer ha confermato in modo indipendente suite (59 file, 470 passati, 1 saltato) e build riuscite sullo stesso merge.
 - `git diff --check` passato prima del commit.
 
 ## Note minori
