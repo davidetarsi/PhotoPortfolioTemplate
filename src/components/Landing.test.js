@@ -53,6 +53,15 @@ describe('default landing slot', () => {
     expect(container.querySelector('.page-error').textContent).toBe('Rete assente');
   });
 
+  it('shows the generic message for any other load error', async () => {
+    const { landing } = await import('./Landing.js');
+    await landing.mount(container, {
+      texts,
+      data: Promise.resolve({ site, albums: null, albumsError: 'MALFORMED', r2PublicUrl: undefined }),
+    });
+    expect(container.querySelector('.page-error').textContent).toBe('Errore');
+  });
+
   it('destroy empties its container', async () => {
     const { landing } = await import('./Landing.js');
     const handle = await landing.mount(container, {
