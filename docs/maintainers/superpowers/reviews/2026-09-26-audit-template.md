@@ -140,3 +140,23 @@ Le trappole note sono documentate bene, ma in cinque file diversi: README, runbo
 4. **A2**: pulizia del materiale interno dal template.
 5. **S2**: bucket privato per i messaggi (tocca Terraform e `wrangler.json`: da decidere).
 6. **S4** (parte `workers_dev`), **S5**, **S6**, **A3**, **U6**: miglioramenti.
+
+## Stato delle correzioni (priorità 1–4)
+
+Branch `fix/audit-before-sharing`.
+
+| Rilievo | Commit | Esito |
+|---|---|---|
+| S1 — messaggi mostrati come testo, mai come HTML; A3 — `hidden` al posto di `style` inline | `e303a08` | corretto, con test che include `<meta http-equiv="refresh">` |
+| S3 — Turnstile con sitekey senza secret rifiuta (503) | `387a319` | corretto; runbook, staging e upgrading aggiornati |
+| U1–U6 — README inglese come percorso ordinato, Node 22.12 (`engines`), "Mistakes to avoid" | `1328204` | corretto |
+| U1–U6 — README italiano allineato | `5895fd8` | corretto |
+| A2 — materiale interno spostato in `docs/maintainers/` | `cf2779a, aefe9ef` | corretto |
+
+Rilievo aggiunto durante le correzioni:
+
+- **U7 — Media: nessuna guida spiegava come collegare il dominio del sito al Worker.** Terraform crea Access su `prod_hostname`, ma non collega quel dominio al Worker; il README ora lo fa al passo 4 (Workers & Pages → Settings → Domains & Routes). Possibile miglioramento futuro: generare `routes` con `custom_domain: true` in `wrangler.json` da `infra:sync`.
+
+Restano aperti: S2 (bucket privato per i messaggi; esiste già il piano `docs/maintainers/superpowers/plans/2026-09-25-private-contact-buckets-template.md`, da riprendere), S4 (`workers_dev`/`preview_urls` a `false` con dominio proprio), S5, S6.
+
+Verifica finale: `npm test` 73 file, 581 test passati; build riuscita, 0 avvisi; link dei documenti: 0 rotti.
