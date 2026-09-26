@@ -54,4 +54,12 @@ describe('createSlotResolver', () => {
     expect(() => createSlotResolver({ landing: defaults.landing }, {}, contracts))
       .toThrow(/default implementation.*"lightbox"/);
   });
+
+  it('names custom/slots.js and the slot when a loader fails, keeping the cause', async () => {
+    const cause = new Error('Failed to fetch dynamically imported module');
+    const slot = createSlotResolver(defaults, { landing: async () => { throw cause; } }, contracts);
+    const error = await slot('landing').catch(e => e);
+    expect(error.message).toMatch(/custom\/slots\.js.*"landing".*failed to load.*Failed to fetch/);
+    expect(error.cause).toBe(cause);
+  });
 });

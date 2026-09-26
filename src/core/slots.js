@@ -29,7 +29,12 @@ export function createSlotResolver(defaults, overrides, contracts) {
     if (!known.includes(name)) throw new Error(`Unknown slot "${name}".`);
     const loader = overrides?.[name];
     if (!loader) return defaults[name];
-    const loaded = await loader();
+    let loaded;
+    try {
+      loaded = await loader();
+    } catch (error) {
+      throw new Error(`custom/slots.js: slot "${name}" failed to load: ${error?.message ?? error}`, { cause: error });
+    }
     const impl = loaded?.default ?? loaded;
     const method = contracts[name];
     if (typeof impl?.[method] !== 'function') {
