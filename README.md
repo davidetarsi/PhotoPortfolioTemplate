@@ -103,11 +103,9 @@ git fetch upstream
 git merge upstream/main
 ```
 
-Conflicts, if any, will land on `config/`, `theme/` and `wrangler.json` — that is, on what you customized. Keep your changes inside those files and updates will stay painless.
+Conflicts, if any, will land on `config/` and `theme/` — that is, on what you customized. Keep your changes inside those files and updates will stay painless. Your `wrangler.json` is never touched: the template ships only `wrangler.example.json`.
 
-`wrangler.json` in particular will conflict almost every time, because the template ships it with placeholders and you've put your own values in it: resolve by keeping your version, with `git checkout --ours wrangler.json`.
-
-> ⚠️ **Unless it doesn't conflict at all.** If you haven't committed anything of your own yet, git fast-forwards instead of merging: nothing conflicts, nothing warns, and your `wrangler.json` is replaced by the placeholders in silence. One command tells you which case you're in, and [**docs/upgrading.md**](docs/upgrading.md) is the production update procedure.
+> ⚠️ **Forked before 26 September 2026?** Older versions of the template shipped a placeholder `wrangler.json`. Your next merge stops once with a *modify/delete* conflict on it: keep yours with `git add wrangler.json` and commit. [docs/upgrading.md](docs/upgrading.md) is the production update procedure.
 
 > 💡 Prefer a private repository, unlinked from the fork? Then `git clone` this repo, point `origin` at your own, and add `upstream` as above: for updates the result is identical.
 
@@ -206,7 +204,6 @@ An optional staging environment exists, but it is not turnkey for a first instal
 | Use Node 20 | Node 22.12 or later |
 | Leave the site without your domain | Attach it to the Worker (step 4): `/admin` works only there |
 | Run `npm run migrate` after using the dashboard | You don't need it: the dashboard creates the data. If you use it, only before the first save from `/admin` |
-| Merge an update without looking at `wrangler.json` | Follow [docs/upgrading.md](docs/upgrading.md): a fast-forward replaces your values with placeholders without any conflict |
 | Deploy a build made with `ALLOW_PLACEHOLDER_CSP=1` | Use it only to check that the template builds |
 | Put a notification URL or any secret in `wrangler.json` | `npx wrangler versions secret put …`: the file is public in your repository |
 | Set the Turnstile sitekey without the secret, or the reverse | Set both, or neither ([runbook §9](docs/runbook-cloudflare.md#9-contact-form-notifications-and-spam-protection)) |

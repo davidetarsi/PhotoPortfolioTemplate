@@ -105,7 +105,7 @@ npm run infra:sync
 ALLOW_PLACEHOLDER_CSP=1 npm run build
 ```
 
-`infra:sync` writes account-specific values into the repository's tracked `wrangler.json`. In a real fork, review and commit that file. In the public template's smoke test, never commit the generated values; restore the placeholder version after verification.
+`infra:sync` writes account-specific values into `wrangler.json`. In a real fork, review and commit that file. The public template does not track `wrangler.json`: in its smoke test, delete the generated file after verification.
 
 ### 3.4 Existing infrastructure is an import, not a new apply
 
@@ -146,7 +146,7 @@ Provider v5 warns that `cloudflare_r2_managed_domain` cannot be destroyed throug
 
 3. Run `terraform destroy` and verify that its plan contains only resources whose names use the smoke prefix.
 4. Confirm in R2, Zero Trust → Access → Applications, Access policies, and Turnstile that no resource with the smoke prefix remains.
-5. Restore the public template's placeholder `wrangler.json`; never commit smoke account values.
+5. Delete the generated `wrangler.json`; the public template does not track it, so smoke account values can never be committed.
 6. Delete the generated `infra/outputs.json`. Remove or replace the smoke-test values in `infra/terraform.tfvars`; leaving them there makes the next `terraform plan` propose recreating the disposable infrastructure.
 7. Remove the API token from the current shell with `unset CLOUDFLARE_API_TOKEN` when the Terraform session is finished.
 

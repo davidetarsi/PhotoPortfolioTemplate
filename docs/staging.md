@@ -308,13 +308,13 @@ Worker.
 ```bash
 git checkout staging
 git merge upstream/main
-#   ...restore wrangler.json and commit, as above...
+#   your wrangler.json is untouched: template updates do not ship one
 
 npm test && npm run build && head -2 dist/_headers
 ```
 
-Read that CSP line. It must contain **your** R2 URL. If it contains `pub-xxxxxxxx`, the
-restore failed — stop, do not push.
+Read that CSP line. It must contain **your** R2 URL. If it contains `pub-xxxxxxxx`, your
+`wrangler.json` is missing or still has placeholders — stop, do not push.
 
 ```bash
 git push origin staging

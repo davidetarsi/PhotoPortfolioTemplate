@@ -125,11 +125,11 @@ Names, email addresses and whatever someone chose to write, sitting in your buck
 
 ### `wrangler.json`
 
-The template ships it with placeholders; you fill in your values **and commit it**. Not an oversight: Cloudflare's deploy reads Worker configuration from the repository, so a `wrangler.json` that stays on your computer means a failed deploy.
+The template ships only `wrangler.example.json`. Your site has its own `wrangler.json` — written by `npm run infra:sync`, or copied from the example and filled in by hand — and you **commit it**. Not an oversight: Cloudflare's deploy reads Worker configuration from the repository, so a `wrangler.json` that stays on your computer means a failed deploy.
 
 The values it contains aren't secrets — bucket names, team domain, AUD, and public bucket URL are all already visible externally. Real credentials live in `.env`, which isn't versioned.
 
-Two practical consequences: it will conflict on every `git merge upstream/main` (resolve with `git checkout --ours wrangler.json`), and `npm run infra:sync` rewrites it from Terraform outputs, so any manual changes need to be redone or moved to `.tf`.
+Template updates never touch it, because the template does not ship one. `npm run infra:sync` rewrites it from Terraform outputs, so any manual change needs to be redone or moved to `.tf`.
 
 ---
 

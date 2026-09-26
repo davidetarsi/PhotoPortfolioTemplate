@@ -4,9 +4,21 @@ You forked this template and made it your site. The template keeps moving — bu
 features, security changes. This is how you pull those in without losing your own
 configuration.
 
-If you are handing this file to an agent rather than following it yourself, the one thing
-it must not skip is the check in the next section. Everything else is recoverable; that
-one is the difference between a silent config wipe and a normal merge.
+## Your configuration stays yours
+
+The template ships only `wrangler.example.json`. Your fork commits its own `wrangler.json`, and a merge from `upstream` never touches it. When an update adds a key to `wrangler.example.json` — the notes under "When an update changes behaviour" say so — run `npm run infra:sync` again, or copy the new key across by hand.
+
+### Forks created before 26 September 2026
+
+Older versions of the template tracked a placeholder `wrangler.json`. The first merge after this change deletes it on the template's side, so git stops once with a *modify/delete* conflict. Keep your file:
+
+```bash
+git merge upstream/main
+git add wrangler.json
+git commit
+```
+
+From then on it never conflicts again.
 
 ## The two remotes
 
@@ -17,62 +29,20 @@ git remote add upstream https://github.com/<owner>/<template-repo>.git
 git fetch upstream
 ```
 
-From then on, an update is a merge of `upstream/main` into your branch.
-
-## Your first update is the dangerous one
-
-Everything below hinges on one question: **have you committed anything of your own since
-forking?** Run this before merging:
-
-```bash
-git log --oneline origin/main ^upstream/main
-```
-
-**If it prints nothing**, you have no commits the template lacks. Your branch is not
-divergent, it is simply *behind*, and `git merge` will do a **fast-forward**: git moves
-the label forward and your files become the template's files.
-
-That sounds harmless and mostly is — it is how you get the new work. But a fast-forward
-has no merge, therefore no conflict, therefore **no warning**. And one of the files it
-replaces is `wrangler.json`, which holds your bucket names, your R2 public URL and your
-Access AUD. They are silently overwritten with the template's placeholders. Push that and
-your deployment goes live pointing at `pub-xxxxxxxx.r2.dev`.
-
-**If it prints commits**, you are past this stage. Skip to
-[Updates after the first one](#updates-after-the-first-one).
-
-## The first update, step by step
-
-Put your configuration aside before the merge and restore it after:
-
-```bash
-cp wrangler.json ~/wrangler.mysite.json    # outside the repo, so the merge cannot touch it
-git merge upstream/main                    # fast-forward: overwrites without asking
-cp ~/wrangler.mysite.json wrangler.json    # put your values back
-git add wrangler.json
-git commit -m "chore: restore this site's real configuration"
-```
-
-**That last commit is the point of the exercise.** It gives your fork a commit the template
-does not have. From then on your branch is genuinely divergent, merges are real merges, and
-`wrangler.json` conflicts loudly like it should.
-
-> Before you commit, compare your restored `wrangler.json` against the template's
-> `wrangler.example.json`. An update may have **added** a variable — if your file is missing
-> one the new code expects, restoring it verbatim reintroduces the gap. Copy any new key
-> across and fill it in.
+From then on, an update is `git fetch upstream` followed by `git merge upstream/main`.
 
 ## What each file does during an update
 
 | File | What happens | Is that right? |
 |---|---|---|
-| `wrangler.json` | replaced by the template's placeholders | **no** — restore it, as above |
+| `wrangler.json` | untouched: the template does not ship it | yes |
 | `public/_headers` | deleted | yes: the CSP is generated at build time from `wrangler.json`. If you restore it, Vite copies it over the generated one and pins stale URLs in production |
 | `config/*.config.js` | back to the neutral seed | yes: at runtime the truth lives in R2, not in these files |
 | `custom/` | untouched — the template never ships it | yes. Slot changes are listed under "When an update changes behaviour" below |
 
 After the merge, **do not run `npm run migrate`**. It would push the empty seed over your
 real content.
+
 
 ## Verify the production update
 
@@ -85,7 +55,7 @@ head -2 dist/_headers
 ```
 
 The CSP line must contain your real production R2 URL. If it contains `pub-xxxxxxxx`, stop:
-the restored `wrangler.json` is still using a placeholder. Once the check passes, push the
+your `wrangler.json` still uses a placeholder. Once the check passes, push the
 production branch:
 
 ```bash
@@ -93,19 +63,6 @@ git push origin main
 ```
 
 [Optional: test the deployment on staging](staging.md).
-
-## Updates after the first one
-
-Once your fork has commits of its own, `git merge upstream/main` behaves the way you expect.
-`wrangler.json` will come up as a genuine conflict, and the answer is almost always to keep
-your side:
-
-```bash
-git checkout --ours wrangler.json && git add wrangler.json
-```
-
-Then re-read the note above about newly added variables: keeping your side wholesale is
-right for values, wrong for keys the new code expects to exist.
 
 ## When an update changes behaviour
 

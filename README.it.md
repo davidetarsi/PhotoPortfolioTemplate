@@ -105,11 +105,9 @@ git fetch upstream
 git merge upstream/main
 ```
 
-I conflitti, se ci sono, cadranno su `config/`, `theme/` e `wrangler.json` — cioè su ciò che hai personalizzato tu. Tieni le tue modifiche dentro quei file e gli aggiornamenti resteranno indolori.
+I conflitti, se ci sono, cadranno su `config/` e `theme/` — cioè su ciò che hai personalizzato tu. Tieni le tue modifiche dentro quei file e gli aggiornamenti resteranno indolori. Il tuo `wrangler.json` non viene mai toccato: il template contiene solo `wrangler.example.json`.
 
-`wrangler.json` in particolare andrà in conflitto quasi sempre, perché il template lo distribuisce coi segnaposto e tu ci hai messo i tuoi valori: risolvi tenendo la tua versione, con `git checkout --ours wrangler.json`.
-
-> ⚠️ **A meno che non vada in conflitto per niente.** Se non hai ancora committato nulla di tuo, git fa un fast-forward invece di un merge: niente conflitti, nessun avviso, e il tuo `wrangler.json` viene sostituito dai segnaposto in silenzio. Un comando ti dice in quale dei due casi sei, e [**docs/upgrading.md**](docs/upgrading.md) è la procedura normale per aggiornare la produzione.
+> ⚠️ **Hai fatto il fork prima del 26 settembre 2026?** Le versioni precedenti del template contenevano un `wrangler.json` coi segnaposto. Il prossimo merge si ferma una volta con un conflitto *modify/delete* su quel file: tieni il tuo con `git add wrangler.json` e fai il commit. [docs/upgrading.md](docs/upgrading.md) è la procedura normale per aggiornare la produzione.
 
 > 💡 Preferisci un repo privato e slegato dal fork? Allora `git clone` di questo repo, poi ripunta `origin` sul tuo e aggiungi `upstream` come sopra: il risultato per gli aggiornamenti è identico.
 
@@ -208,7 +206,6 @@ Esiste un ambiente di staging facoltativo, ma non è pronto all'uso per una prim
 | Usare Node 20 | Node 22.12 o successivo |
 | Lasciare il sito senza il tuo dominio | Collegalo al Worker (passo 4): `/admin` funziona solo lì |
 | Lanciare `npm run migrate` dopo aver usato la dashboard | Non serve: i dati li crea la dashboard. Se lo usi, solo prima del primo salvataggio da `/admin` |
-| Fare il merge di un aggiornamento senza guardare `wrangler.json` | Segui [docs/upgrading.md](docs/upgrading.md): un fast-forward sostituisce i tuoi valori coi segnaposto senza alcun conflitto |
 | Pubblicare una build fatta con `ALLOW_PLACEHOLDER_CSP=1` | Usala solo per verificare che il template compili |
 | Mettere un URL di notifica o qualunque segreto in `wrangler.json` | `npx wrangler versions secret put …`: il file è pubblico nel tuo repository |
 | Impostare la sitekey di Turnstile senza il secret, o il contrario | Impostali entrambi, o nessuno ([runbook §9](docs/runbook-cloudflare.md#9-contact-form-notifications-and-spam-protection)) |
