@@ -219,6 +219,16 @@ describe('messaggi', () => {
     expect(messages[0].id).toBe('2026-02-01T00-00-00-000Z-bbb');
   });
 
+  it('elenca anche oltre i 1000 oggetti di una pagina di R2', async () => {
+    const many = {};
+    for (let i = 0; i < 1001; i++) {
+      many[`_messages/2026-01-01T00-00-00-${String(i).padStart(4, '0')}Z-aaa.json`] = { ...M1, receivedAt: i };
+    }
+    const { messages } = await (await call(makeEnv({}, many), 'GET', '/api/admin/messages')).json();
+    expect(messages).toHaveLength(1001);
+    expect(messages[0].receivedAt).toBe(1000);
+  });
+
   it('non legge i vecchi messaggi rimasti nel bucket pubblico', async () => {
     const env = makeEnv({ '_messages/2026-01-01T00-00-00-000Z-aaa.json': M1 });
     const { messages } = await (await call(env, 'GET', '/api/admin/messages')).json();

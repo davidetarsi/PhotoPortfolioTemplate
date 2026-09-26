@@ -147,7 +147,14 @@ export async function handleAdminRequest(request, env, deps = {}) {
   if (isMessageRoute && !env.MESSAGES_BUCKET) return jsonResponse({ error: 'STORAGE_UNAVAILABLE' }, 500);
 
   if (pathname === '/api/admin/messages' && request.method === 'GET') {
-    const { objects } = await env.MESSAGES_BUCKET.list({ prefix: MESSAGES_PREFIX });
+    // list() returns at most 1000 keys per page: follow the cursor to the end.
+    const objects = [];
+    let cursor;
+    do {
+      const page = await env.MESSAGES_BUCKET.list({ prefix: MESSAGES_PREFIX, cursor });
+      objects.push(...page.objects);
+      cursor = page.truncated ? page.cursor : undefined;
+    } while (cursor);
     const messages = [];
     for (const { key } of objects) {
       const obj = await env.MESSAGES_BUCKET.get(key);
