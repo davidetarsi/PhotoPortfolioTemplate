@@ -8,7 +8,7 @@
 
 **Tech Stack:** Vanilla JS, Vitest + jsdom, libreria `exifr` (nuova dipendenza).
 
-**Spec di riferimento:** `docs/superpowers/specs/2026-07-12-album-sort-and-save-design.md`
+**Spec di riferimento:** `docs/maintainers/superpowers/specs/2026-07-12-album-sort-and-save-design.md`
 
 ## Global Constraints
 

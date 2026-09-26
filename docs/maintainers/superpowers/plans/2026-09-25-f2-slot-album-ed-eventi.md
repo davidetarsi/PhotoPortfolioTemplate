@@ -10,9 +10,9 @@
 
 **Tech Stack:** Vite 8 (`import.meta.glob`), JavaScript ES modules, Vitest 4 with jsdom.
 
-**Spec:** `docs/superpowers/specs/2026-09-25-punti-di-aggancio-design.md`
-**Depends on:** F1 (`docs/superpowers/plans/2026-09-25-f1-slot-landing.md`).
-**Status (2026-09-26):** written before F1 shipped. The F1 final review found three points below that this plan must honour (the three new Global Constraints). Decided by the user on 2026-09-26: **(1) static defaults on every page — accepted.** Measured on the production build: +1.5 KB gzip on the home page, +1.8 on the album page, +3.9 on the about page (from 5.8 to 9.7); no component stylesheet has a selector outside a class, so loading them all changes no page's appearance. **(2) `src/api` ships earlier and minimal, in F2a** (`docs/superpowers/plans/2026-09-26-f2a-api-pubblica-minima.md`), with only `albumsToCards`. Re-verify the plan against the code before executing.
+**Spec:** `docs/maintainers/superpowers/specs/2026-09-25-punti-di-aggancio-design.md`
+**Depends on:** F1 (`docs/maintainers/superpowers/plans/2026-09-25-f1-slot-landing.md`).
+**Status (2026-09-26):** written before F1 shipped. The F1 final review found three points below that this plan must honour (the three new Global Constraints). Decided by the user on 2026-09-26: **(1) static defaults on every page — accepted.** Measured on the production build: +1.5 KB gzip on the home page, +1.8 on the album page, +3.9 on the about page (from 5.8 to 9.7); no component stylesheet has a selector outside a class, so loading them all changes no page's appearance. **(2) `src/api` ships earlier and minimal, in F2a** (`docs/maintainers/superpowers/plans/2026-09-26-f2a-api-pubblica-minima.md`), with only `albumsToCards`. Re-verify the plan against the code before executing.
 
 ## Global Constraints
 

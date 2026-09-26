@@ -8,7 +8,7 @@
 
 **Tech Stack:** Cloudflare Workers (R2 binding, WebCrypto), Vite multi-entry, vanilla JS, Vitest (+jsdom), `@jsquash/webp` (solo fallback Safari).
 
-**Spec:** `docs/superpowers/specs/2026-07-10-admin-dashboard-design.md`
+**Spec:** `docs/maintainers/superpowers/specs/2026-07-10-admin-dashboard-design.md`
 
 ## Global Constraints
 

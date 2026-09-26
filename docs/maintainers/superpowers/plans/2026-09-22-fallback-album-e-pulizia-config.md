@@ -8,7 +8,7 @@
 
 **Tech Stack:** JavaScript ES modules, Vite 8, Vitest 4 with jsdom, Cloudflare Worker runtime, Cloudflare R2.
 
-**Spec:** `docs/superpowers/specs/2026-09-22-fallback-album-e-pulizia-config-design.md`
+**Spec:** `docs/maintainers/superpowers/specs/2026-09-22-fallback-album-e-pulizia-config-design.md`
 
 ## Global Constraints
 
@@ -622,7 +622,7 @@ Run:
 
 ```bash
 npx vitest run scripts/upload.test.js src/components/ContactForm.test.js src/worker/data-routes.test.js
-rg -n "VITE_TURNSTILE_SITEKEY" . --glob '!docs/superpowers/specs/**' --glob '!docs/superpowers/plans/**'
+rg -n "VITE_TURNSTILE_SITEKEY" . --glob '!docs/maintainers/superpowers/specs/**' --glob '!docs/maintainers/superpowers/plans/**'
 ```
 
 Expected: all tests PASS and `rg` exits with no matches.
@@ -695,7 +695,7 @@ uploads a prepared directory and its `manifest.json` directly to R2, and require
 Run:
 
 ```bash
-rg -n "VITE_TURNSTILE_SITEKEY" . --glob '!docs/superpowers/specs/**' --glob '!docs/superpowers/plans/**'
+rg -n "VITE_TURNSTILE_SITEKEY" . --glob '!docs/maintainers/superpowers/specs/**' --glob '!docs/maintainers/superpowers/plans/**'
 npm test
 ALLOW_PLACEHOLDER_CSP=1 npm run build
 git diff --check

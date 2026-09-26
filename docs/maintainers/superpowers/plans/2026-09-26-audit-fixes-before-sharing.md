@@ -8,7 +8,7 @@
 
 **Tech Stack:** JavaScript ES modules, Vitest 4 (jsdom), Markdown.
 
-**Spec:** `docs/superpowers/reviews/2026-09-26-audit-template.md` (findings S1, S3, A2, A3, U1–U7). User decision 2026-09-26: fix priorities 1–4, execute like F3.
+**Spec:** `docs/maintainers/superpowers/reviews/2026-09-26-audit-template.md` (findings S1, S3, A2, A3, U1–U7). User decision 2026-09-26: fix priorities 1–4, execute like F3.
 
 **Base:** branch `docs/audit-2026-09-26` (audit report + this plan) on `main` `e1e0fd4`. Implementation branch: `fix/audit-before-sharing`, created from it. Never commit on `main`.
 
@@ -401,9 +401,9 @@ EOF
 ```bash
 mkdir -p docs/maintainers/history
 git mv docs/superpowers docs/maintainers/superpowers
-git mv docs/platform-direction.md docs/maintainers/platform-direction.md
-git mv docs/platform-roadmap.md docs/maintainers/platform-roadmap.md
-git mv docs/azioni-manuali.md docs/maintainers/azioni-manuali.md
+git mv docs/maintainers/platform-direction.md docs/maintainers/platform-direction.md
+git mv docs/maintainers/platform-roadmap.md docs/maintainers/platform-roadmap.md
+git mv docs/maintainers/azioni-manuali.md docs/maintainers/azioni-manuali.md
 git mv piano-implementazione.md docs/maintainers/history/piano-implementazione.md
 git mv roadmap-sito-portfolio.md docs/maintainers/history/roadmap-sito-portfolio.md
 ```
@@ -411,9 +411,9 @@ git mv roadmap-sito-portfolio.md docs/maintainers/history/roadmap-sito-portfolio
 - [ ] **Step 2: Update the paths inside the moved documents.** Mechanical replacement, only inside `docs/maintainers/`:
 
 ```bash
-grep -rl --include='*.md' -e 'docs/superpowers/' -e 'docs/platform-direction.md' -e 'docs/platform-roadmap.md' -e 'docs/azioni-manuali.md' docs/maintainers \
+grep -rl --include='*.md' -e 'docs/maintainers/superpowers/' -e 'docs/maintainers/platform-direction.md' -e 'docs/maintainers/platform-roadmap.md' -e 'docs/maintainers/azioni-manuali.md' docs/maintainers \
   | xargs -r sed -i \
-    -e 's#docs/superpowers/#docs/maintainers/superpowers/#g' \
+    -e 's#docs/maintainers/superpowers/#docs/maintainers/superpowers/#g' \
     -e 's#docs/platform-direction\.md#docs/maintainers/platform-direction.md#g' \
     -e 's#docs/platform-roadmap\.md#docs/maintainers/platform-roadmap.md#g' \
     -e 's#docs/azioni-manuali\.md#docs/maintainers/azioni-manuali.md#g'
@@ -445,7 +445,7 @@ New plans and reviews go in `docs/maintainers/superpowers/`.
 - [ ] **Step 5: Commit.**
 
 ```bash
-git add -A docs/maintainers docs/superpowers docs/platform-direction.md docs/platform-roadmap.md docs/azioni-manuali.md piano-implementazione.md roadmap-sito-portfolio.md
+git add -A docs/maintainers docs/superpowers docs/maintainers/platform-direction.md docs/maintainers/platform-roadmap.md docs/maintainers/azioni-manuali.md piano-implementazione.md roadmap-sito-portfolio.md
 git status --short
 git commit -F - <<'EOF'
 docs: move maintainer notes to docs/maintainers

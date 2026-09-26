@@ -8,7 +8,7 @@
 
 **Tech Stack:** Cloudflare Workers, R2, Workers Static Assets, JavaScript ES modules, Vitest 4 (`// @vitest-environment node`).
 
-**Spec:** `docs/superpowers/specs/2026-09-25-punti-di-aggancio-design.md`
+**Spec:** `docs/maintainers/superpowers/specs/2026-09-25-punti-di-aggancio-design.md`
 **Depends on:** nothing. First phase of the roadmap (order: F4 → F1 → F2 → F3).
 **Verified against:** `main` @ `6b0d6db` (2026-09-25). Baseline: 406 tests in 49 files, all passing.
 **Executor:** every step below contains the complete code to write. A transcription-level implementer is enough; do not redesign.

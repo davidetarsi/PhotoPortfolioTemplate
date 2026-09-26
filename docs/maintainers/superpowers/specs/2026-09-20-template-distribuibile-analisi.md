@@ -292,7 +292,7 @@ Tre conseguenze meritano di essere dette prima che diventino sorprese:
 
 Le voci che richiedono i tuoi permessi o una tua scelta — aprire la PR, decidere cosa
 fare di `docs/`, rendere pubblico il repo, togliere la spunta "Template repository" —
-sono raccolte in [docs/azioni-manuali.md](../../azioni-manuali.md), con l'indicazione
+sono raccolte in [docs/maintainers/azioni-manuali.md](../../azioni-manuali.md), con l'indicazione
 di cosa bloccano e cosa no. **Nessuna di esse blocca il punto 1.**
 
 ### 8.2 Domande che restano aperte davvero

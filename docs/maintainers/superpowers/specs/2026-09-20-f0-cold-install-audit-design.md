@@ -1,8 +1,8 @@
 # F0 — Installazione a freddo e destinatario reale (design)
 
 **Data:** 20 settembre 2026
-**Fase:** F0 di `docs/platform-roadmap.md`
-**Premessa:** `docs/platform-direction.md`
+**Fase:** F0 di `docs/maintainers/platform-roadmap.md`
+**Premessa:** `docs/maintainers/platform-direction.md`
 
 ---
 

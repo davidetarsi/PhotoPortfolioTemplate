@@ -8,7 +8,7 @@
 
 **Tech Stack:** Cloudflare Workers, R2, Turnstile, Terraform (provider 5.13.0), Vite 8, vitest.
 
-**Spec:** [docs/superpowers/specs/2026-09-20-contatti-about-design.md](../specs/2026-09-20-contatti-about-design.md)
+**Spec:** [docs/maintainers/superpowers/specs/2026-09-20-contatti-about-design.md](../specs/2026-09-20-contatti-about-design.md)
 
 **Questo piano copre il primo dei due sottosistemi della spec.** Il secondo — selettore foto a due modi, campi about su R2, ridisegno della pagina fusa — avrà un piano proprio. Alla fine di questo, la pagina `/contatti` è quella di oggi con un backend nuovo.
 
@@ -1188,7 +1188,7 @@ grep -rn -i 'web3forms' --include='*.js' --include='*.json' --include='*.md' --i
 
 Ogni riga va risolta: `web3formsAccessKey` da `config/site.config.js`, `VITE_WEB3FORMS_ACCESS_KEY` da `.env.example`, le menzioni nei due README e in `CUSTOMIZING.md`.
 
-I documenti in `docs/superpowers/` **non si toccano**: sono il resoconto storico di decisioni prese allora, e riscriverli falsificherebbe la storia del progetto.
+I documenti in `docs/maintainers/superpowers/` **non si toccano**: sono il resoconto storico di decisioni prese allora, e riscriverli falsificherebbe la storia del progetto.
 
 Da dichiarare nel commit: sparisce la dipendenza da un servizio esterno e il passo di setup relativo.
 
@@ -1228,7 +1228,7 @@ Aggiunto il campo subject, facoltativo. Turnstile si monta solo se la
 sitekey e' valorizzata, con appearance interaction-only: per i
 visitatori legittimi non compare nulla.
 
-I documenti in docs/superpowers/ non sono stati toccati: sono il
+I documenti in docs/maintainers/superpowers/ non sono stati toccati: sono il
 resoconto di decisioni prese allora, e riscriverli falsificherebbe la
 storia del progetto.
 
@@ -1363,7 +1363,7 @@ Nessun agente può eseguire questi passi: richiedono credenziali e toccano risor
 
 - [ ] **Step 5: La prova che conta.** Controllare che la notifica ricevuta **non contenga il testo del messaggio**. C'è un test automatico che lo garantisce, ma questa è l'unica verifica sul canale reale.
 
-- [ ] **Step 6:** Aggiungere l'esito a [docs/azioni-manuali.md](../../azioni-manuali.md).
+- [ ] **Step 6:** Aggiungere l'esito a [docs/maintainers/azioni-manuali.md](../../azioni-manuali.md).
 
 ---
 

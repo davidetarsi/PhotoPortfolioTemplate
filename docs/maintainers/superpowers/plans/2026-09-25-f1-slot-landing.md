@@ -8,7 +8,7 @@
 
 **Tech Stack:** Vite 8 (`import.meta.glob`), JavaScript ES modules, Vitest 4 with jsdom, Markdown documentation.
 
-**Spec:** `docs/superpowers/specs/2026-09-25-punti-di-aggancio-design.md`
+**Spec:** `docs/maintainers/superpowers/specs/2026-09-25-punti-di-aggancio-design.md`
 
 **Verified against:** `main` @ `a757c45`; rechecked on `6b0d6db` (2026-09-25), no file of this plan changed.
 

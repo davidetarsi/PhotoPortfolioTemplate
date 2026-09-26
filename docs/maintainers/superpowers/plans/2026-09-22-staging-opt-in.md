@@ -8,7 +8,7 @@
 
 **Tech Stack:** Terraform 1.16.3, Cloudflare provider 5.13.0, Terraform native tests with a mock provider, JavaScript ES modules, Vitest 4, Wrangler configuration, Markdown documentation.
 
-**Spec:** `docs/superpowers/specs/2026-09-22-staging-opt-in-design.md`
+**Spec:** `docs/maintainers/superpowers/specs/2026-09-22-staging-opt-in-design.md`
 
 ## Global Constraints
 

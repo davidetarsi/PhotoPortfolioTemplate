@@ -8,7 +8,7 @@
 
 **Tech Stack:** Vite 8 (Rolldown `generateBundle` with `order: 'post'`, `emitFile`, virtual modules, `transformIndexHtml`), Node `fs`/`url`, Vitest 4 (jsdom), Wrangler 4 (local verification only), Playwright/Chromium already installed in `/srv/claude/workspaces/f2-fixtures/browser/` (verification only).
 
-**Spec:** `docs/superpowers/specs/2026-09-25-punti-di-aggancio-design.md` §2.5 and §6 ("F3: decisions approved on 2026-09-26"). This plan replaces `docs/superpowers/plans/2026-09-25-f3-pagine-del-sito.md`.
+**Spec:** `docs/maintainers/superpowers/specs/2026-09-25-punti-di-aggancio-design.md` §2.5 and §6 ("F3: decisions approved on 2026-09-26"). This plan replaces `docs/maintainers/superpowers/plans/2026-09-25-f3-pagine-del-sito.md`.
 
 **Base:** `main` at `e4ad944` (F2 merged, PR #20). Work on a new branch `feat/f3-custom-pages`. Never commit on `main`.
 
@@ -59,7 +59,7 @@ Approved by the user on 2026-09-26: one Haiku 4.5 implementer per task, given th
 - `src/admin/album-creation.js` (+ test): refuse slugs taken by pages.
 - `src/utils/slugFromPath.js` (+ test), `src/api/index.js` (+ test), `src/api/base.css`.
 - `custom.example/pages.config.js`, `custom.example/pages/archive.html|js`, `custom.example/pages/project.html|js`, `custom.example/content/projects.json`.
-- Docs: `docs/pages.md` (new), `docs/slots.md`, `docs/upgrading.md`, `CUSTOMIZING.md`, `custom.example/README.md`, `docs/azioni-manuali.md`.
+- Docs: `docs/pages.md` (new), `docs/slots.md`, `docs/upgrading.md`, `CUSTOMIZING.md`, `custom.example/README.md`, `docs/maintainers/azioni-manuali.md`.
 
 ---
 
@@ -71,7 +71,7 @@ Approved by the user on 2026-09-26: one Haiku 4.5 implementer per task, given th
 - Modify: `src/worker/admin-routes.js`, `src/worker/admin-routes.test.js`
 - Modify: `src/utils/devRouteFallback.js`, `src/utils/devRouteFallback.test.js`
 - Modify: `src/admin/album-creation.test.js`
-- Modify: `docs/upgrading.md`, `CUSTOMIZING.md`, `docs/azioni-manuali.md`
+- Modify: `docs/upgrading.md`, `CUSTOMIZING.md`, `docs/maintainers/azioni-manuali.md`
 
 **Interfaces:**
 - Produces: `TEMPLATE_ROUTES = { pages: { '/about': '/about.html', '/admin': '/admin.html' }, builtFiles: ['/album', '/index'], prefixes: ['/api', '/assets'] }` (frozen); `RESERVED_SLUGS = ['about', 'admin', 'album', 'api', 'assets', 'index']` (frozen, sorted, derived).
@@ -258,7 +258,7 @@ In `docs/upgrading.md`, directly under the paragraph that ends with `No such cha
 
 In `CUSTOMIZING.md`, replace `(\`index.html\`, \`album.html\`, \`contatti.html\`, \`admin.html\`)` with `(\`index.html\`, \`album.html\`, \`about.html\`, \`admin.html\`)`.
 
-In `docs/azioni-manuali.md`, directly under the line that starts with `- **URL pubblico \`/about\`** (21 settembre 2026).` and its continuation lines, add:
+In `docs/maintainers/azioni-manuali.md`, directly under the line that starts with `- **URL pubblico \`/about\`** (21 settembre 2026).` and its continuation lines, add:
 
 ```markdown
 - **`/contatti` rimosso** (26 settembre 2026, F3). Il redirect 301 verso `/about` non c'è più: `/contatti` è un indirizzo di album come gli altri.
@@ -267,7 +267,7 @@ In `docs/azioni-manuali.md`, directly under the line that starts with `- **URL p
 - [ ] **Step 10: Commit.**
 
 ```bash
-git add src/shared/content-rules.js src/shared/content-rules.test.js src/worker.js src/worker.test.js src/worker/admin-routes.js src/worker/admin-routes.test.js src/utils/devRouteFallback.js src/utils/devRouteFallback.test.js src/admin/album-creation.test.js docs/upgrading.md CUSTOMIZING.md docs/azioni-manuali.md
+git add src/shared/content-rules.js src/shared/content-rules.test.js src/worker.js src/worker.test.js src/worker/admin-routes.js src/worker/admin-routes.test.js src/utils/devRouteFallback.js src/utils/devRouteFallback.test.js src/admin/album-creation.test.js docs/upgrading.md CUSTOMIZING.md docs/maintainers/azioni-manuali.md
 git commit -m "feat(routes): one list of template routes, reserve only new names, drop /contatti"
 ```
 
@@ -1527,7 +1527,7 @@ If anything differs, fix it in a new commit and repeat this step.
 
 ### Task 10: Final verification
 
-**Files:** none in the repo, except the verification report `docs/superpowers/reviews/2026-09-26-f3-verification.md`.
+**Files:** none in the repo, except the verification report `docs/maintainers/superpowers/reviews/2026-09-26-f3-verification.md`.
 
 - [ ] **Step 1: Full matrix.** Rebuild `/srv/claude/workspaces/f3-probes/example` as in Task 9 Step 7 from the final `HEAD`, plus a template copy without `custom/` in `/srv/claude/workspaces/f3-probes/template`. In each: `npm test` and `ALLOW_PLACEHOLDER_CSP=1 npx vite build`. Record counts, exit codes and warnings.
 
@@ -1549,10 +1549,10 @@ Expected: `/archive` 200 "Archive — …"; `/archive/` 307 → `/archive`; `/pr
 
 - [ ] **Step 4: Browser check.** With the example `dist/` served by `/srv/claude/workspaces/f2-fixtures/browser/server.mjs` (do not modify it), open the archive and a project page with Playwright (`PLAYWRIGHT_BROWSERS_PATH=/srv/claude/workspaces/f2-fixtures/browser/ms-playwright`, `channel: 'chromium'`): nav and footer mounted, list or project text rendered, theme link last, no console errors. Note: `server.mjs` maps every one-segment path to `album.html` and serves other paths as files, so request `/archive.html` and `/projects/harbour-lights.html` (`slugFromPath` accepts the `.html` suffix).
 
-- [ ] **Step 5: Report.** Write `docs/superpowers/reviews/2026-09-26-f3-verification.md` with the results of Steps 1–4, exact counts, and anything that did not match. `git diff --check`, then commit it:
+- [ ] **Step 5: Report.** Write `docs/maintainers/superpowers/reviews/2026-09-26-f3-verification.md` with the results of Steps 1–4, exact counts, and anything that did not match. `git diff --check`, then commit it:
 
 ```bash
-git add docs/superpowers/reviews/2026-09-26-f3-verification.md
+git add docs/maintainers/superpowers/reviews/2026-09-26-f3-verification.md
 git commit -m "docs(f3): verification report"
 ```
 

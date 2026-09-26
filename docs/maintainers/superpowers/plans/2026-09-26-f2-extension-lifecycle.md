@@ -5,7 +5,7 @@
 **Goal:** Complete F2 without React: replaceable chrome and album components, page/photo events, owned cleanup, optional custom theme and cycle-safe public API.
 **Architecture:** Extend existing F1 slots with thin adapters; introduce a small page owner and event bus. Public pages start independent mounts and retain their handles. Vite processes an optional custom stylesheet and emits an explicit final HTML link; no theme is loaded by admin.
 **Tech Stack:** existing JavaScript ES modules, Vite 8, Vitest 4/jsdom, Cloudflare Worker unchanged. No new production dependency.
-**Spec:** `docs/superpowers/specs/2026-09-25-punti-di-aggancio-design.md`, particularly section 6, "F2: contracts approved on 2026-09-26".
+**Spec:** `docs/maintainers/superpowers/specs/2026-09-25-punti-di-aggancio-design.md`, particularly section 6, "F2: contracts approved on 2026-09-26".
 **Base:** local main `0bb1a19`; work on `codex/f2-extension-lifecycle` in the existing linked worktree. F1, F2a and F4 are already implemented.
 
 ## Global Constraints
@@ -120,7 +120,7 @@ The other exports must not import this registry. Add a real fixture in which cus
 
 ## Task 6: Examples, documentation and route audit
 
-**Files:** custom.example/setup.js, theme.css, optional example override component; custom.example/README.md, docs/slots.md, docs/upgrading.md, README.md as needed; `docs/superpowers/reviews/2026-09-26-f2-verification.md`.
+**Files:** custom.example/setup.js, theme.css, optional example override component; custom.example/README.md, docs/slots.md, docs/upgrading.md, README.md as needed; `docs/maintainers/superpowers/reviews/2026-09-26-f2-verification.md`.
 
 - [ ] Make setup example return cleanup for subscriptions:
 

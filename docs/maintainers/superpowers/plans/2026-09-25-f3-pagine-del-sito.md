@@ -8,9 +8,9 @@
 
 **Tech Stack:** Vite 8 (Rollup `generateBundle`, virtual modules, `transformIndexHtml`), Node `fs`/`url`, Vitest 4, Wrangler (local verification only).
 
-**Spec:** `docs/superpowers/specs/2026-09-25-punti-di-aggancio-design.md`
+**Spec:** `docs/maintainers/superpowers/specs/2026-09-25-punti-di-aggancio-design.md`
 **Depends on:** F2 (site page scripts import from `src/api/index.js`), and a single source of truth for reserved paths (Task 0).
-**Status (2026-09-26): superseded** by `docs/superpowers/plans/2026-09-26-f3-custom-pages.md`, rewritten on the code after F2 with complete code for every task, English names and the decisions of spec §6 ("F3: decisions approved on 2026-09-26"). Kept for history; do not execute this file.
+**Status (2026-09-26): superseded** by `docs/maintainers/superpowers/plans/2026-09-26-f3-custom-pages.md`, rewritten on the code after F2 with complete code for every task, English names and the decisions of spec §6 ("F3: decisions approved on 2026-09-26"). Kept for history; do not execute this file.
 
 ~~**Status (2026-09-25):** deferred until the personal site has pages to publish. Tasks 3, 4, 5 and 8 are described in prose: detail them with complete code on the real codebase before executing, and use a standard-tier model, not a transcription-level one. Estimate revised from 4–5 h to 6–8 h. The fork folder is now `custom/` (spec §6); concept names such as `sitePages`, `docs/site-pages.md` and `virtual:site-pages` predate that rename — settle them when this plan is re-detailed.~~
 

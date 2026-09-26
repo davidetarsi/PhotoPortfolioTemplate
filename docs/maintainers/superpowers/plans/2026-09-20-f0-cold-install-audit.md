@@ -34,7 +34,7 @@ Rilevato il 20 settembre 2026, prima di iniziare. Il piano si basa su questi fat
 | `config/site.config.js`, `config/albums.config.js` | valori segnaposto, **nessun dato personale** |
 | `your-github-user` nei file tracciati | solo in `docs/` (pianificazione interna) |
 | `your-github-user/your-portfolio` in `SETUP.md` | presente e **legittimo** — diventa rilevante appena `SETUP.md` è tracciato |
-| Altri file non tracciati | `docs/superpowers/plans/2026-07-06-m1-google-drive-provider.md`, `...-m2-config-theming.md`, `...-m3-gallery-components.md` |
+| Altri file non tracciati | `docs/maintainers/superpowers/plans/2026-07-06-m1-google-drive-provider.md`, `...-m2-config-theming.md`, `...-m3-gallery-components.md` |
 
 ---
 
@@ -95,7 +95,7 @@ Creare `docs/cold-install-audit.md` con questa struttura, ordinata per gravità 
 
 **Data:** 2026-09-20
 **Metodo:** clone pulito di `HEAD`, README e SETUP seguiti alla lettera, senza account esterni.
-**Spec:** `docs/superpowers/specs/2026-09-20-f0-cold-install-audit-design.md`
+**Spec:** `docs/maintainers/superpowers/specs/2026-09-20-f0-cold-install-audit-design.md`
 
 ## Limiti di questa simulazione
 
@@ -215,9 +215,9 @@ Atteso: FAIL su `SETUP.md è tracciato in git` — l'array dei file tracciati no
 
 ```bash
 git add SETUP.md
-git add docs/superpowers/plans/2026-07-06-m1-google-drive-provider.md \
-        docs/superpowers/plans/2026-07-06-m2-config-theming.md \
-        docs/superpowers/plans/2026-07-06-m3-gallery-components.md
+git add docs/maintainers/superpowers/plans/2026-07-06-m1-google-drive-provider.md \
+        docs/maintainers/superpowers/plans/2026-07-06-m2-config-theming.md \
+        docs/maintainers/superpowers/plans/2026-07-06-m3-gallery-components.md
 ```
 
 - [ ] **Step 4: Rendere `SETUP.md` raggiungibile dal README**
@@ -254,9 +254,9 @@ Atteso: FAIL con `theme/non-esiste.css` nell'array dei mancanti. Poi rimuovere l
 
 ```bash
 git add tests/repo/docs-reference-existing-files.test.js README.md SETUP.md \
-        docs/superpowers/plans/2026-07-06-m1-google-drive-provider.md \
-        docs/superpowers/plans/2026-07-06-m2-config-theming.md \
-        docs/superpowers/plans/2026-07-06-m3-gallery-components.md
+        docs/maintainers/superpowers/plans/2026-07-06-m1-google-drive-provider.md \
+        docs/maintainers/superpowers/plans/2026-07-06-m2-config-theming.md \
+        docs/maintainers/superpowers/plans/2026-07-06-m3-gallery-components.md
 git commit -m "test: guardia sui documenti di onboarding, e traccia SETUP.md
 
 SETUP.md era l'unica guida al setup e non era tracciata: chi creava un repo

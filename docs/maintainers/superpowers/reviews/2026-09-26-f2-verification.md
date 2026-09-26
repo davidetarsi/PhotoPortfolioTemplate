@@ -1,6 +1,6 @@
 # F2 verification — 2026-09-26
 
-Piano: `docs/superpowers/plans/2026-09-26-f2-extension-lifecycle.md`. Branch `codex/f2-extension-lifecycle`, base `b46a08d`. Nessun push, merge in `main`, deploy o `apply` è stato eseguito.
+Piano: `docs/maintainers/superpowers/plans/2026-09-26-f2-extension-lifecycle.md`. Branch `codex/f2-extension-lifecycle`, base `b46a08d`. Nessun push, merge in `main`, deploy o `apply` è stato eseguito.
 
 ## Stato
 
@@ -33,7 +33,7 @@ Alias legacy: `/contatti` (con o senza barra finale) → 301 verso `/about`, in 
 
 Percorsi negli esempi: `custom.example/` usa solo `/sport` e `/travel` come slug di album di prova. Nessuna nuova rotta di pagina è introdotta da F2.
 
-Esempi F3 in italiano, **non implementati**: `docs/superpowers/plans/2026-09-25-f3-pagine-del-sito.md` e la spec §2.5 usano `/archivio`, `/codice/:slug`, `custom/pages/archivio.html`, `custom/pages/progetto.html`, `custom/content/progetti.json`. Sono in attesa di conversione in inglese quando F3 verrà ripreso.
+Esempi F3 in italiano, **non implementati**: `docs/maintainers/superpowers/plans/2026-09-25-f3-pagine-del-sito.md` e la spec §2.5 usano `/archivio`, `/codice/:slug`, `custom/pages/archivio.html`, `custom/pages/progetto.html`, `custom/content/progetti.json`. Sono in attesa di conversione in inglese quando F3 verrà ripreso.
 
 Slug riservati, **incoerenza non risolta, rinviata a F3**: le tre liste divergono.
 

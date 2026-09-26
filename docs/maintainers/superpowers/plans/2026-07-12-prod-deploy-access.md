@@ -11,7 +11,7 @@
 ## Global Constraints
 
 - `portfolio.example` è già una zona attiva nell'account Cloudflare dell'utente (confermato).
-- Il deploy è automatico via Git integration nativa Cloudflare — **nessuna GitHub Actions da scrivere**. Il piano precedente (`docs/superpowers/plans/docs:superpowers:plans:2026-07-10-staging-prod-deploy.md.rtf`) proponeva un workflow Actions: è superato, non seguirlo.
+- Il deploy è automatico via Git integration nativa Cloudflare — **nessuna GitHub Actions da scrivere**. Il piano precedente (`docs/maintainers/superpowers/plans/docs:superpowers:plans:2026-07-10-staging-prod-deploy.md.rtf`) proponeva un workflow Actions: è superato, non seguirlo.
 - Bucket R2 di produzione: `photo-portfolio` (già il default di `R2_BUCKET_NAME` in `.env`, non serve override per `npm run migrate` in prod, a differenza dello staging).
 - R2 public URL di produzione: `https://pub-xxxxxxxx.r2.dev` (confermato sia da `.env` `VITE_R2_PUBLIC_URL` sia dall'header CSP live su `portfolio.example`).
 - **Verificato via curl diretto**: `portfolio.example` oggi serve ancora il vecchio sito statico pre-migrazione Worker (`/api/data/site` → 404 con `content-length: 0`, nessun `content-type` — il Worker risponderebbe sempre con JSON via `jsonResponse()`).

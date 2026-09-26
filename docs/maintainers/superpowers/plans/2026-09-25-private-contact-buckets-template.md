@@ -38,7 +38,7 @@
 - `src/utils/renderWrangler.test.js`: pin complete, missing and partial output behavior.
 - `src/worker/contact-routes.js` and its test: write valid messages only to private storage and fail closed.
 - `src/worker/admin-routes.js` and its test: private list/read/delete, pagination, JWT gate and storage failures.
-- `README.md`, `README.it.md`, `docs/runbook-cloudflare.md`, `docs/staging.md`, `docs/upgrading.md`, `docs/azioni-manuali.md`, `infra/terraform.tfvars.example`: user-facing setup and upgrade paths. README remains the entry point.
+- `README.md`, `README.it.md`, `docs/runbook-cloudflare.md`, `docs/staging.md`, `docs/upgrading.md`, `docs/maintainers/azioni-manuali.md`, `infra/terraform.tfvars.example`: user-facing setup and upgrade paths. README remains the entry point.
 
 ---
 
@@ -342,7 +342,7 @@ Retain `MESSAGE_ID_RE` before `env.MESSAGES_BUCKET.delete`, and do not include a
 - Modify: `docs/runbook-cloudflare.md`
 - Modify: `docs/staging.md`
 - Modify: `docs/upgrading.md`
-- Modify: `docs/azioni-manuali.md`
+- Modify: `docs/maintainers/azioni-manuali.md`
 - Modify: `infra/terraform.tfvars.example`
 
 **Interfaces:**
@@ -353,11 +353,11 @@ Retain `MESSAGE_ID_RE` before `env.MESSAGES_BUCKET.delete`, and do not include a
 
 - [ ] **Step 2: Update the English README and runbook first.** In the setup section, say exactly: “Production uses one public photo bucket and one private contact-message bucket. Enabling staging adds one of each.” Link directly to `docs/runbook-cloudflare.md`, `docs/staging.md` and `docs/upgrading.md`. Change the example `r2_buckets` array to include `MESSAGES_BUCKET`. In the runbook's Terraform/manual/smoke/contacts sections, name both production buckets, explain that message buckets have no public domains, and update four-bucket smoke expectations when staging is on. The manual path creates a private message bucket without enabling Public Development URL. Link the existing-site migration warning to the new `docs/upgrading.md#contact-message-storage-migration` section.
 
-- [ ] **Step 3: Align the other reader paths.** Mirror the short README setup explanation in `README.it.md`; update its Wrangler example. In `docs/staging.md`, explain the additional private staging bucket, its binding, and that disabling staging must account for *both* staging buckets. Add `## Contact-message storage migration` to `docs/upgrading.md`: require private bucket creation, form maintenance, complete copy/verification, binding/deploy, staging/production canaries and only then old-object deletion; explicitly say the template has no one-command legacy migration yet and refer to the approved design spec for safety gates. Warn existing users not to deploy until they have a migration method and not to apply Terraform to unimported live resources. In `docs/azioni-manuali.md`, replace old claims that contact messages live in the photo bucket with a link to the runbook; preserve its historical status/other open decisions. In `infra/terraform.tfvars.example`, annotate the two-versus-four-bucket effect of `enable_staging`.
+- [ ] **Step 3: Align the other reader paths.** Mirror the short README setup explanation in `README.it.md`; update its Wrangler example. In `docs/staging.md`, explain the additional private staging bucket, its binding, and that disabling staging must account for *both* staging buckets. Add `## Contact-message storage migration` to `docs/upgrading.md`: require private bucket creation, form maintenance, complete copy/verification, binding/deploy, staging/production canaries and only then old-object deletion; explicitly say the template has no one-command legacy migration yet and refer to the approved design spec for safety gates. Warn existing users not to deploy until they have a migration method and not to apply Terraform to unimported live resources. In `docs/maintainers/azioni-manuali.md`, replace old claims that contact messages live in the photo bucket with a link to the runbook; preserve its historical status/other open decisions. In `infra/terraform.tfvars.example`, annotate the two-versus-four-bucket effect of `enable_staging`.
 
-- [ ] **Step 4: Verify documentation and regressions.** Run `rg -n 'r2_buckets|MESSAGES_BUCKET|bucket_messages|private|public|enable_staging' README.md README.it.md docs/runbook-cloudflare.md docs/staging.md docs/upgrading.md docs/azioni-manuali.md infra/terraform.tfvars.example` and check every setup example has both bindings and no public message URL. Run `git diff --check`, `npm test`, `ALLOW_PLACEHOLDER_CSP=1 npm run build` (this worktree's ignored `wrangler.json` has a placeholder photo URL), `terraform -chdir=infra fmt -check`, `terraform -chdir=infra validate`, and `terraform -chdir=infra test`. Expected: all pass; review generated artifacts to ensure no secret/message content is included. Do not run `terraform apply` or deploy.
+- [ ] **Step 4: Verify documentation and regressions.** Run `rg -n 'r2_buckets|MESSAGES_BUCKET|bucket_messages|private|public|enable_staging' README.md README.it.md docs/runbook-cloudflare.md docs/staging.md docs/upgrading.md docs/maintainers/azioni-manuali.md infra/terraform.tfvars.example` and check every setup example has both bindings and no public message URL. Run `git diff --check`, `npm test`, `ALLOW_PLACEHOLDER_CSP=1 npm run build` (this worktree's ignored `wrangler.json` has a placeholder photo URL), `terraform -chdir=infra fmt -check`, `terraform -chdir=infra validate`, and `terraform -chdir=infra test`. Expected: all pass; review generated artifacts to ensure no secret/message content is included. Do not run `terraform apply` or deploy.
 
-- [ ] **Step 5: Commit documentation only.** `git add README.md README.it.md docs/runbook-cloudflare.md docs/staging.md docs/upgrading.md docs/azioni-manuali.md infra/terraform.tfvars.example` then `git commit -m "docs: explain private contact buckets and upgrade gate"`.
+- [ ] **Step 5: Commit documentation only.** `git add README.md README.it.md docs/runbook-cloudflare.md docs/staging.md docs/upgrading.md docs/maintainers/azioni-manuali.md infra/terraform.tfvars.example` then `git commit -m "docs: explain private contact buckets and upgrade gate"`.
 
 ## Completion gate and downstream handoff
 

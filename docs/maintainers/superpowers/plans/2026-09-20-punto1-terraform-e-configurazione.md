@@ -14,7 +14,7 @@ terraform apply → infra/outputs.json ─┐
 
 **Tech Stack:** Terraform (provider `cloudflare/cloudflare` v5), Node 20+, Vite 8, vitest.
 
-**Spec:** [docs/superpowers/specs/2026-09-20-template-distribuibile-analisi.md](../specs/2026-09-20-template-distribuibile-analisi.md) — §3 per intero, più i punti 2 e 3 dell'[audit di luglio](../specs/2026-07-12-boilerplate-template-audit.md).
+**Spec:** [docs/maintainers/superpowers/specs/2026-09-20-template-distribuibile-analisi.md](../specs/2026-09-20-template-distribuibile-analisi.md) — §3 per intero, più i punti 2 e 3 dell'[audit di luglio](../specs/2026-07-12-boilerplate-template-audit.md).
 
 ## Global Constraints
 
@@ -1043,7 +1043,7 @@ I task precedenti scrivono e validano la configurazione, ma **nessuno ha mai ese
 
 - [ ] **Step 5: Verificare il deploy.** Dopo il push, controllare sull'URL `workers.dev` che `/api/data/site` risponda `200` e che `curl -sI` mostri l'header `content-security-policy` con gli URL R2 giusti.
 
-Aggiungere l'esito a [docs/azioni-manuali.md](../../azioni-manuali.md).
+Aggiungere l'esito a [docs/maintainers/azioni-manuali.md](../../azioni-manuali.md).
 
 ---
 

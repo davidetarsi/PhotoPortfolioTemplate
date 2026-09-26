@@ -1,7 +1,7 @@
 # Roadmap — PhotoPortfolio Template
 
 **Data:** 20 settembre 2026
-**Premessa:** vedi `docs/platform-direction.md`. Se una fase qui contraddice una decisione lì, vale il documento di direzione.
+**Premessa:** vedi `docs/maintainers/platform-direction.md`. Se una fase qui contraddice una decisione lì, vale il documento di direzione.
 **Unità di stima:** una *sessione* = 2–4 ore di lavoro concentrato, come in `piano-implementazione.md`.
 
 ---
@@ -324,7 +324,7 @@ Il motivo per non farlo: se la proposta di valore verso amici sviluppatori è "e
 
 ## 6. Metodo di lavoro
 
-**Una fase alla volta.** Quando inizi una fase, scrivi il piano di implementazione dettagliato con `superpowers:writing-plans` e salvalo in `docs/superpowers/plans/`, come per M0–M8. Questo documento dice *cosa e perché*; quei piani dicono *come*, task per task, e vanno scritti sul codice del momento — non adesso, perché F1 e F2 cambieranno nomi e confini che F3 darebbe per scontati.
+**Una fase alla volta.** Quando inizi una fase, scrivi il piano di implementazione dettagliato con `superpowers:writing-plans` e salvalo in `docs/maintainers/superpowers/plans/`, come per M0–M8. Questo documento dice *cosa e perché*; quei piani dicono *come*, task per task, e vanno scritti sul codice del momento — non adesso, perché F1 e F2 cambieranno nomi e confini che F3 darebbe per scontati.
 
 **Per ogni fase:** una issue epic suddivisa in task verificabili, branch `feature/f<numero>-<argomento>`, PR con checklist, test e documentazione nella stessa PR, verifica su staging quando tocca Worker, R2 o dashboard.
 

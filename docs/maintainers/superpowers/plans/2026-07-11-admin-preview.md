@@ -8,7 +8,7 @@
 
 **Tech Stack:** Vanilla JS, Vitest + jsdom (stesso stack del resto della dashboard admin).
 
-**Spec:** `docs/superpowers/specs/2026-07-11-admin-preview-design.md`
+**Spec:** `docs/maintainers/superpowers/specs/2026-07-11-admin-preview-design.md`
 
 ## Global Constraints
 

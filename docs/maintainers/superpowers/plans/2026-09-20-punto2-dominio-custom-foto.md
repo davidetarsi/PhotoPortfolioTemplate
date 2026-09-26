@@ -434,7 +434,7 @@ Richiede il `terraform apply` del punto 1, mai eseguito, e un dominio su una zon
 
 - [ ] **Step 5: Chiudere `r2.dev`** con `keep_managed_domain = false`, solo dopo che i passi 3 e 4 sono andati.
 
-Aggiungere l'esito a [docs/azioni-manuali.md](../../azioni-manuali.md).
+Aggiungere l'esito a [docs/maintainers/azioni-manuali.md](../../azioni-manuali.md).
 
 ---
 

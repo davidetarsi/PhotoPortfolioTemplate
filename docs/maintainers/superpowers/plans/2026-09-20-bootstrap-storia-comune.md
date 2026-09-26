@@ -8,7 +8,7 @@
 
 **Tech Stack:** git, Node 20+, npm, vitest, wrangler (solo per validare la configurazione, nessun deploy).
 
-**Spec:** [docs/superpowers/specs/2026-09-20-template-distribuibile-analisi.md](../specs/2026-09-20-template-distribuibile-analisi.md) — punto 0 di §7, decisioni §8.1 e §8.2.
+**Spec:** [docs/maintainers/superpowers/specs/2026-09-20-template-distribuibile-analisi.md](../specs/2026-09-20-template-distribuibile-analisi.md) — punto 0 di §7, decisioni §8.1 e §8.2.
 
 ## Global Constraints
 
@@ -45,7 +45,7 @@ Repo di lavoro: `/srv/claude/workspaces/PhotoPortfolioTemplate` (tutti i task tr
 | `config/site.config.js` | seed neutro: nome/bio segnaposto |
 | `config/albums.config.js` | seed neutro: un album di esempio |
 | `README.md` | aggiunge la sezione "Fork e aggiornamenti" |
-| `docs/superpowers/` | arriva dal sito col merge, sostituisce i documenti di luglio |
+| `docs/maintainers/superpowers/` | arriva dal sito col merge, sostituisce i documenti di luglio |
 
 Il resto dell'albero arriva dal sito senza modifiche.
 
@@ -498,7 +498,7 @@ Poi aprire una PR verso `main` su GitHub. **Il merge lo decide una persona**, co
 
 - [ ] **Step 2: Decidere cosa fare di `docs/` prima della pubblicazione**
 
-La spec e questo piano citano nome del team Access, AUD e URL R2 reali. Non sono credenziali — l'AUD è un identificativo pubblico e gli URL `r2.dev` sono già raggiungibili da chiunque — ma sono dati che legano il repo pubblico al tuo account. Tre vie: lasciarli, sostituirli con segnaposto anche nei documenti, oppure tenere `docs/superpowers/` fuori dal template. **Decisione della persona.**
+La spec e questo piano citano nome del team Access, AUD e URL R2 reali. Non sono credenziali — l'AUD è un identificativo pubblico e gli URL `r2.dev` sono già raggiungibili da chiunque — ma sono dati che legano il repo pubblico al tuo account. Tre vie: lasciarli, sostituirli con segnaposto anche nei documenti, oppure tenere `docs/maintainers/superpowers/` fuori dal template. **Decisione della persona.**
 
 - [ ] **Step 3: Rendere pubblico il repo template**
 

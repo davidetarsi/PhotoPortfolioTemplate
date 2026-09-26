@@ -8,7 +8,7 @@
 
 **Tech Stack:** JavaScript ES modules, Vite 8, Vitest 4 (jsdom).
 
-**Spec:** `docs/superpowers/specs/2026-09-25-punti-di-aggancio-design.md`
+**Spec:** `docs/maintainers/superpowers/specs/2026-09-25-punti-di-aggancio-design.md`
 **Depends on:** F1 (merged in `main` at `e609df7`).
 **Decided by the user (2026-09-26):** `src/api` ships before the rest of F2, minimal: only what a landing needs to show covers. The rest of the API arrives with F2, by adding exports.
 **Verified against:** `main` @ `e609df7`. Baseline: 464 passed, 1 skipped, 57 files.

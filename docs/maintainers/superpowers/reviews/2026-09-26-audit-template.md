@@ -68,9 +68,9 @@ Route del template (`TEMPLATE_ROUTES`), regole su slug e contenuti (`src/shared/
 
 Chi fa il fork (e ogni `git merge upstream/main`) riceve:
 
-- `docs/superpowers/`: 50 file, 1,1 MB di piani, spec e review di sviluppo;
+- `docs/maintainers/superpowers/`: 50 file, 1,1 MB di piani, spec e review di sviluppo;
 - nella radice `piano-implementazione.md` e `roadmap-sito-portfolio.md`, che descrive ancora la vecchia architettura basata su Google Drive: fuorviante;
-- `docs/platform-direction.md`, `docs/platform-roadmap.md`, `docs/azioni-manuali.md` (il diario delle azioni manuali del maintainer);
+- `docs/maintainers/platform-direction.md`, `docs/maintainers/platform-roadmap.md`, `docs/maintainers/azioni-manuali.md` (il diario delle azioni manuali del maintainer);
 - `mockups/`: 5 file tracciati, anche se `.gitignore` contiene `mockups/*`.
 
 Correzione consigliata: spostare il materiale interno in `docs/maintainers/` (o su un branch separato) ed eliminare dalla radice i documenti superati. Così nella radice restano README, CUSTOMIZING, CONTRIBUTING e LICENSE.
@@ -112,7 +112,7 @@ Il README non nomina `TURNSTILE_SECRET` (S3), il suo esempio di `wrangler.json` 
 
 ### U5 — Media: gli errori da evitare sono sparsi
 
-Le trappole note sono documentate bene, ma in cinque file diversi: README, runbook, `docs/staging.md`, `docs/upgrading.md`, `docs/azioni-manuali.md`. Serve una sezione "Errori da evitare" nel README, con una riga e un link per ciascuna:
+Le trappole note sono documentate bene, ma in cinque file diversi: README, runbook, `docs/staging.md`, `docs/upgrading.md`, `docs/maintainers/azioni-manuali.md`. Serve una sezione "Errori da evitare" nel README, con una riga e un link per ciascuna:
 
 - usare "Use this template" invece del fork;
 - rilanciare `npm run migrate` dopo aver usato la dashboard;

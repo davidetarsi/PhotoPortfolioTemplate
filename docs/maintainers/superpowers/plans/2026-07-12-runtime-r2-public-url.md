@@ -8,7 +8,7 @@
 
 **Tech Stack:** Cloudflare Workers, Vitest (+jsdom per i test client, `@vitest-environment node` per i test worker).
 
-**Spec:** `docs/superpowers/specs/2026-07-12-runtime-r2-public-url-design.md`
+**Spec:** `docs/maintainers/superpowers/specs/2026-07-12-runtime-r2-public-url-design.md`
 
 ## Global Constraints
 
