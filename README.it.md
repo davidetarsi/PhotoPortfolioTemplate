@@ -32,8 +32,9 @@ Niente database. Nessun server da mantenere. Zero euro al mese.
 - [📸 Screenshot](#-screenshot)
 - [🧰 Cosa serve](#-cosa-serve)
 - [🚀 Come partire, e come restare aggiornati](#-come-partire-e-come-restare-aggiornati)
-- [⚡ Avvio rapido](#-avvio-rapido)
+- [⚡ Provarlo in locale](#-provarlo-in-locale)
 - [⚙️ Allestire un nuovo portfolio](#-allestire-un-nuovo-portfolio)
+- [⚠️ Errori da evitare](#-errori-da-evitare)
 - [🖼️ Come si usa il sito una volta online](#-come-si-usa-il-sito-una-volta-online)
 - [🎨 Personalizzazione](#-personalizzazione)
 - [🏗️ Struttura del progetto](#-struttura-del-progetto)
@@ -57,7 +58,7 @@ Questo template sta nel mezzo. Il sito è statico e velocissimo, ma le foto vivo
 
 ## ✨ Cosa fa
 
-- **Pagine** — home con gli album, pagina album con griglia e lightbox, contatti con form funzionante.
+- **Pagine** — home con gli album, pagina album con griglia e lightbox, pagina About con un form di contatto funzionante.
 - **Dashboard `/admin`** — carica foto (compresse nel browser prima dell'invio), riordina per trascinamento o per data, scegli la copertina, crea ed elimina album, modifica nome, bio e social.
 - **Accesso protetto** da Cloudflare Access — si entra con un codice via email, e nessuna password vive nel codice.
 - **Tre aspetti già pronti** per le card degli album, si cambiano con una riga.
@@ -74,10 +75,13 @@ Questo template sta nel mezzo. Il sito è statico e velocissimo, ma le foto vivo
 | | |
 |---|---|
 | ☁️ **Account Cloudflare** | il piano gratuito basta |
-| 🟢 **Node.js 20+** | |
-| 🌐 **Un dominio** | facoltativo — altrimenti funziona su un sottodominio `workers.dev` gratuito |
+| 🌐 **Un dominio su Cloudflare** | serve per la dashboard `/admin`: Cloudflare Access sa proteggere solo `/admin` unicamente sul tuo dominio. Senza, puoi comunque provare il sito in locale |
+| 🟢 **Node.js 22.12+** | `wrangler`, usato durante l'installazione, richiede Node 22 |
+| 🧱 **Terraform 1.9+** | consigliato; il [percorso manuale](docs/runbook-cloudflare.md#5-manual-path--creating-resources-from-cloudflare-dashboard) funziona anche senza |
 
-Costo ricorrente: **zero**, salvo il dominio se scegli di averne uno.
+Costo ricorrente: **zero**, salvo il dominio.
+
+I testi dell'interfaccia sono in italiano: si cambiano in `config/texts.config.js`.
 
 ## 🚀 Come partire, e come restare aggiornati
 
@@ -90,8 +94,7 @@ git clone git@github.com:TUO-UTENTE/TUO-REPO.git
 cd TUO-REPO
 git remote add upstream git@github.com:davidetarsi/PhotoPortfolioTemplate.git
 npm install
-# poi apri wrangler.json, sostituisci i segnaposto coi tuoi valori, e committalo:
-# il deploy di Cloudflare legge quel file dal repository, quindi deve starci dentro.
+# poi segui "Allestire un nuovo portfolio" qui sotto, nell'ordine
 ```
 
 Per ricevere gli aggiornamenti, quando vuoi:
@@ -109,102 +112,124 @@ I conflitti, se ci sono, cadranno su `config/`, `theme/` e `wrangler.json` — c
 
 > 💡 Preferisci un repo privato e slegato dal fork? Allora `git clone` di questo repo, poi ripunta `origin` sul tuo e aggiungi `upstream` come sopra: il risultato per gli aggiornamenti è identico.
 
-## ⚡ Avvio rapido
+## ⚡ Provarlo in locale
 
 ```bash
-node --version   # richiede v20+
+node --version   # richiede v22.12+
 npm install
 npm run dev      # → http://localhost:5173/
-ALLOW_PLACEHOLDER_CSP=1 npm run build
 npm test
+ALLOW_PLACEHOLDER_CSP=1 npm run build   # verifica solo che compili: non pubblicare mai questo output
 ```
 
-Per il primo deploy su Cloudflare, compila `wrangler.json` con i tuoi valori veri (non i segnaposto).
+L'anteprima locale mostra il seed di `config/`, senza foto: le foto stanno in R2, che si configura nella sezione successiva.
 
 ## ⚙️ Allestire un nuovo portfolio
 
-### 1. Infrastruttura Cloudflare
+Segui i passi nell'ordine: ognuno ha bisogno del precedente. Il [runbook Cloudflare](docs/runbook-cloudflare.md) *(in inglese)* ha i dettagli di ogni passo.
 
-Questo README è il punto di ingresso del setup; il [runbook dell'infrastruttura Cloudflare](docs/runbook-cloudflare.md) contiene la procedura tecnica dettagliata. Prima di modificare [`infra/terraform.tfvars.example`](infra/terraform.tfvars.example), consulta il [riferimento campo per campo](docs/runbook-cloudflare.md#32-variable-reference).
+### 1. Crea l'infrastruttura
 
-Crea i bucket R2, le applicazioni Access e il widget Turnstile attraverso uno di due percorsi equivalenti:
+Con Terraform (consigliato): copia `infra/terraform.tfvars.example` in `infra/terraform.tfvars`, compilalo seguendo il [riferimento campo per campo](docs/runbook-cloudflare.md#32-variable-reference), poi esegui plan e apply come spiega il [percorso Terraform](docs/runbook-cloudflare.md#3-terraform-path), compresi il token API e i suoi permessi. Crea il bucket R2, l'applicazione Access che protegge `/admin` e `/api/admin`, e il widget Turnstile del form di contatto.
 
-- **Automatico, con Terraform** (consigliato): segui il [percorso Terraform](docs/runbook-cloudflare.md#3-terraform-path). Comprende token, spiegazione di ogni campo, revisione del piano, import delle risorse esistenti e pulizia.
-- **Manuale, dalla dashboard**: segui il [percorso manuale](docs/runbook-cloudflare.md#5-manual-path--creating-resources-from-cloudflare-dashboard).
-
-Se stai mantenendo il template, usa lo [smoke test Terraform isolato](docs/runbook-cloudflare.md#35-isolated-smoke-test-for-template-maintainers), che non punta mai al sito live. L'intero ciclo di creazione, convergenza, build e pulizia è stato verificato contro l'API Cloudflare reale il 22 settembre 2026.
-
-In entrambi i casi, la CSP si genera automaticamente da `wrangler.json` durante la build.
-
-### 2. Configurazione di `wrangler.json`
-
-Compila i segnaposto:
-
-```json
-{
-  "name": "il-tuo-portfolio",
-  "main": "src/worker.js",
-  "r2_buckets": [
-    { "binding": "BUCKET", "bucket_name": "il-tuo-bucket" }
-  ],
-  "vars": {
-    "ACCESS_TEAM_DOMAIN": "il-tuo-team.cloudflareaccess.com",
-    "ACCESS_AUD": "aud-della-tua-Access-app",
-    "R2_PUBLIC_URL": "https://pub-xxxxxxxx.r2.dev"
-  }
-}
-```
-
-A mano, o con `npm run infra:sync` se usi Terraform.
-
-### 3. Credenziali locali facoltative per la CLI
-
-L'anteprima nel browser non richiede `.env`. Solo `npm run migrate` e `npm run upload` richiedono le quattro variabili R2 qui sotto. `VITE_R2_PUBLIC_URL` è facoltativa e serve solo al fallback nel browser; l'anteprima dei meta tag a build time legge `R2_PUBLIC_URL` da `wrangler.json`. Non è una credenziale S3. In `.env` non deve esserci alcuna sitekey Turnstile.
+Poi scrivi i risultati in `wrangler.json`:
 
 ```bash
-VITE_R2_PUBLIC_URL="https://pub-xxxxxxxx.r2.dev"  # facoltativa: copia da wrangler.json vars.R2_PUBLIC_URL
+npm run infra:sync
+```
+
+Senza Terraform, segui il [percorso manuale](docs/runbook-cloudflare.md#5-manual-path--creating-resources-from-cloudflare-dashboard) e compila `wrangler.json` a mano, partendo da `wrangler.example.json`.
+
+### 2. Committa `wrangler.json`
+
+```bash
+git add wrangler.json
+git commit -m "chore: la mia configurazione Cloudflare"
+git push
+```
+
+Il deploy di Cloudflare legge questo file dal repository. Contiene identificativi, non segreti: i segreti vanno a Cloudflare al passo 5. La Content Security Policy viene generata da qui a ogni build.
+
+### 3. Collega il repository a Cloudflare
+
+Dashboard Cloudflare → **Workers & Pages → Create → Import a repository** ([runbook §6](docs/runbook-cloudflare.md#6-git-integration--connect-repository)):
+
+- Build command: `npm test && npm run build`
+- Build output directory: `dist`
+- Production branch: `main`
+
+Ogni push su `main` pubblica il sito.
+
+### 4. Collega il tuo dominio al Worker
+
+Workers & Pages → il tuo Worker → **Settings → Domains & Routes → Add → Custom domain**, e inserisci lo stesso hostname usato come `prod_hostname`. Finché non lo fai, il sito risponde solo sul suo indirizzo `workers.dev`, dove la dashboard non riesce a farti entrare.
+
+### 5. Imposta i segreti
+
+Dopo `npx wrangler login`:
+
+```bash
+npx wrangler versions secret put TURNSTILE_SECRET     # la chiave segreta del widget Turnstile
+npx wrangler versions secret put CONTACT_NOTIFY_URL   # facoltativo: una notifica push per ogni nuovo messaggio
+```
+
+`versions secret put` prepara una nuova versione senza pubblicarla: promuovila dalla scheda **Deployments** del Worker, oppure fai un push. La chiave segreta è nella dashboard in **Turnstile → il tuo widget**. Se la sitekey è in `wrangler.json` e questo segreto manca, il form di contatto rifiuta ogni messaggio, apposta. Notifiche e loro limiti: [runbook §9](docs/runbook-cloudflare.md#9-contact-form-notifications-and-spam-protection).
+
+### 6. Carica il contenuto iniziale
+
+Compila i file del seed:
+
+- **`config/site.config.js`** — nome, bio, social, hero
+- **`config/albums.config.js`** — album, con slug, titolo, descrizione e nome del file di copertina
+- **`config/texts.config.js`** *(facoltativo)* — testi dell'interfaccia
+- **`config/admin.config.js`** *(facoltativo)* — stile della dashboard
+- **`theme/tokens.css`** e **`theme/typography.css`** — colori, font e link a Google Fonts
+
+Poi copiali in R2, una volta sola. `npm run migrate` legge quattro variabili R2 da `.env` (copia `.env.example`; crea un token API R2 con permesso di scrittura sul tuo bucket):
+
+```bash
 R2_ACCOUNT_ID="..."
 R2_ACCESS_KEY_ID="..."
 R2_SECRET_ACCESS_KEY="..."
 R2_BUCKET_NAME="il-tuo-bucket"
 ```
 
-Queste credenziali non vanno in git — `.env` è ignorato, mentre le variabili Cloudflare stanno in `wrangler.json`, che è versionato.
-
-### 4. Bootstrap della dashboard
-
-Compila i file di configurazione che formano il seed del sito:
-
-- **`config/site.config.js`** — nome, bio, social, hero
-- **`config/albums.config.js`** — album, con slug, titolo, descrizione e nome del file di copertina
-- **`config/texts.config.js`** *(facoltativo)* — testi dell'interfaccia
-- **`config/admin.config.js`** *(facoltativo)* — stile della dashboard
-- **`theme/tokens.css`** — colori e variabili dei font
-- **`theme/typography.css`** — scala tipografica e link Google Fonts
-
-Il seed è già visibile nell'anteprima locale. Quando vuoi fare il bootstrap della dashboard, esegui:
-
 ```bash
 npm run migrate
 ```
 
-Questo copia `site.config.js` e `albums.config.js` su R2, così `/admin` ha dati runtime da modificare.
+> ⚠️ `migrate` serve una volta sola, all'inizio. **Rilanciarlo dopo aver usato la dashboard riporta tutto al seed.** Se ne accorge, si ferma e chiede `--force`.
 
-> Prima della migrazione, la home può mostrare le schede degli album dal seed della build. Aprirne una mostra un album vuoto perché i manifest delle foto e i file immagine esistono solo su R2.
+`VITE_R2_PUBLIC_URL` in `.env` è facoltativo: lo usa solo l'anteprima locale. `npm run upload` usa le stesse credenziali per caricare una cartella già pronta senza passare dalla dashboard.
 
-> ⚠️ `migrate` è un comando di bootstrap, una volta sola: trasforma il seed nei JSON su R2. **Rilanciarlo dopo aver usato la dashboard riporta tutto al seed, cancellando il lavoro fatto da lì.** Il comando se ne accorge, si ferma spiegando cosa perderesti, e richiede `--force` se insisti.
+### 7. Entra in `/admin`
 
-### 5. Git integration
+Apri `https://il-tuo-dominio/admin`. Cloudflare Access chiede la tua email e ti manda un codice monouso: entrano solo gli indirizzi elencati in `admin_emails`. Crea un album e carica qualche foto.
 
-Collega il repository a Cloudflare Workers & Pages (vedi [runbook](docs/runbook-cloudflare.md) sezione 6):
+### 8. Controlla che tutto funzioni
 
-- Build command: `npm test && npm run build`
-- Build output directory: `dist`
-- Branch di produzione: `main`
+- La home elenca i tuoi album, e un album mostra le foto che hai caricato.
+- Dalla pagina About mandati un messaggio: compare nella dashboard in **Messaggi**, e come notifica se l'hai configurata.
+- Lo stesso Worker risponde anche su `https://<worker>.<account>.workers.dev`: lì `/admin` non deve farti entrare.
 
-Cloudflare crea un Worker di produzione da `main`, che si deploya a ogni push.
+Esiste un ambiente di staging facoltativo, ma non è pronto all'uso per una prima installazione: vedi [`docs/staging.md`](docs/staging.md) *(in inglese)*.
 
-Un secondo ambiente isolato è disponibile ma disattivato per impostazione predefinita; attivalo solo se ti servono verifiche sul deployment, seguendo [`docs/staging.md`](docs/staging.md).
+## ⚠️ Errori da evitare
+
+| Non fare | Fai invece |
+|---|---|
+| Usare "Use this template" | Fai un fork, così potrai ricevere gli aggiornamenti ([sopra](#-come-partire-e-come-restare-aggiornati)) |
+| Usare Node 20 | Node 22.12 o successivo |
+| Lasciare il sito senza il tuo dominio | Collegalo al Worker (passo 4): `/admin` funziona solo lì |
+| Rilanciare `npm run migrate` dopo aver usato la dashboard | Modifica i contenuti da `/admin`; `migrate` serve solo la prima volta |
+| Fare il merge di un aggiornamento senza guardare `wrangler.json` | Segui [docs/upgrading.md](docs/upgrading.md): un fast-forward sostituisce i tuoi valori coi segnaposto senza alcun conflitto |
+| Pubblicare una build fatta con `ALLOW_PLACEHOLDER_CSP=1` | Usala solo per verificare che il template compili |
+| Mettere un URL di notifica o qualunque segreto in `wrangler.json` | `npx wrangler versions secret put …`: il file è pubblico nel tuo repository |
+| Impostare la sitekey di Turnstile senza il secret, o il contrario | Impostali entrambi, o nessuno ([runbook §9](docs/runbook-cloudflare.md#9-contact-form-notifications-and-spam-protection)) |
+| Servire le foto di produzione da `r2.dev` | Aggiungi un dominio per le foto ([runbook §8](docs/runbook-cloudflare.md#8-custom-domain-for-photos)): `r2.dev` ha limiti di traffico |
+| Mettere `keep_managed_domain = false` prima che il dominio foto funzioni | Verifica prima il dominio, poi spegni `r2.dev` |
+| Aggiornare un'installazione che ha già lo staging senza `enable_staging = true` | Impostalo prima del primo `terraform plan`, altrimenti Terraform propone di distruggere lo staging |
+
 
 ## 🖼️ Come si usa il sito una volta online
 
@@ -224,6 +249,8 @@ Leggi [`CUSTOMIZING.md`](CUSTOMIZING.md) *(in inglese)* per sapere:
 - La distinzione tra contenuto (R2 + dashboard) e aspetto/testi (file)
 - Cosa non toccare, per evitare conflitti ai futuri merge dal template
 
+Per sostituire componenti delle pagine, eventi del ciclo di vita e tema personalizzato, vedi la [guida alle estensioni](docs/slots.md) *(in inglese)*. Per aggiungere pagine tue — un archivio, una pagina per progetto — vedi [pagine](docs/pages.md) *(in inglese)*. Copia [`custom.example/`](custom.example/) in `custom/` per provare entrambe in locale.
+
 ## 🏗️ Struttura del progetto
 
 ```
@@ -232,13 +259,16 @@ theme/           ← aspetto: design token CSS, tipografia, Google Fonts
 src/pages/       ← entry point JS per ciascuna pagina
 src/components/  ← componenti UI riusabili
 src/styles/      ← CSS strutturale (importa solo i token)
-src/utils/       ← funzioni pure e utilità
+src/utils/       ← funzioni pure e utilità di build
+src/shared/      ← regole condivise da sito, dashboard e Worker (slug, validazione)
+src/api/         ← l'API pubblica: l'unica cosa che custom/ può importare
 src/worker.js    ← Cloudflare Worker
-src/core/        ← registro degli slot: le parti che un fork può sostituire
+src/core/        ← registro degli slot e ciclo di vita delle pagine: le parti che un fork può sostituire
+src/admin/       ← la dashboard /admin
 custom.example/  ← esempio di custom/, dove un fork sostituisce parti del sito
 infra/           ← configurazione Terraform (facoltativa)
 scripts/         ← strumenti: migrate, upload, compress
-docs/            ← documentazione: runbook, specifiche
+docs/            ← guide: runbook, staging, aggiornamenti, slot, pagine (note del maintainer in docs/maintainers/)
 public/          ← asset statici (favicon). `_headers` non sta qui: si genera in dist/
 ```
 
