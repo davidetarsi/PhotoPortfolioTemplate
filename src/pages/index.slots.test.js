@@ -1,9 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // vi.hoisted: vi.mock factories are hoisted above plain declarations.
-const { mount } = vi.hoisted(() => ({ mount: vi.fn(async () => ({ destroy() {} })) }));
+const { mount, slot } = vi.hoisted(() => {
+  const mount = vi.fn(async () => ({ destroy() {} }));
+  return { mount, slot: vi.fn(async () => ({ mount })) };
+});
 
-vi.mock('../core/custom-slots.js', () => ({ slot: vi.fn(async () => ({ mount })) }));
+vi.mock('../core/custom-slots.js', () => ({ slot }));
 vi.mock('../providers/data.js', () => ({
   fetchSite: vi.fn(async () => ({ ok: true, data: { name: 'Runtime', bio: '', hero: null, social: {} } })),
   fetchAlbums: vi.fn(async () => ({ ok: true, data: [] })),
@@ -21,6 +24,7 @@ describe('home page delegates to the landing slot', () => {
 
   it('mounts the resolved slot in #landing with texts and a data promise', async () => {
     await import('./index.js');
+    expect(slot).toHaveBeenCalledWith('landing');
     expect(mount).toHaveBeenCalledTimes(1);
     const [container, ctx] = mount.mock.calls[0];
     expect(container.id).toBe('landing');
