@@ -145,4 +145,8 @@ describe('contact form validation', () => {
 
 Open an issue. If something in this guide is unclear, the guide should be clearer — that's a valid contribution too.
 
+## HTML in the browser code
+
+Build HTML with the `html` tag from `src/shared/html.js`: ``el.innerHTML = html`<p>${text}</p>` ``. It escapes every interpolated value, except nested `html` templates. For single values, `textContent` and `setAttribute` are just as good. A test (`src/shared/html-guard.test.js`) fails if a raw template literal is assigned to `innerHTML`.
+
 Thank you for helping this template stay maintainable.
