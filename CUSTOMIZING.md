@@ -191,12 +191,16 @@ It generates WebP at 1900px on the long side, quality 85 — the same settings t
 
 ## Social previews (Open Graph)
 
-Title, description, and preview image (WhatsApp, Instagram DM, LinkedIn, iMessage…) are injected into HTML **at build time** by `site.config.js`, with the image URL built from the photo domain declared in `wrangler.json`: no need to touch HTML files.
+Title, description, and preview image (WhatsApp, Instagram DM, LinkedIn, iMessage…) come from two places:
 
-Two limits to know:
+- **Album pages** (`/<album>`): the Worker writes the album's own title, description, cover and canonical URL into the page, read live from R2. A change made in the dashboard is used by the next share — social networks may still show their cached copy for a while. An album without a cover uses the site's hero photo, and an album without a description uses the site bio, both taken from the site profile in R2 (the one the dashboard edits). An address that is not an album answers 404.
+- **Home and about**: injected **at build time** from `site.config.js`, with the image URL built from the photo domain declared in `wrangler.json`. These pages are static files served before the Worker runs, so they keep the build-time values.
 
-- Any link on the site shared — including links to individual albums — always shows the generic site preview (title and hero image from `site.config.js`). Social crawlers don't run JavaScript, so they can't know the album's content. This is a limit of pure static hosting, accepted by design.
-- If `heroImage` is empty, the preview has no image.
+Limits to know:
+
+- Until R2 holds the album list — before `npm run migrate`, or before the first album is saved from the dashboard — album pages keep the build-time preview, and an address that is not an album answers 200 instead of 404.
+- If the site profile in R2 is missing or invalid, album pages use the album title alone, with no fallback to the bio or the hero photo.
+- If `heroImage` in `site.config.js` is empty, home and about have no preview image. An album with no cover has no preview image if the site profile has no hero photo.
 
 ---
 

@@ -1,6 +1,7 @@
 import { handleDataRequest } from './worker/data-routes.js'
 import { handleAdminRequest } from './worker/admin-routes.js'
 import { handleContactRequest } from './worker/contact-routes.js'
+import { serveAlbumPage } from './worker/album-page.js'
 
 const STATIC_PAGES = {
   '/about': '/about.html',
@@ -38,7 +39,7 @@ export default {
     }
 
     if (ALBUM_SLUG_RE.test(pathname)) {
-      return env.ASSETS.fetch(new URL('/album.html', url))
+      return serveAlbumPage(env, url, pathname.slice(1))
     }
 
     return env.ASSETS.fetch(request)
