@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { devRouteFallback } from './devRouteFallback.js';
+import { createDevRouteFallback, devRouteFallback } from './devRouteFallback.js';
 
 function responseDouble() {
   return {
@@ -55,5 +55,42 @@ describe('devRouteFallback', () => {
     const request = { url: '/contatti' };
     devRouteFallback(request, responseDouble(), vi.fn());
     expect(request.url).toBe('/album.html');
+  });
+});
+
+describe('createDevRouteFallback with custom pages', () => {
+  const middleware = createDevRouteFallback({
+    customPages: [
+      { kind: 'single', path: '/archive', html: 'custom/pages/archive.html', name: 'archive', outFile: 'archive.html' },
+      { kind: 'single', path: '/info/credits', html: 'custom/pages/credits.html', name: 'info-credits', outFile: 'info/credits.html' },
+      { kind: 'collection', path: '/projects/:slug', html: 'custom/pages/project.html', name: 'projects-collection', prefix: 'projects', entries: [] },
+    ],
+  });
+  const route = url => {
+    const request = { url };
+    const next = vi.fn();
+    middleware(request, responseDouble(), next);
+    expect(next).toHaveBeenCalledOnce();
+    return request.url;
+  };
+
+  it.each([
+    ['/archive', '/custom/pages/archive.html'],
+    ['/archive/?x=1', '/custom/pages/archive.html?x=1'],
+    ['/info/credits', '/custom/pages/credits.html'],
+    ['/projects/sea-sentinels', '/custom/pages/project.html'],
+    ['/projects/sea-sentinels/?x=1', '/custom/pages/project.html?x=1'],
+  ])('serves %s from %s', (url, expected) => {
+    expect(route(url)).toBe(expected);
+  });
+
+  it('keeps album slugs and invalid collection slugs as before', () => {
+    expect(route('/sport')).toBe('/album.html');
+    expect(route('/projects/Bad')).toBe('/projects/Bad');
+    expect(route('/projects/a/b')).toBe('/projects/a/b');
+  });
+
+  it('treats the bare collection prefix as an album slug, like production', () => {
+    expect(route('/projects')).toBe('/album.html');
   });
 });
