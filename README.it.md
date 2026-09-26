@@ -129,13 +129,13 @@ Segui i passi nell'ordine: ognuno ha bisogno del precedente. Il [runbook Cloudfl
 
 ### 1. Crea l'infrastruttura
 
-Con Terraform (consigliato): copia `infra/terraform.tfvars.example` in `infra/terraform.tfvars`, compilalo seguendo il [riferimento campo per campo](docs/runbook-cloudflare.md#32-variable-reference), poi esegui plan e apply come spiega il [percorso Terraform](docs/runbook-cloudflare.md#3-terraform-path), compresi il token API e i suoi permessi. Crea due bucket R2 — uno pubblico per le foto e uno privato per i messaggi di contatto —, l'applicazione Access che protegge `/admin` e `/api/admin`, e il widget Turnstile del form di contatto.
-
-Poi scrivi i risultati in `wrangler.json`:
+Con Terraform (consigliato): copia `infra/terraform.tfvars.example` in `infra/terraform.tfvars` e compilalo seguendo il [riferimento campo per campo](docs/runbook-cloudflare.md#32-variable-reference). Esporta un token API con i permessi elencati nel [percorso Terraform](docs/runbook-cloudflare.md#3-terraform-path) — nella shell, mai in un file — poi:
 
 ```bash
-npm run infra:sync
+npm run setup
 ```
+
+Controlla i prerequisiti, esegue `terraform init` e `terraform apply` — leggi il piano prima di rispondere `yes` — e scrive `wrangler.json`. Terraform crea due bucket R2 — uno pubblico per le foto e uno privato per i messaggi di contatto —, l'applicazione Access che protegge `/admin` e `/api/admin`, e il widget Turnstile del form di contatto.
 
 Senza Terraform, segui il [percorso manuale](docs/runbook-cloudflare.md#5-manual-path--creating-resources-from-cloudflare-dashboard) e compila `wrangler.json` a mano, partendo da `wrangler.example.json`.
 
@@ -165,14 +165,14 @@ Con Terraform e `npm run infra:sync` non c'è niente da fare: `wrangler.json` co
 
 ### 5. Imposta i segreti
 
-Dopo `npx wrangler login`:
+Dopo il primo deploy, e dopo `npx wrangler login`:
 
 ```bash
-npx wrangler versions secret put TURNSTILE_SECRET     # la chiave segreta del widget Turnstile
-npx wrangler versions secret put CONTACT_NOTIFY_URL   # facoltativo: una notifica push per ogni nuovo messaggio
+npm run setup:secrets                                  # la chiave segreta di Turnstile, da Terraform al Worker
+npx wrangler versions secret put CONTACT_NOTIFY_URL    # facoltativo: una notifica push per ogni nuovo messaggio
 ```
 
-`versions secret put` prepara una nuova versione senza pubblicarla: promuovila dalla scheda **Deployments** del Worker, oppure fai un push. La chiave segreta è nella dashboard in **Turnstile → il tuo widget**. Se la sitekey è in `wrangler.json` e questo segreto manca, il form di contatto rifiuta ogni messaggio, apposta. Notifiche e loro limiti: [runbook §9](docs/runbook-cloudflare.md#9-contact-form-notifications-and-spam-protection).
+`setup:secrets` passa la chiave con una pipe: non viene mai scritta su un file. I segreti vanno su una nuova versione del Worker senza pubblicarla: promuovila dalla scheda **Deployments** del Worker, oppure fai un push. Senza Terraform, imposta la chiave a mano con `npx wrangler versions secret put TURNSTILE_SECRET` (dashboard → **Turnstile → il tuo widget**). Se la sitekey è in `wrangler.json` e questo segreto manca, il form di contatto rifiuta ogni messaggio, apposta. Notifiche e loro limiti: [runbook §9](docs/runbook-cloudflare.md#9-contact-form-notifications-and-spam-protection).
 
 ### 6. Personalizza il seed (facoltativo)
 

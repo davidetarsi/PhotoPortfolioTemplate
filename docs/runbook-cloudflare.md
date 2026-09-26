@@ -107,6 +107,8 @@ ALLOW_PLACEHOLDER_CSP=1 npm run build
 
 `infra:sync` writes account-specific values into `wrangler.json`. In a real fork, review and commit that file. The public template does not track `wrangler.json`: in its smoke test, delete the generated file after verification.
 
+`npm run setup` runs the same steps in one go — `terraform init`, `terraform apply` (it shows the plan and asks for confirmation), and writing `wrangler.json` — after checking that Terraform, `CLOUDFLARE_API_TOKEN` and `infra/terraform.tfvars` are in place. After the first deploy, `npm run setup:secrets` passes the Turnstile secret key from Terraform to the Worker through a pipe, without writing it to a file. Both commands, and `infra:sync`, drop sensitive outputs before writing anything.
+
 ### 3.4 Existing infrastructure is an import, not a new apply
 
 If buckets, Access applications or public domains already exist, `terraform.tfvars` must describe those exact resources. Do not apply a plan that proposes duplicates. Complete the imports in [section 7](#7-import-existing-infrastructure), then require `terraform plan` to converge before applying.
