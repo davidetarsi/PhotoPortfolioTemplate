@@ -1,12 +1,13 @@
 import './example-landing.css';
+import { albumsToCards } from '/src/api/index.js';
 
 /**
- * Minimal landing: site name and a plain list of albums.
- * Shows the contract only. A landing can import its own stylesheet, as this one does.
+ * Minimal landing: site name and the albums with their covers.
+ * Shows the contract and the public API. A landing can import its own stylesheet, as this one does.
  */
 export default {
   async mount(container, { texts, data }) {
-    const { site, albums, albumsError } = await data;
+    const { site, albums, albumsError, r2PublicUrl } = await data;
 
     const main = document.createElement('main');
     main.className = 'page-main example-landing';
@@ -25,11 +26,18 @@ export default {
       inner.appendChild(p);
     } else {
       const list = document.createElement('ul');
-      for (const album of albums) {
+      for (const card of albumsToCards(albums, r2PublicUrl)) {
         const li = document.createElement('li');
         const a = document.createElement('a');
-        a.href = `/${album.slug}`;
-        a.textContent = album.title;
+        a.href = `/${card.slug}`;
+        if (card.coverUrl) {
+          const img = document.createElement('img');
+          img.src = card.coverUrl;
+          img.alt = '';
+          img.loading = 'lazy';
+          a.appendChild(img);
+        }
+        a.append(card.title);
         li.appendChild(a);
         list.appendChild(li);
       }

@@ -2,3 +2,10 @@
 .example-landing a {
   color: var(--color-text);
 }
+
+.example-landing img {
+  display: block;
+  width: 12rem;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+}
