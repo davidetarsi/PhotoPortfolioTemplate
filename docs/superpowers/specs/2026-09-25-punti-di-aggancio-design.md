@@ -1,7 +1,7 @@
 # Punti di aggancio (`custom/`) — Design e roadmap
 
 **Data**: 2026-09-25
-**Stato**: F4, F1 e F2a incluse nel `main` locale; F2a integrata con merge `8f3b4d8785fa840c5c311a73390c398c5721dee0` il 2026-09-26. Cartella del fork: `custom/` (§6)
+**Stato**: F4, F1 e F2a incluse nel `main` locale; F2a integrata con merge `8f3b4d8785fa840c5c311a73390c398c5721dee0` il 2026-09-26. F2 completata sul branch `codex/f2-extension-lifecycle` il 2026-09-26 (verifica: `docs/superpowers/reviews/2026-09-26-f2-verification.md`), in attesa di PR e merge. Cartella del fork: `custom/` (§6)
 **Verificato su**: `main` locale @ `8f3b4d8785fa840c5c311a73390c398c5721dee0` (genitore precedente `e609df7`). Suite e build locali passate sul merge; nessuna verifica di remoto o deploy.
 **Origine**: il sito personale (davidetarsi.com) vuole una landing completamente diversa — una carta
 nautica a due livelli — senza modificare i file del template, così che ogni `git merge upstream/main`
