@@ -240,7 +240,7 @@ Limits to know:
 
 ### `texts.config.js` (UI text)
 
-Edit loading messages, errors, forms, nav, footer. All album page text (loading, error, not found) lives here — not in HTML.
+Edit loading messages, errors, forms, nav, footer and the dashboard. Every visible text lives here — not in HTML or in the code. It ships in English; `config/texts.it.js` has the same keys in Italian: to use it, replace the content of `texts.config.js` with `export { texts } from './texts.it.js';` and set `language: 'it'` in `config/site.config.js`. Placeholders such as `{slug}` or `{nome}` keep their names in every language.
 
 ### `admin.config.js` (dashboard style)
 

@@ -82,7 +82,7 @@ Questo template sta nel mezzo. Il sito è statico e velocissimo, ma le foto vivo
 
 Costo ricorrente: **zero**, salvo il dominio.
 
-I testi dell'interfaccia sono in italiano: si cambiano in `config/texts.config.js`.
+I testi dell'interfaccia sono in inglese, in `config/texts.config.js`. Per l'italiano, sostituisci il contenuto di quel file con `export { texts } from './texts.it.js';` e imposta `language: 'it'` in `config/site.config.js`.
 
 ## 🚀 Come partire, e come restare aggiornati
 

@@ -13,7 +13,7 @@ Obiettivo: da 8 passi a circa 4 (fork → `npm run setup` → collega Git su Clo
 | E | Font in un posto solo: un plugin Vite inserisce il link a Google Fonts da `theme/` | le modifiche coordinate su 4 HTML e sulle pagine custom | piccolo | approvata 2026-09-26, branch `feat/simplify-e-fonts` |
 | T | Template HTML sicuri per costruzione: helper interno `html\`…\`` che fa l'escaping di ogni valore, usato in admin e componenti | la classe di errori di S1 (HTML iniettato) | piccolo-medio | approvata 2026-09-26, branch `feat/simplify-t-safe-html` |
 | D | `npm run setup`: `terraform apply`, legge gli output, scrive `wrangler.json`, imposta `TURNSTILE_SECRET` | unisce i passi 1 e 5; niente `outputs.json` a mano | medio, da provare su Cloudflare | approvata 2026-09-26, branch `feat/simplify-d-setup`, da provare su un account reale |
-| L | Testi di default in inglese, italiano come preset | mix di lingue per chi non è italiano | medio | opzionale |
+| L | Testi di default in inglese, italiano come preset | mix di lingue per chi non è italiano | medio | approvata 2026-09-26, branch `feat/simplify-l-english` |
 
 Ordine proposto: A, C, E, T, D.
 

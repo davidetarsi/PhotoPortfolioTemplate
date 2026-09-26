@@ -80,7 +80,7 @@ It's meant for **photographers who can code**, or for anyone setting up a site f
 
 Recurring cost: **zero**, except the domain.
 
-The interface copy ships in Italian: change it in `config/texts.config.js`.
+The interface copy ships in English, in `config/texts.config.js`. For Italian, replace that file's content with `export { texts } from './texts.it.js';` and set `language: 'it'` in `config/site.config.js`.
 
 ## 🚀 Getting started, and staying up to date
 
