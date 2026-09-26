@@ -77,7 +77,7 @@ Changing fonts requires **three coordinated changes** — skipping one causes si
 --font-heading: 'Playfair Display', serif;
 ```
 
-2. **In all four HTML files** (`index.html`, `album.html`, `about.html`, `admin.html`): replace the Google Fonts `<link>` tag.
+2. **In all four HTML files** (`index.html`, `album.html`, `about.html`, `admin.html`), and in your custom pages (`custom/pages/*.html`): replace the Google Fonts `<link>` tag.
    Forgetting `admin.html` is the easiest mistake: the site changes fonts and the dashboard lags behind.
 
 ```html

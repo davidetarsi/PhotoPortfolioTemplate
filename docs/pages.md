@@ -35,6 +35,8 @@ Values are HTML-escaped. A `<meta>` whose `content` ends up empty is removed. In
 
 No inline `<script>` or `<style>`: the Content Security Policy blocks them. Use `<script type="module" src="/custom/pages/….js">`.
 
+Copy the Google Fonts `<link>` tags from the `<head>` of `index.html` into your pages, as the examples do: the template's typography expects those fonts.
+
 ## The script
 
 Import only from `/src/api/`: `/src/api/index.js` for data, slots and `slugFromPath`, and `/src/api/base.css` for the template's base styles. `custom.example/pages/` shows a single page and a collection, with a small helper that mounts nav and footer through `slot`. `slugFromPath('/projects/:slug', location.pathname)` returns the current entry's slug, or `null`.

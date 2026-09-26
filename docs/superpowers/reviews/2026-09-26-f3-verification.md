@@ -1,6 +1,6 @@
 # F3 verification — 2026-09-26
 
-Branch `feat/f3-custom-pages`, HEAD `5261a8bcfe8307114d12bd1817c3930eba702df4`. Verifiche eseguite come da Task 10 brief. Nessun push, merge, deploy o modifica di file sorgente; solo registro verifiche.
+Branch `feat/f3-custom-pages`, HEAD `bf593bd`. Verifiche eseguite come da Task 10 brief. Nessun push, merge, deploy o modifica di file sorgente; solo registro verifiche.
 
 ## Stato
 
@@ -124,3 +124,28 @@ Una verifica è fallita:
 - **`/archive.html: no console errors`**: il browser test riporta `Failed to load resource: the server responded with a status of 404 (Not Found)`. L'errore non specifca quale risorsa, ma indica un tentativo di caricamento fallito durante la visualizzazione di `/archive.html`.
 
 Tutti gli altri risultati corrispondono alle attese del brief di Task 10.
+
+## Note del maintainer
+
+- **Il 404 su `/archive.html` è `/favicon.ico`.** Nessuna pagina, né del template né di esempio, dichiara un'icona, quindi Chrome chiede `/favicon.ico` alla prima pagina aperta e il server di prova risponde 404. Registrando le risposte della pagina non compare nessuna richiesta ≥400: è un comportamento preesistente, non introdotto da F3.
+- **Font nelle pagine di esempio.** La review finale ha trovato che le pagine di esempio non caricavano i Google Fonts di tutte le altre pagine. Corretto nel commit di correzione finale; la verifica nel browser ripetuta dopo la correzione è riportata sotto.
+
+## Verifica nel browser dopo la correzione
+
+```
+PASS  archive: album list rendered  [/travel /empty-album /broken /slow]
+PASS  /archive.html: nav and footer mounted
+PASS  /archive.html: theme is last stylesheet  [css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;1,9..144,400&family=Sora:wght@300;400;600&family=IBM+Plex+Mono:wght@400&display=swap > chrome-C1PfrB6q.css > Lightbox-DouETw31.css > custom-slots-Kc3AaEpC.css > THEME]
+PASS  /archive.html: base styles + theme applied (body bg #f3f0e9)  [rgb(243, 240, 233)]
+PASS  /archive.html: Google Fonts loaded (Fraunces, Sora)  [Fraunces, IBM Plex Mono, Sora]
+PASS  /archive.html: no console errors (favicon 404 excluded)
+PASS  project: title from slugFromPath
+PASS  project: description
+PASS  project: document title from build  [Harbour lights — Nome Fotografo]
+PASS  /projects/harbour-lights.html: nav and footer mounted
+PASS  /projects/harbour-lights.html: theme is last stylesheet  [css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;1,9..144,400&family=Sora:wght@300;400;600&family=IBM+Plex+Mono:wght@400&display=swap > chrome-C1PfrB6q.css > Lightbox-DouETw31.css > custom-slots-Kc3AaEpC.css > THEME]
+PASS  /projects/harbour-lights.html: base styles + theme applied (body bg #f3f0e9)  [rgb(243, 240, 233)]
+PASS  /projects/harbour-lights.html: Google Fonts loaded (Fraunces, Sora)  [Fraunces, IBM Plex Mono, Sora]
+PASS  /projects/harbour-lights.html: no console errors (favicon 404 excluded)
+14/14 passed
+```
