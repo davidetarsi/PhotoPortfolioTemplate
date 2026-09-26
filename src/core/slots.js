@@ -43,3 +43,22 @@ export function createSlotResolver(defaults, overrides, contracts) {
     return impl;
   };
 }
+
+/**
+ * Reads the overrides from the custom/slots.js module found by import.meta.glob.
+ * A missing file means no overrides; a file without a default export is a mistake
+ * and must fail loudly instead of silently falling back to the template.
+ *
+ * @param {object|undefined} customModule - The module namespace, or undefined when the file does not exist.
+ * @returns {Record<string, Function>} Loaders by slot name.
+ */
+export function overridesFrom(customModule) {
+  if (!customModule) return {};
+  const overrides = customModule.default;
+  if (typeof overrides !== 'object' || overrides === null || Array.isArray(overrides)) {
+    throw new Error(
+      "custom/slots.js: must `export default` an object that maps slot names to loaders, e.g. export default { landing: () => import('./landing/my-landing.js') }.",
+    );
+  }
+  return overrides;
+}

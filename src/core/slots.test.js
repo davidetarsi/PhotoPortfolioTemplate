@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createSlotResolver } from './slots.js';
+import { createSlotResolver, overridesFrom } from './slots.js';
 
 const contracts = { landing: 'mount', lightbox: 'create' };
 const defaults = {
@@ -61,5 +61,26 @@ describe('createSlotResolver', () => {
     const error = await slot('landing').catch(e => e);
     expect(error.message).toMatch(/custom\/slots\.js.*"landing".*failed to load.*Failed to fetch/);
     expect(error.cause).toBe(cause);
+  });
+});
+
+describe('overridesFrom', () => {
+  it('is empty when custom/slots.js does not exist', () => {
+    expect(overridesFrom(undefined)).toEqual({});
+  });
+
+  it('returns the default export', () => {
+    const overrides = { landing: async () => ({}) };
+    expect(overridesFrom({ default: overrides })).toBe(overrides);
+  });
+
+  it('rejects a module without a default export, naming custom/slots.js', () => {
+    expect(() => overridesFrom({ landing: async () => ({}) }))
+      .toThrow(/custom\/slots\.js.*export default/);
+  });
+
+  it('rejects a default export that is not an object', () => {
+    expect(() => overridesFrom({ default: () => ({}) }))
+      .toThrow(/custom\/slots\.js.*export default/);
   });
 });
