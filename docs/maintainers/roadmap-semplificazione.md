@@ -16,8 +16,8 @@ Ogni fase ha il proprio piano in `docs/maintainers/superpowers/plans/`, scritto 
 | **C** | `wrangler.json` non più tracciato nel template (solo `wrangler.example.json`); build e test ricadono sull'esempio; il fork aggiunge il suo. Assunzione: il template non viene pubblicato dal suo repository (nessuna demo online) | "Come partire e restare aggiornati", passo 2, "Errori da evitare", `docs/upgrading.md` (conflitto una tantum per i fork esistenti) | fatta — branch `feat/simplify-c-untracked-wrangler` |
 | **E** | Font in un posto solo: un plugin Vite inserisce il link a Google Fonts in ogni pagina (template e custom) da un'unica configurazione | `CUSTOMIZING.md` (cambio font), passo 6, `docs/pages.md` | fatta — branch `feat/simplify-e-fonts` |
 | **T** | Template HTML sicuri: helper interno `html\`…\`` con escaping di default, adottato in admin e componenti | nessuno (interno); `CONTRIBUTING.md` | fatta — branch `feat/simplify-t-safe-html` |
-| **D** | `npm run setup`: `terraform apply`, output letti direttamente, `wrangler.json` scritto, `TURNSTILE_SECRET` impostato. Richiede una prova su un account Cloudflare reale | passi 1, 2 e 5 uniti | piano `2026-09-26-simplify-d-npm-run-setup.md` |
-| **L** | Testi di default in inglese, italiano come preset in `config/` | requisiti ("lingua dell'interfaccia"), `CUSTOMIZING.md` | da pianificare |
+| **D** | `npm run setup`: `terraform apply`, output letti direttamente, `wrangler.json` scritto, `TURNSTILE_SECRET` impostato. Richiede una prova su un account Cloudflare reale | passi 1, 2 e 5 uniti | fatta — branch `feat/simplify-d-setup`, da provare su un account reale |
+| **L** | Testi di default in inglese, italiano come preset in `config/` | requisiti ("lingua dell'interfaccia"), `CUSTOMIZING.md` | piano `2026-09-26-simplify-l-english-default.md` |
 
 ## Verifiche su un account reale (a carico del maintainer)
 
