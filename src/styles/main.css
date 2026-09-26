@@ -31,3 +31,8 @@ body {
   font-size: 1.9rem;
   margin: var(--space-xl) 0 var(--space-lg);
 }
+
+/* Slot container: generates no box, so the landing's children lay out as before. */
+#landing {
+  display: contents;
+}

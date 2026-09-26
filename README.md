@@ -237,6 +237,8 @@ src/components/  ← reusable UI components
 src/styles/      ← structural CSS (imports tokens only)
 src/utils/       ← pure functions and helpers
 src/worker.js    ← Cloudflare Worker
+src/core/        ← slot registry: the parts a fork can replace
+custom.example/  ← example of custom/, where a fork replaces parts of the site
 infra/           ← Terraform configuration (optional)
 scripts/         ← tools: migrate, upload, compress
 docs/            ← documentation: runbook, specs

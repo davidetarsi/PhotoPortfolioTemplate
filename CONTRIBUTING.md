@@ -137,6 +137,10 @@ describe('contact form validation', () => {
 - No console logs in production code (they'll be minified away, but they're noise).
 - No `console.log` in tests — use assertions instead.
 
+## `custom/` never belongs to the template
+
+`custom/` is where a fork replaces parts of the site; the template ships only `custom.example/`. If you try the example in the template checkout (`cp -r custom.example custom`), delete `custom/` before committing, and never commit it here.
+
 ## Questions?
 
 Open an issue. If something in this guide is unclear, the guide should be clearer — that's a valid contribution too.

@@ -2,22 +2,22 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Let a fork add its own pages from `site/pages.config.js`: single pages (`/archivio`) and collections generated at build from content in the repo (`/codice/:slug` → one static HTML per entry, with its own title, description and preview image). No Worker change, correct routing in dev, and the dashboard refuses album slugs that a site page would shadow.
+**Goal:** Let a fork add its own pages from `custom/pages.config.js`: single pages (`/archivio`) and collections generated at build from content in the repo (`/codice/:slug` → one static HTML per entry, with its own title, description and preview image). No Worker change, correct routing in dev, and the dashboard refuses album slugs that a site page would shadow.
 
-**Architecture:** `vite.config.js` loads `site/pages.config.js` when it exists, validates it with a pure function, and adds each page's HTML as a build input. A Vite plugin relocates built site pages to their public path and expands collections into one file per entry, injecting `{{PAGE_*}}` placeholders. In production these are plain static files, so Workers Static Assets serves them before the Worker runs. `devRouteFallback` becomes a factory that knows the site pages. A virtual module exposes the reserved first path segments to the dashboard.
+**Architecture:** `vite.config.js` loads `custom/pages.config.js` when it exists, validates it with a pure function, and adds each page's HTML as a build input. A Vite plugin relocates built site pages to their public path and expands collections into one file per entry, injecting `{{PAGE_*}}` placeholders. In production these are plain static files, so Workers Static Assets serves them before the Worker runs. `devRouteFallback` becomes a factory that knows the site pages. A virtual module exposes the reserved first path segments to the dashboard.
 
 **Tech Stack:** Vite 8 (Rollup `generateBundle`, virtual modules, `transformIndexHtml`), Node `fs`/`url`, Vitest 4, Wrangler (local verification only).
 
 **Spec:** `docs/superpowers/specs/2026-09-25-punti-di-aggancio-design.md`
 **Depends on:** F2 (site page scripts import from `src/api/index.js`), and a single source of truth for reserved paths (Task 0).
-**Status (2026-09-25):** deferred until the personal site has pages to publish. Tasks 3, 4, 5 and 8 are described in prose: detail them with complete code on the real codebase before executing, and use a standard-tier model, not a transcription-level one. Estimate revised from 4–5 h to 6–8 h.
+**Status (2026-09-25):** deferred until the personal site has pages to publish. Tasks 3, 4, 5 and 8 are described in prose: detail them with complete code on the real codebase before executing, and use a standard-tier model, not a transcription-level one. Estimate revised from 4–5 h to 6–8 h. The fork folder is now `custom/` (spec §6); concept names such as `sitePages`, `docs/site-pages.md` and `virtual:site-pages` predate that rename — settle them when this plan is re-detailed.
 
 ## Global Constraints
 
-- Without `site/pages.config.js`, the build output is identical to today's (same files in `dist/`).
+- Without `custom/pages.config.js`, the build output is identical to today's (same files in `dist/`).
 - Site page paths: one or two lowercase segments; collections use `:slug` as the **last** segment only. Allowed characters follow `SLUG_RE`.
 - A site page may not claim `/`, a template page (read from the single list of Task 0, never re-declared in this plan), `/api/*`, `/assets/*`, or a path already declared by another site page.
-- Site page HTML must live under `site/pages/`. It goes through `injectSiteMeta` like every page, so `{{SITE_*}}` placeholders work; `{{PAGE_*}}` placeholders are filled only for collection entries.
+- Site page HTML must live under `custom/pages/`. It goes through `injectSiteMeta` like every page, so `{{SITE_*}}` placeholders work; `{{PAGE_*}}` placeholders are filled only for collection entries.
 - Collection output is `dist/<prefix>/<slug>.html`, served at `/<prefix>/<slug>` by the default `html_handling` (`auto-trailing-slash`), without redirects.
 - No inline scripts or styles in site pages (CSP unchanged). Page scripts are regular `<script type="module" src>` entries bundled by Vite.
 - The Worker is not modified. The residual case "album created by hand in `albums.json` with a reserved slug" is documented: the static page wins.
@@ -33,7 +33,7 @@
 - `vite.config.js` (modify): load, validate, inputs, plugins.
 - `src/admin/album-creation.js` (modify) + test: reject site-reserved slugs.
 - `src/api/index.js` (modify) + test: add `slugFromPath`.
-- `site.example/pages.config.js`, `site.example/pages/archivio.html|js`, `site.example/pages/progetto.html|js`, `site.example/content/progetti.json` (create).
+- `custom.example/pages.config.js`, `custom.example/pages/archivio.html|js`, `custom.example/pages/progetto.html|js`, `custom.example/content/progetti.json` (create).
 - `docs/site-pages.md` (create), `docs/slots.md`, `CUSTOMIZING.md` (modify).
 
 ---
@@ -72,9 +72,9 @@ Two more slugs are shadowed before the Worker runs (verified on workerd during t
 
 **Interfaces:**
 - Config entry shapes:
-  - single: `{ path: '/archivio', html: 'site/pages/archivio.html' }`
-  - collection: `{ path: '/codice/:slug', html: 'site/pages/progetto.html', entries: Entry[] | () => Entry[] | Promise<Entry[]> }` with `Entry = { slug, title, description?, image? }`
-- `validateSitePages(pages, { fileExists }) → NormalizedPage[]` — throws with a message starting `site/pages.config.js:`.
+  - single: `{ path: '/archivio', html: 'custom/pages/archivio.html' }`
+  - collection: `{ path: '/codice/:slug', html: 'custom/pages/progetto.html', entries: Entry[] | () => Entry[] | Promise<Entry[]> }` with `Entry = { slug, title, description?, image? }`
+- `validateSitePages(pages, { fileExists }) → NormalizedPage[]` — throws with a message starting `custom/pages.config.js:`.
   - `NormalizedPage = { kind: 'single' | 'collection', path, html, name, prefix? }`, `name` = path without slashes and `:slug`, joined with `-` (`archivio`, `codice`).
 - `sitePageInputs(pages, resolve) → { ['site-' + name]: absoluteHtmlPath }`
 - `expandCollection(page, entries) → { outFile, url, meta }[]` — validates entry slugs with `SLUG_RE` and uniqueness.
@@ -91,12 +91,12 @@ const exists = () => true;
 describe('validateSitePages', () => {
   it('normalizes a single page and a collection', () => {
     const pages = validateSitePages([
-      { path: '/archivio', html: 'site/pages/archivio.html' },
-      { path: '/codice/:slug', html: 'site/pages/progetto.html', entries: [] },
+      { path: '/archivio', html: 'custom/pages/archivio.html' },
+      { path: '/codice/:slug', html: 'custom/pages/progetto.html', entries: [] },
     ], { fileExists: exists });
     expect(pages).toEqual([
-      { kind: 'single', path: '/archivio', html: 'site/pages/archivio.html', name: 'archivio' },
-      { kind: 'collection', path: '/codice/:slug', html: 'site/pages/progetto.html', name: 'codice', prefix: 'codice', entries: [] },
+      { kind: 'single', path: '/archivio', html: 'custom/pages/archivio.html', name: 'archivio' },
+      { kind: 'collection', path: '/codice/:slug', html: 'custom/pages/progetto.html', name: 'codice', prefix: 'codice', entries: [] },
     ]);
   });
 
@@ -110,27 +110,27 @@ describe('validateSitePages', () => {
     ['/a/b/c', /one or two segments/],
     ['/:slug/codice', /last segment/],
   ])('rejects path %s', (path, message) => {
-    expect(() => validateSitePages([{ path, html: 'site/pages/x.html' }], { fileExists: exists }))
+    expect(() => validateSitePages([{ path, html: 'custom/pages/x.html' }], { fileExists: exists }))
       .toThrow(message);
   });
 
-  it('rejects html outside site/pages/', () => {
+  it('rejects html outside custom/pages/', () => {
     expect(() => validateSitePages([{ path: '/x', html: 'index.html' }], { fileExists: exists }))
-      .toThrow(/site\/pages\//);
+      .toThrow(/custom\/pages\//);
   });
 
   it('rejects a missing html file, naming it', () => {
-    expect(() => validateSitePages([{ path: '/x', html: 'site/pages/x.html' }], { fileExists: () => false }))
-      .toThrow(/site\/pages\/x\.html/);
+    expect(() => validateSitePages([{ path: '/x', html: 'custom/pages/x.html' }], { fileExists: () => false }))
+      .toThrow(/custom\/pages\/x\.html/);
   });
 
   it('rejects duplicate paths', () => {
-    const p = { path: '/x', html: 'site/pages/x.html' };
+    const p = { path: '/x', html: 'custom/pages/x.html' };
     expect(() => validateSitePages([p, p], { fileExists: exists })).toThrow(/declared twice/);
   });
 
   it('rejects a collection without entries', () => {
-    expect(() => validateSitePages([{ path: '/c/:slug', html: 'site/pages/c.html' }], { fileExists: exists }))
+    expect(() => validateSitePages([{ path: '/c/:slug', html: 'custom/pages/c.html' }], { fileExists: exists }))
       .toThrow(/entries/);
   });
 });
@@ -155,26 +155,26 @@ describe('expandCollection', () => {
 
 describe('reservedSlugsOf / sitePageInputs', () => {
   const pages = [
-    { kind: 'single', path: '/archivio', html: 'site/pages/archivio.html', name: 'archivio' },
-    { kind: 'collection', path: '/codice/:slug', html: 'site/pages/progetto.html', name: 'codice', prefix: 'codice' },
+    { kind: 'single', path: '/archivio', html: 'custom/pages/archivio.html', name: 'archivio' },
+    { kind: 'collection', path: '/codice/:slug', html: 'custom/pages/progetto.html', name: 'codice', prefix: 'codice' },
   ];
   it('reserves first segments', () => expect(reservedSlugsOf(pages)).toEqual(['archivio', 'codice']));
   it('maps inputs', () => expect(sitePageInputs(pages, p => `/abs/${p}`)).toEqual({
-    'site-archivio': '/abs/site/pages/archivio.html',
-    'site-codice': '/abs/site/pages/progetto.html',
+    'site-archivio': '/abs/custom/pages/archivio.html',
+    'site-codice': '/abs/custom/pages/progetto.html',
   }));
 });
 ```
 
 - [ ] **Step 2: Run to verify failure.**
 
-- [ ] **Step 3: Implement** `src/utils/sitePages.js`. Rules, in the order the tests expect: `/` → "root is the landing, use the landing slot"; template pages from the list exported in Task 0 → "is a template page"; first segment in `RESERVED_SLUGS` from `src/shared/content-rules.js` (`admin`, `api`, `assets`, `about`) → "is reserved"; segment pattern `/^[a-z0-9][a-z0-9-]*$/` or `:slug` → otherwise "must be lowercase letters, digits and dashes"; 1–2 segments; `:slug` only last; `html` must start with `site/pages/` and end with `.html`; `fileExists(html)`; duplicates; collections require `entries`. Every message starts with `site/pages.config.js:` and quotes the offending value.
+- [ ] **Step 3: Implement** `src/utils/sitePages.js`. Rules, in the order the tests expect: `/` → "root is the landing, use the landing slot"; template pages from the list exported in Task 0 → "is a template page"; first segment in `RESERVED_SLUGS` from `src/shared/content-rules.js` (`admin`, `api`, `assets`, `about`) → "is reserved"; segment pattern `/^[a-z0-9][a-z0-9-]*$/` or `:slug` → otherwise "must be lowercase letters, digits and dashes"; 1–2 segments; `:slug` only last; `html` must start with `custom/pages/` and end with `.html`; `fileExists(html)`; duplicates; collections require `entries`. Every message starts with `custom/pages.config.js:` and quotes the offending value.
 
 - [ ] **Step 4: Run to verify pass**, commit:
 
 ```bash
 git add src/utils/sitePages.js src/utils/sitePages.test.js
-git commit -m "feat(site-pages): validate and normalize site/pages.config.js"
+git commit -m "feat(site-pages): validate and normalize custom/pages.config.js"
 ```
 
 ---
@@ -202,7 +202,7 @@ git commit -m "feat(site-pages): validate and normalize site/pages.config.js"
   - single: the HTML asset whose `fileName === page.html` is re-emitted as `<name>.html` and the original deleted;
   - collection: `entries` resolved (array or function, awaited), expanded, each output emitted with `injectPageMeta(source, meta)`; the template asset deleted.
 
-- [ ] **Step 1: Tests** — call `plugin.generateBundle.call(ctx, {}, bundle)` with a fake `ctx.emitFile` that records `{ fileName, source }` and a `bundle` holding `{ 'site/pages/archivio.html': { type: 'asset', fileName: 'site/pages/archivio.html', source: '<title>{{PAGE_TITLE}}</title>' } }`. Assert: emitted `archivio.html`, original key removed; for a collection with two entries, emitted `codice/a.html` and `codice/b.html` with their titles, template removed; a function returning a promise of entries works; `load('\0virtual:site-pages')` returns the reserved list.
+- [ ] **Step 1: Tests** — call `plugin.generateBundle.call(ctx, {}, bundle)` with a fake `ctx.emitFile` that records `{ fileName, source }` and a `bundle` holding `{ 'custom/pages/archivio.html': { type: 'asset', fileName: 'custom/pages/archivio.html', source: '<title>{{PAGE_TITLE}}</title>' } }`. Assert: emitted `archivio.html`, original key removed; for a collection with two entries, emitted `codice/a.html` and `codice/b.html` with their titles, template removed; a function returning a promise of entries works; `load('\0virtual:site-pages')` returns the reserved list.
 - [ ] **Step 2: Run to verify failure.**
 - [ ] **Step 3: Implement.** Use the `\0` prefix convention for the resolved virtual id. Treat `source` as string (`String(asset.source)`).
 - [ ] **Step 4: Run to verify pass**, `git commit -m "feat(site-pages): relocate and expand site pages at build"`
@@ -239,8 +239,8 @@ import { validateSitePages, sitePageInputs } from './src/utils/sitePages.js'
 import { sitePagesPlugin } from './src/utils/sitePagesPlugin.js'
 import { createDevRouteFallback } from './src/utils/devRouteFallback.js'
 
-// Optional: forks declare extra pages in site/pages.config.js. The template never ships it.
-const sitePagesFile = resolve(__dirname, 'site/pages.config.js')
+// Optional: forks declare extra pages in custom/pages.config.js. The template never ships it.
+const sitePagesFile = resolve(__dirname, 'custom/pages.config.js')
 const sitePages = existsSync(sitePagesFile)
   ? validateSitePages((await import(pathToFileURL(sitePagesFile).href)).default, {
       fileExists: p => existsSync(resolve(__dirname, p)),
@@ -258,7 +258,7 @@ git stash && npm run build && ls dist > /tmp/dist-before.txt && git stash pop
 diff /tmp/dist-before.txt /tmp/dist-after.txt   # expected: no difference
 ```
 
-- [ ] **Step 4:** `git commit -m "build: load optional site/pages.config.js"`
+- [ ] **Step 4:** `git commit -m "build: load optional custom/pages.config.js"`
 
 ---
 
@@ -282,39 +282,39 @@ diff /tmp/dist-before.txt /tmp/dist-after.txt   # expected: no difference
 
 ### Task 9: Example pages, documentation, real routing check
 
-**Files:** Create in `site.example/`: `pages.config.js`, `pages/archivio.html`, `pages/archivio.js`, `pages/progetto.html`, `pages/progetto.js`, `content/progetti.json`; create `docs/site-pages.md`; modify `docs/slots.md`, `CUSTOMIZING.md`.
+**Files:** Create in `custom.example/`: `pages.config.js`, `pages/archivio.html`, `pages/archivio.js`, `pages/progetto.html`, `pages/progetto.js`, `content/progetti.json`; create `docs/site-pages.md`; modify `docs/slots.md`, `CUSTOMIZING.md`.
 
 - [ ] **Step 1: Example config**
 
 ```js
-// site.example/pages.config.js
+// custom.example/pages.config.js
 import { readFileSync } from 'node:fs';
 
 export default [
-  { path: '/archivio', html: 'site/pages/archivio.html' },
+  { path: '/archivio', html: 'custom/pages/archivio.html' },
   {
     path: '/progetti/:slug',
-    html: 'site/pages/progetto.html',
+    html: 'custom/pages/progetto.html',
     entries: () => JSON.parse(readFileSync(new URL('./content/progetti.json', import.meta.url), 'utf8')),
   },
 ];
 ```
 
-`progetto.html` uses `<title>{{PAGE_TITLE}} — {{SITE_NAME}}</title>`, `<meta name="description" content="{{PAGE_DESCRIPTION}}">`, `og:title`, `og:description`, `og:image` with `{{PAGE_IMAGE}}`, `<link rel="canonical" href="{{PAGE_URL}}">`, the usual `#site-nav`/`#site-footer`, and `<script type="module" src="/site/pages/progetto.js">`. The script imports only from `/src/api/index.js`, reads the slug with `slugFromPath`, finds the entry in the same JSON and renders it. `archivio.js` lists albums with `fetchAlbums`.
+`progetto.html` uses `<title>{{PAGE_TITLE}} — {{SITE_NAME}}</title>`, `<meta name="description" content="{{PAGE_DESCRIPTION}}">`, `og:title`, `og:description`, `og:image` with `{{PAGE_IMAGE}}`, `<link rel="canonical" href="{{PAGE_URL}}">`, the usual `#site-nav`/`#site-footer`, and `<script type="module" src="/custom/pages/progetto.js">`. The script imports only from `/src/api/index.js`, reads the slug with `slugFromPath`, finds the entry in the same JSON and renders it. `archivio.js` lists albums with `fetchAlbums`.
 
 - [ ] **Step 2: `docs/site-pages.md`** — the two page kinds, the path rules, the placeholders, where files end up in `dist/`, why the Worker is not involved (static assets are served first), the reserved-slug behavior and its residual case, and that the bare prefix of a collection is not a page (404 unless a single page is declared there).
 
 - [ ] **Step 3: Check routing on the real runtime, not only the Vite dev server**
 
 ```bash
-cp -r site.example site
+cp -r custom.example custom
 npm test && npm run build
 ls dist/archivio.html dist/progetti/          # files exist
 npx wrangler dev                              # local Workers runtime with static assets
 curl -sI http://localhost:8787/archivio       # 200, no redirect
 curl -s  http://localhost:8787/progetti/<slug> | grep '<title>'   # entry title in the HTML
 curl -sI http://localhost:8787/sport          # still album.html via the Worker
-rm -rf site
+rm -rf custom
 ```
 
 Expected: the three checks as annotated. If `/archivio` redirects or falls to `album.html`, stop: the assumption about `html_handling` does not hold and the spec must be revisited before going further.
@@ -322,6 +322,6 @@ Expected: the three checks as annotated. If `/archivio` redirects or falls to `a
 - [ ] **Step 4: Commit**
 
 ```bash
-git add site.example docs/site-pages.md docs/slots.md CUSTOMIZING.md
+git add custom.example docs/site-pages.md docs/slots.md CUSTOMIZING.md
 git commit -m "docs(site-pages): examples and guide for site pages"
 ```

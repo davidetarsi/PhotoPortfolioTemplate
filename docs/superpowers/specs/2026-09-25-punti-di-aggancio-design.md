@@ -1,7 +1,7 @@
-# Punti di aggancio (`site/`) — Design e roadmap
+# Punti di aggancio (`custom/`) — Design e roadmap
 
 **Data**: 2026-09-25
-**Stato**: rivista il 2026-09-25 (ordine delle fasi, percorsi riservati, rischi); F4 in esecuzione
+**Stato**: F4 unita in `main` il 2026-09-26; F1 in revisione finale. Cartella del fork: `custom/` (§6)
 **Verificato su**: `main` @ `a757c45` (merge PR #19, 2026-09-24) · **Ricontrollato su** `6b0d6db`
 (2026-09-25): i tre commit successivi toccano solo `contact-routes`, nessun file dei piani
 **Origine**: il sito personale (davidetarsi.com) vuole una landing completamente diversa — una carta
@@ -11,7 +11,7 @@ comportamento, e toccarlo significa conflitti a ogni aggiornamento.
 
 ## Obiettivo
 
-Aggiungere una **terza zona di personalizzazione**, `site/`, facoltativa e mai presente nel template.
+Aggiungere una **terza zona di personalizzazione**, `custom/`, facoltativa e mai presente nel template.
 Chi non la crea non vede nessuna differenza. Chi la crea può:
 
 1. sostituire parti intere del sito (landing, nav, footer, griglia foto, lightbox) con componenti propri;
@@ -55,23 +55,23 @@ accettato "by design": con il Worker già davanti alle pagine album non è più 
 ### 2.1 Una cartella che il template non tocca mai
 
 ```
-site/                    ← solo nel repo del sito, mai nel template
+custom/                    ← solo nel repo del sito, mai nel template
   slots.js               ← quali parti sostituire
   setup.js               ← (facoltativo) agganci agli eventi
   theme.css              ← (facoltativo) stile caricato dopo theme/
   pages.config.js        ← (facoltativo) pagine aggiuntive
   pages/…                ← HTML e JS delle pagine aggiuntive
   components/…           ← componenti propri
-site.example/            ← nel template: esempio minimo da copiare
+custom.example/            ← nel template: esempio minimo da copiare
 ```
 
-Il template scopre `site/` con `import.meta.glob`, che restituisce un oggetto vuoto se il file non
+Il template scopre `custom/` con `import.meta.glob`, che restituisce un oggetto vuoto se il file non
 esiste: **nessuna configurazione e nessun import che fallisce** quando la cartella manca.
 
 ### 2.2 Slot: parti sostituibili con un contratto unico
 
 Le pagine non importano più direttamente Nav, Footer, Hero, PhotoGrid, Lightbox: li chiedono a un
-registro. Se `site/slots.js` fornisce un'alternativa, usa quella; altrimenti il componente di base.
+registro. Se `custom/slots.js` fornisce un'alternativa, usa quella; altrimenti il componente di base.
 
 Due forme di contratto, perché i componenti di oggi sono di due tipi:
 
@@ -81,28 +81,29 @@ Due forme di contratto, perché i componenti di oggi sono di due tipi:
 | `create` | `create(items, ctx) → { open(i, triggerEl), close(), destroy() }` | `lightbox` |
 
 Il registro rifiuta con un errore esplicito uno slot sconosciuto o un'implementazione che non rispetta
-il tipo, **al build e in dev**, non in produzione davanti a un visitatore.
+il tipo, **in dev e in `npm test`** — che il deploy esegue prima della build — non in produzione davanti a
+un visitatore. `vite build` da sola non esegue il registro: la garanzia passa dai test.
 
 ### 2.3 Eventi di pagina
 
 Un emettitore minimo (`on`, `emit`) con quattro eventi: `page:ready`, `page:leave`, `photo:open`,
-`photo:close`. `site/setup.js` riceve `{ on, page }` una volta per pagina. È il posto per GSAP,
+`photo:close`. `custom/setup.js` riceve `{ on, page }` una volta per pagina. È il posto per GSAP,
 analytics, qualunque comportamento che non sostituisce un componente ma gli si affianca.
 
 ### 2.4 Una superficie pubblica stabile
 
-`src/api/index.js` riesporta ciò che il codice in `site/` può usare: lettura dati (`fetchSite`,
+`src/api/index.js` riesporta ciò che il codice in `custom/` può usare: lettura dati (`fetchSite`,
 `fetchAlbums`, `fetchManifest`, `fetchConfig`), trasformazioni (`resolveSiteContent`, `resolveAlbums`,
 `albumsToCards`, `photosFromManifest`), `slot`, `on`, `texts`, e gli helper delle pagine. **Il codice in
-`site/` importa solo da lì.** Un test fissa l'elenco degli export: rimuoverne uno rompe il test, cioè
+`custom/` importa solo da lì.** Un test fissa l'elenco degli export: rimuoverne uno rompe il test, cioè
 diventa una decisione esplicita e non un incidente.
 
 ### 2.5 Pagine del sito
 
-`site/pages.config.js` dichiara pagine di due tipi:
+`custom/pages.config.js` dichiara pagine di due tipi:
 
-- **singola** — `{ path: '/archivio', html: 'site/pages/archivio.html' }` → `dist/archivio.html`;
-- **collezione** — `{ path: '/codice/:slug', html: 'site/pages/progetto.html', entries }` → un file
+- **singola** — `{ path: '/archivio', html: 'custom/pages/archivio.html' }` → `dist/archivio.html`;
+- **collezione** — `{ path: '/codice/:slug', html: 'custom/pages/progetto.html', entries }` → un file
   statico per voce (`dist/codice/sea-sentinels.html`), con titolo, descrizione e immagine già
   scritti nell'HTML. `entries` è un array o una funzione (anche asincrona) che legge i contenuti dal repo.
 
@@ -123,10 +124,10 @@ tutto com'è oggi.
 
 | Decisione | Alternativa scartata | Perché |
 |---|---|---|
-| `site/` scoperta con `import.meta.glob` | voce `site: true` in `config/` | i file di `config/` tornano al seed a ogni aggiornamento (`docs/upgrading.md`): la personalizzazione si perderebbe |
+| `custom/` scoperta con `import.meta.glob` | voce `custom: true` in `config/` | i file di `config/` tornano al seed a ogni aggiornamento (`docs/upgrading.md`): la personalizzazione si perderebbe |
 | Validazione degli slot al caricamento | TypeScript sulle firme | il template è JavaScript senza build step di tipi; un errore esplicito in dev basta |
-| Pagine del sito statiche, generate al build | pagine servite dal Worker con una tabella di rotte | il Worker non può leggere `site/` (wrangler non fa glob); i file statici non richiedono di toccarlo e sono il caso migliore per la SEO |
-| Collisione slug album / pagina bloccata dalla dashboard | anche il Worker che rifiuta lo slug | il Worker non conosce `site/`; la dashboard è l'unico punto in cui si creano album. Il caso residuo (album creato a mano in `albums.json`) è documentato: vince la pagina |
+| Pagine del sito statiche, generate al build | pagine servite dal Worker con una tabella di rotte | il Worker non può leggere `custom/` (wrangler non fa glob); i file statici non richiedono di toccarlo e sono il caso migliore per la SEO |
+| Collisione slug album / pagina bloccata dalla dashboard | anche il Worker che rifiuta lo slug | il Worker non conosce `custom/`; la dashboard è l'unico punto in cui si creano album. Il caso residuo (album creato a mano in `albums.json`) è documentato: vince la pagina |
 | Riscrittura dell'`<head>` con funzioni su stringhe | `HTMLRewriter` | `HTMLRewriter` non esiste nei test Node; l'`<head>` di `album.html` è nostro e stabile. Se in futuro serve, la funzione si sostituisce senza cambiare il ramo del Worker |
 | Promessa di stabilità solo su `src/api` e slot | nessuna promessa | senza una superficie dichiarata ogni refactoring interno del template rischia di rompere i siti |
 | Un'unica fonte di verità per i percorsi riservati, prima di F3 | una lista per ogni punto che instrada (dashboard, Worker, dev server, pagine del sito) | le tre liste di oggi già divergono (bug `contatti`, da correggere subito e a parte); F3 ne aggiungerebbe altre due |
@@ -135,9 +136,9 @@ tutto com'è oggi.
 
 - **Deriva del contratto.** Mitigazione: test di contratto sugli slot e sull'elenco degli export di
   `src/api`; una riga in `docs/upgrading.md` per ogni cambiamento.
-- **`site/` finita per errore nel template.** Un test che gira ovunque non può distinguere il template da un
+- **`custom/` finita per errore nel template.** Un test che gira ovunque non può distinguere il template da un
   fork, ma un job CI sì: eseguito solo quando `github.repository == 'davidetarsi/PhotoPortfolioTemplate'`,
-  fallisce se `site/` esiste. I fork hanno un altro nome di repo e non lo eseguono mai. In più la regola
+  fallisce se `custom/` esiste. I fork hanno un altro nome di repo e non lo eseguono mai. In più la regola
   va in `CONTRIBUTING` e nella checklist di release.
 - **Ordine di servizio degli asset.** Le pagine del sito contano sul comportamento predefinito di
   Workers Static Assets (file prima del Worker, `/archivio` → `archivio.html`). Va verificato su un
@@ -168,8 +169,8 @@ documentazione compresi.
 | Ordine | Fase | Contenuto | Piano | Stima | Dipende da | Esecutore |
 |---|---|---|---|---|---|---|
 | 1 | **F4** | Meta per album nel Worker, 404 per album inesistenti | `plans/2026-09-25-f4-meta-album-worker.md` | 2–3 h | — | modello economico: il piano contiene tutto il codice |
-| 2 | **F1** | Registro degli slot, slot `landing`, `site.example/`, documentazione di base | `plans/2026-09-25-f1-slot-landing.md` | 3–4 h | nome della cartella deciso (§6) | modello economico |
-| 3 | **F2** | Slot `nav`, `footer`, `photoGrid`, `lightbox`; eventi; `site/setup.js`; `site/theme.css`; `src/api` | `plans/2026-09-25-f2-slot-album-ed-eventi.md` | 3–4 h | F1 | modello economico |
+| 2 | **F1** | Registro degli slot, slot `landing`, `custom.example/`, documentazione di base | `plans/2026-09-25-f1-slot-landing.md` | 3–4 h | — | modello economico |
+| 3 | **F2** | Slot `nav`, `footer`, `photoGrid`, `lightbox`; eventi; `custom/setup.js`; `custom/theme.css`; `src/api` | `plans/2026-09-25-f2-slot-album-ed-eventi.md` | 3–4 h | F1 | modello economico |
 | 4 | **F3** | Pagine del sito (singole e collezioni), dev server, slug riservati | `plans/2026-09-25-f3-pagine-del-sito.md` | 6–8 h | F2, percorsi riservati unificati | modello standard, dopo aver dettagliato i task in prosa |
 
 **Totale: 14–19 ore.**
@@ -205,10 +206,15 @@ Non fanno parte di questo lavoro; ognuno sarà un piano a sé, costruito sopra g
 | Canonical stabile | variabile `SITE_URL` opzionale, con ripiego su `url.origin` | emerso dalla revisione di F4: oggi su `workers.dev` e su staging ogni copia si dichiara canonica |
 | Primo byte delle pagine album | avviare insieme `ASSETS.fetch` e le due letture R2 | emerso dalla revisione di F4: oggi le letture partono dopo l'asset |
 | Header ereditati dall'asset | togliere `cf-cache-status` dalla risposta riscritta | emerso dalla revisione di F4: innocuo, ma fuorviante nel debug |
+| CSP estendibile da `custom/` | un modo dichiarato per aggiungere origini (font, immagini, script) alla CSP generata | emerso dalla revisione di F1: oggi un fork non può usare font propri né immagini esterne senza toccare file del template |
+| URL delle copertine in `ctx` | un campo con le card già risolte (`albumsToCards`) nel `ctx` della landing | emerso dalla revisione di F1: aggiungerlo dopo non rompe nulla, toglierlo sì; valutare insieme a `src/api` in F2 |
+| Setup dei test per `custom/` | un `custom/test-setup.js` facoltativo, aggiunto ai `setupFiles` di Vitest | emerso dalla revisione di F1: permetterebbe ai fork di simulare API del browser che jsdom non ha |
 
-## 6. Domande aperte
+## 6. Decisioni prese dopo la revisione
 
-- **Il nome della cartella.** `site/` convive già con `site.config.js`, `siteConfig`, `_site/site.json`
-  su R2, e con `src/core/site-slots.js` e `src/core/site-theme.js` introdotti da F1–F2. Rinominarla
-  prima di F1 costa una sostituzione di testo; dopo che un fork la usa è una modifica incompatibile,
-  da annunciare in `docs/upgrading.md`. Va deciso **prima di F1**; F4 non la usa.
+- **Il nome della cartella: `custom/`** (deciso il 2026-09-26). Il nome iniziale, `site/`, conviveva con
+  `site.config.js`, `siteConfig`, `_site/site.json` su R2 e con i moduli `site-slots.js` e `site-theme.js`
+  che F1–F2 introducono. `custom/` è libero nel codice e si legge come "il tuo codice". Il template
+  contiene `custom.example/`; i moduli interni diventano `src/core/custom-slots.js` e
+  `src/core/custom-theme.js`. Da qui in poi cambiarlo sarebbe una modifica incompatibile, da annunciare
+  in `docs/upgrading.md`.

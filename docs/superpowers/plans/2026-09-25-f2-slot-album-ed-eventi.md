@@ -1,25 +1,29 @@
-# F2 — Chrome and album slots, page events, site theme, public API Implementation Plan
+# F2 — Chrome and album slots, page events, custom theme, public API Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Complete the extension surface started in F1: nav, footer, photo grid and lightbox become slots; pages emit lifecycle and photo events that `site/setup.js` can listen to; `site/theme.css` loads after `theme/`; `src/api/index.js` becomes the only module code in `site/` may import.
+**Goal:** Complete the extension surface started in F1: nav, footer, photo grid and lightbox become slots; pages emit lifecycle and photo events that `custom/setup.js` can listen to; `custom/theme.css` loads after `theme/`; `src/api/index.js` becomes the only module code in `custom/` may import.
 
-**Architecture:** The slot registry from F1 gains four contracts. Template components stay as they are and get thin adapters in `default-slots.js`, so their existing tests keep covering them. A tiny event bus and a pure page-lifecycle factory emit `page:ready`, `page:leave`, `photo:open`, `photo:close`. `site/setup.js` and `site/theme.css` are discovered with `import.meta.glob`, like `site/slots.js`.
+**Architecture:** The slot registry from F1 gains four contracts. Template components stay as they are and get thin adapters in `default-slots.js`, so their existing tests keep covering them. A tiny event bus and a pure page-lifecycle factory emit `page:ready`, `page:leave`, `photo:open`, `photo:close`. `custom/setup.js` and `custom/theme.css` are discovered with `import.meta.glob`, like `custom/slots.js`.
 
 **Tech Stack:** Vite 8 (`import.meta.glob`), JavaScript ES modules, Vitest 4 with jsdom.
 
 **Spec:** `docs/superpowers/specs/2026-09-25-punti-di-aggancio-design.md`
 **Depends on:** F1 (`docs/superpowers/plans/2026-09-25-f1-slot-landing.md`).
+**Status (2026-09-26):** written before F1 shipped. The F1 final review found three points below that this plan must honour (the three new Global Constraints) and two open decisions to settle before execution: whether statically importing every default on every page is acceptable (`default-slots.js` would pull Landing, Hero, AlbumCard, PhotoGrid and Lightbox, with their CSS, into all three pages), and whether to move Task 6 (`src/api`) first — a custom landing needs `albumsToCards`, `photosFromManifest` and `fetchManifest` before it needs events. Re-verify the plan against the code before executing.
 
 ## Global Constraints
 
-- Without `site/`, every page renders the same DOM as after F1; all existing tests pass with fixture-only changes, if any.
+- Without `custom/`, every page renders the same DOM as after F1; all existing tests pass with fixture-only changes, if any.
 - `renderNav`, `renderFooter`, `renderGrid`, `renderSkeletons`, `createLightbox` keep their current signatures; the only change is an optional second argument `{ onClose }` to `createLightbox`.
 - Skeletons on the album page stay template-owned and appear before any fetch, exactly as today.
 - A listener that throws never breaks the page: the bus logs and continues with the next listener.
-- `site/setup.js` runs at most once per page load, before any slot is mounted.
-- The dashboard (`admin.html`) does not load `site/theme.css` and does not use slots: it is template territory.
+- `custom/setup.js` runs at most once per page load, before any slot is mounted.
+- The dashboard (`admin.html`) does not load `custom/theme.css` and does not use slots: it is template territory.
 - `src/api/index.js` exports are pinned by a test; removing or renaming one is a breaking change noted in `docs/upgrading.md`.
+- **Every page test pins `custom-slots.js` to the template defaults** — `vi.mock('../core/custom-slots.js', async () => { const defaults = await import('../core/default-slots.js'); return { slot: async name => defaults[name] }; })`, as `index.test.js` does since F1. In a fork, a page test that resolves the real slots would mount the fork's components under jsdom and fail the deploy, which runs `npm test`.
+- **Nav and footer never wait for other slots to load.** Mount the chrome independently of the landing, grid and lightbox, so a slow or failing custom chunk never leaves a page without its frame; the failure still surfaces in the console.
+- **`custom/theme.css` loads last by construction**, and the order is verified in the built `dist/*.html`, not in dev. In a production build the order of stylesheets follows the bundler's chunks, not import order: F1 alone changed the order of the home page's stylesheets.
 
 ## File Map
 
@@ -28,11 +32,11 @@
 - `src/core/contracts.js` (modify): add `nav`, `footer`, `photoGrid`, `lightbox`.
 - `src/core/default-slots.js` (modify): adapters for the four new slots.
 - `src/core/chrome.js` (create) + test: `mountChrome({ site, texts })`.
-- `src/core/site-theme.js` (create): eager glob of `/site/theme.css`.
+- `src/core/custom-theme.js` (create): eager glob of `/custom/theme.css`.
 - `src/components/Lightbox.js` (modify) + test: optional `onClose`.
 - `src/pages/index.js`, `src/pages/album.js`, `src/pages/about.js` (modify).
 - `src/api/index.js` (create) + test.
-- `site.example/setup.js`, `site.example/theme.css` (create), `docs/slots.md` (modify).
+- `custom.example/setup.js`, `custom.example/theme.css` (create), `docs/slots.md` (modify).
 
 ---
 
@@ -90,7 +94,7 @@ describe('event bus', () => {
 /**
  * Minimal page event bus. Events: page:ready, page:leave, photo:open, photo:close.
  * Listeners run synchronously; one failing listener is logged and skipped,
- * because site code must never be able to break a template page.
+ * because custom code must never be able to break a template page.
  */
 const listeners = new Map();
 
@@ -125,7 +129,7 @@ git commit -m "feat(slots): add page event bus"
 
 ---
 
-### Task 2: Page lifecycle and `site/setup.js`
+### Task 2: Page lifecycle and `custom/setup.js`
 
 **Files:** Create `src/core/page.js`, `src/core/page.test.js`
 
@@ -134,7 +138,7 @@ git commit -m "feat(slots): add page event bus"
   - Calls `setup({ on: bus.on, page })` once, if `setup` is a function.
   - Registers `pagehide` on `target` → `bus.emit('page:leave', { page })`.
   - `ready(detail)` → `bus.emit('page:ready', { page, ...detail })`.
-- `startPage(page)` — the same, wired to `import.meta.glob('/site/setup.js')`, the real bus and `window`.
+- `startPage(page)` — the same, wired to `import.meta.glob('/custom/setup.js')`, the real bus and `window`.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -145,14 +149,14 @@ import { createPageLifecycle } from './page.js';
 const makeBus = () => ({ on: vi.fn(), emit: vi.fn() });
 
 describe('page lifecycle', () => {
-  it('runs site setup once with on() and the page name', () => {
+  it('runs custom setup once with on() and the page name', () => {
     const setup = vi.fn();
     const bus = makeBus();
     createPageLifecycle({ setup, bus, target: new EventTarget() })('album');
     expect(setup).toHaveBeenCalledWith({ on: bus.on, page: 'album' });
   });
 
-  it('works without a site setup', () => {
+  it('works without a custom setup', () => {
     const bus = makeBus();
     expect(() => createPageLifecycle({ setup: undefined, bus, target: new EventTarget() })('home')).not.toThrow();
   });
@@ -172,11 +176,11 @@ describe('page lifecycle', () => {
     expect(bus.emit).toHaveBeenCalledWith('page:leave', { page: 'about' });
   });
 
-  it('a failing site setup is reported with its file name and does not stop the page', () => {
+  it('a failing custom setup is reported with its file name and does not stop the page', () => {
     const err = vi.spyOn(console, 'error').mockImplementation(() => {});
     const bus = makeBus();
     const page = createPageLifecycle({ setup: () => { throw new Error('x'); }, bus, target: new EventTarget() })('home');
-    expect(err.mock.calls[0][0]).toMatch(/site\/setup\.js/);
+    expect(err.mock.calls[0][0]).toMatch(/custom\/setup\.js/);
     expect(() => page.ready({})).not.toThrow();
   });
 });
@@ -199,7 +203,7 @@ export function createPageLifecycle({ setup, bus: b, target }) {
       try {
         setup({ on: b.on, page });
       } catch (error) {
-        console.error('site/setup.js failed; the page continues without it:', error);
+        console.error('custom/setup.js failed; the page continues without it:', error);
       }
     }
     target.addEventListener('pagehide', () => b.emit('page:leave', { page }));
@@ -207,18 +211,18 @@ export function createPageLifecycle({ setup, bus: b, target }) {
   };
 }
 
-const found = import.meta.glob('/site/setup.js', { eager: true });
-const siteSetup = Object.values(found)[0]?.default;
+const found = import.meta.glob('/custom/setup.js', { eager: true });
+const customSetup = Object.values(found)[0]?.default;
 
 /** Starts the lifecycle of a template page ('home' | 'album' | 'about'). */
-export const startPage = createPageLifecycle({ setup: siteSetup, bus, target: window });
+export const startPage = createPageLifecycle({ setup: customSetup, bus, target: window });
 ```
 
 - [ ] **Step 4: Run to verify pass**, commit:
 
 ```bash
 git add src/core/page.js src/core/page.test.js
-git commit -m "feat(slots): add page lifecycle and site/setup.js hook"
+git commit -m "feat(slots): add page lifecycle and custom/setup.js hook"
 ```
 
 ---
@@ -256,7 +260,7 @@ git commit -m "feat(lightbox): optional onClose callback"
 - `lightbox.create(photos, { onClose(index) }) → { open(index, triggerEl), close(), destroy() }`
 - `mountChrome({ site, texts }) → Promise<void>` mounts `nav` in `#site-nav` and `footer` in `#site-footer`.
 
-- [ ] **Step 1: Write the failing test** `src/core/chrome.test.js`: with `site-slots.js` mocked to return spy implementations, `mountChrome` calls `nav.mount(#site-nav, { site, texts })` and `footer.mount(#site-footer, { site, texts })`.
+- [ ] **Step 1: Write the failing test** `src/core/chrome.test.js`: with `custom-slots.js` mocked to return spy implementations, `mountChrome` calls `nav.mount(#site-nav, { site, texts })` and `footer.mount(#site-footer, { site, texts })`.
 
 - [ ] **Step 2: Run to verify failure.**
 
@@ -317,7 +321,7 @@ export const lightbox = {
 `src/core/chrome.js`:
 
 ```js
-import { slot } from './site-slots.js';
+import { slot } from './custom-slots.js';
 
 /** Mounts the nav and footer slots in the containers every template page has. */
 export async function mountChrome({ site, texts }) {
@@ -340,24 +344,26 @@ git commit -m "feat(slots): nav, footer, photoGrid and lightbox slots"
 
 ---
 
-### Task 5: Pages use slots, events and the site theme
+### Task 5: Pages use slots, events and the custom theme
 
 **Files:**
-- Create: `src/core/site-theme.js`
+- Create: `src/core/custom-theme.js`
 - Modify: `src/pages/index.js`, `src/pages/album.js`, `src/pages/about.js`, their tests where fixtures or mocks need it.
 
 - [ ] **Step 1: Create the theme loader**
 
 ```js
-// Loads site/theme.css after the template CSS when a fork provides it.
-// Imported right after main.css so its rules win on equal specificity.
-import.meta.glob('/site/theme.css', { eager: true });
+// Loads custom/theme.css after the template CSS when a fork provides it.
+// NOTE (F1 final review): import order does NOT decide the order in production — the bundler's
+// chunks do. Redesign this step so the theme is emitted last by construction, and verify the
+// order of <link rel=stylesheet> in the built dist/*.html.
+import.meta.glob('/custom/theme.css', { eager: true });
 ```
 
 - [ ] **Step 2: Update the three pages**
 
 For each page entry:
-1. `import '../core/site-theme.js';` immediately after `import '../styles/main.css';`.
+1. `import '../core/custom-theme.js';` immediately after `import '../styles/main.css';`.
 2. `const page = startPage('<home|album|about>');` right after `validateSiteConfig(siteConfig);`.
 3. Replace `renderNav(...)` + `renderFooter(...)` with `await mountChrome({ site, texts });`.
 4. At the end, `page.ready({ site })` (album page: `page.ready({ site, album: page.album })` when found — rename the local `page` from `resolveAlbumPage` to `albumPage` to avoid the clash).
@@ -388,20 +394,20 @@ with:
 
 `renderSkeletons(gridEl, 12)` stays where it is: the skeleton is template-owned and appears before any fetch.
 
-- [ ] **Step 3: Run the full suite** — `npm test`. Existing page tests mock `Nav.js`, `Footer.js`, `PhotoGrid.js`, `Lightbox.js` by path; the adapters import the same modules, so the mocks still apply. Fix only fixtures or mocks that the refactor legitimately changed; do not weaken assertions.
+- [ ] **Step 3: Run the full suite** — `npm test`. Existing page tests mock `Nav.js`, `Footer.js`, `PhotoGrid.js`, `Lightbox.js` by path; the adapters import the same modules, so the mocks still apply — **but only without `custom/`**: every page test must also pin `custom-slots.js` to the defaults (Global Constraints). Fix only fixtures or mocks that the refactor legitimately changed; do not weaken assertions.
 
 - [ ] **Step 4: Manual check** — `npm run dev`: home, one album (open and close a photo), about. Same look, no console errors.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/core/site-theme.js src/pages
+git add src/core/custom-theme.js src/pages
 git commit -m "feat(slots): pages mount chrome and album parts through slots and emit events"
 ```
 
 ---
 
-### Task 6: Public API for `site/`
+### Task 6: Public API for `custom/`
 
 **Files:** Create `src/api/index.js`, `src/api/index.test.js`
 
@@ -411,7 +417,7 @@ git commit -m "feat(slots): pages mount chrome and album parts through slots and
 import { describe, expect, it } from 'vitest';
 import * as api from './index.js';
 
-describe('public API for site/', () => {
+describe('public API for custom/', () => {
   it('exports exactly the documented surface', () => {
     expect(Object.keys(api).sort()).toEqual([
       'albumsToCards',
@@ -437,14 +443,14 @@ describe('public API for site/', () => {
 
 ```js
 /**
- * The only module code in site/ may import. Everything else in src/ is internal
+ * The only module code in custom/ may import. Everything else in src/ is internal
  * and may change in any template update. Changing this list is a breaking change:
  * note it in docs/upgrading.md.
  */
 export { fetchSite, fetchAlbums, fetchManifest, fetchConfig } from '../providers/data.js';
 export { photosFromManifest } from '../providers/r2.js';
 export { resolveSiteContent, resolveAlbums, albumsToCards } from '../pages/home-logic.js';
-export { slot } from '../core/site-slots.js';
+export { slot } from '../core/custom-slots.js';
 export { on } from '../core/events.js';
 export { texts } from '../../config/texts.config.js';
 export { siteConfig } from '../../config/site.config.js';
@@ -454,18 +460,18 @@ export { siteConfig } from '../../config/site.config.js';
 
 ```bash
 git add src/api
-git commit -m "feat(api): pinned public surface for site/ code"
+git commit -m "feat(api): pinned public surface for custom/ code"
 ```
 
 ---
 
 ### Task 7: Examples and documentation
 
-**Files:** Create `site.example/setup.js`, `site.example/theme.css`; modify `docs/slots.md`, `site.example/README.md`
+**Files:** Create `custom.example/setup.js`, `custom.example/theme.css`; modify `docs/slots.md`, `custom.example/README.md`
 
 - [ ] **Step 1: Examples**
 
-`site.example/setup.js`:
+`custom.example/setup.js`:
 
 ```js
 // Runs once per page, before slots mount. Receives on() and the page name.
@@ -478,23 +484,23 @@ export default function setup({ on, page }) {
 }
 ```
 
-`site.example/theme.css`: two rules that are visibly different (for example the accent colour token and the section heading weight), with a comment explaining it loads after `theme/`.
+`custom.example/theme.css`: two rules that are visibly different (for example the accent colour token and the section heading weight), with a comment explaining it loads after `theme/`.
 
-- [ ] **Step 2: `docs/slots.md`** — add: the table of the five slots with contract and ctx; the four events with their detail shapes (`page:ready { page, site, album? }`, `page:leave { page }`, `photo:open { index, photo }`, `photo:close { index, photo }`); `site/setup.js`; `site/theme.css`; the rule "import only from `src/api/index.js`" with the list of exports.
+- [ ] **Step 2: `docs/slots.md`** — add: the table of the five slots with contract and ctx; the four events with their detail shapes (`page:ready { page, site, album? }`, `page:leave { page }`, `photo:open { index, photo }`, `photo:close { index, photo }`); `custom/setup.js`; `custom/theme.css`; the rule "import only from `src/api/index.js`" with the list of exports.
 
 - [ ] **Step 3: End-to-end check with the example**
 
 ```bash
-cp -r site.example site
+cp -r custom.example custom
 npm test && npm run build && npm run dev
 # home: example landing, example theme visible, console shows "[site] home ready"
 # album: open a photo → "[site] photo N opened"
-rm -rf site
+rm -rf custom
 ```
 
 - [ ] **Step 4: Commit**
 
 ```bash
-git add site.example docs/slots.md
-git commit -m "docs(slots): events, setup hook, site theme and public API"
+git add custom.example docs/slots.md
+git commit -m "docs(slots): events, setup hook, custom theme and public API"
 ```
