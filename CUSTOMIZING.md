@@ -141,7 +141,7 @@ When `config/` and `theme/` are not enough — a different landing, for example 
 cp -r custom.example custom
 ```
 
-The template never contains `custom/`, so `git merge upstream/main` never conflicts there. Commit it in your fork. The parts you can replace, their contracts and the errors you can meet are in [`docs/slots.md`](docs/slots.md).
+The template never contains `custom/`, so `git merge upstream/main` never conflicts there. Commit it in your fork. The parts you can replace, their contracts, the public API your code may import and the errors you can meet are in [`docs/slots.md`](docs/slots.md).
 
 ---
 

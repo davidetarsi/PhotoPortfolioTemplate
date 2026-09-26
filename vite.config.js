@@ -1,5 +1,6 @@
 import { resolve } from 'path'
 import { defineConfig } from 'vite'
+import { configDefaults } from 'vitest/config'
 import { readFileSync, existsSync } from 'fs'
 import { siteConfig } from './config/site.config.js'
 import { injectSiteMeta } from './src/utils/injectSiteMeta.js'
@@ -56,6 +57,7 @@ export default defineConfig({
   plugins: [devRouteFallbackPlugin(), siteMetaPlugin(), headersPlugin()],
   test: {
     environment: 'jsdom',
+    exclude: [...configDefaults.exclude, '**/.worktrees/**'],
   },
   build: {
     modulePreload: { polyfill: false },

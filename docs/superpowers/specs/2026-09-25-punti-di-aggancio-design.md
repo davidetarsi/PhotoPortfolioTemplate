@@ -1,9 +1,8 @@
 # Punti di aggancio (`custom/`) — Design e roadmap
 
 **Data**: 2026-09-25
-**Stato**: F4 unita in `main` il 2026-09-26; F1 in revisione finale. Cartella del fork: `custom/` (§6)
-**Verificato su**: `main` @ `a757c45` (merge PR #19, 2026-09-24) · **Ricontrollato su** `6b0d6db`
-(2026-09-25): i tre commit successivi toccano solo `contact-routes`, nessun file dei piani
+**Stato**: F4 e F1 incluse nel `main` locale (`e609df7`); F2a verificata sul branch `feature/f2a-public-api` (`13bd30f`), in attesa di merge locale. Cartella del fork: `custom/` (§6)
+**Verificato su**: `main` locale @ `e609df7` per F4/F1 · branch locale `feature/f2a-public-api` @ `13bd30f` per F2a. Nessuna verifica di remoto o deploy.
 **Origine**: il sito personale (davidetarsi.com) vuole una landing completamente diversa — una carta
 nautica a due livelli — senza modificare i file del template, così che ogni `git merge upstream/main`
 resti pulito. Oggi il template permette di personalizzare solo `config/` e `theme/`: tutto il resto è
@@ -164,16 +163,17 @@ tutto com'è oggi.
 Quattro fasi, ognuna rilasciabile da sola e con il proprio piano. Stime con Claude Code, test e
 documentazione compresi.
 
-**Ordine: F4 → F1 → F2, poi F3 solo quando serve.**
+**Ordine: F4 → F1 → F2a → F2, poi F3 solo quando serve.**
 
 | Ordine | Fase | Contenuto | Piano | Stima | Dipende da | Esecutore |
 |---|---|---|---|---|---|---|
 | 1 | **F4** | Meta per album nel Worker, 404 per album inesistenti | `plans/2026-09-25-f4-meta-album-worker.md` | 2–3 h | — | modello economico: il piano contiene tutto il codice |
 | 2 | **F1** | Registro degli slot, slot `landing`, `custom.example/`, documentazione di base | `plans/2026-09-25-f1-slot-landing.md` | 3–4 h | — | modello economico |
-| 3 | **F2** | Slot `nav`, `footer`, `photoGrid`, `lightbox`; eventi; `custom/setup.js`; `custom/theme.css`; `src/api` | `plans/2026-09-25-f2-slot-album-ed-eventi.md` | 3–4 h | F1 | modello economico |
-| 4 | **F3** | Pagine del sito (singole e collezioni), dev server, slug riservati | `plans/2026-09-25-f3-pagine-del-sito.md` | 6–8 h | F2, percorsi riservati unificati | modello standard, dopo aver dettagliato i task in prosa |
+| 3 | **F2a** | API pubblica minima per `custom/`: `src/api/index.js` con `albumsToCards` | `plans/2026-09-26-f2a-api-pubblica-minima.md` | 1 h | F1 | modello economico |
+| 4 | **F2** | Slot `nav`, `footer`, `photoGrid`, `lightbox`; eventi; `custom/setup.js`; `custom/theme.css`; `src/api` | `plans/2026-09-25-f2-slot-album-ed-eventi.md` | 3–4 h | F1, F2a | modello economico |
+| 5 | **F3** | Pagine del sito (singole e collezioni), dev server, slug riservati | `plans/2026-09-25-f3-pagine-del-sito.md` | 6–8 h | F2, percorsi riservati unificati | modello standard, dopo aver dettagliato i task in prosa |
 
-**Totale: 14–19 ore.**
+**Totale: 15–20 ore.**
 
 **Perché questo ordine.** F4 è indipendente, piccola e utile a *tutti* i fork: un link a un album
 condiviso che mostra la copertina giusta vale più di qualunque slot per chi fa foto, e il 404 vero
@@ -207,7 +207,7 @@ Non fanno parte di questo lavoro; ognuno sarà un piano a sé, costruito sopra g
 | Primo byte delle pagine album | avviare insieme `ASSETS.fetch` e le due letture R2 | emerso dalla revisione di F4: oggi le letture partono dopo l'asset |
 | Header ereditati dall'asset | togliere `cf-cache-status` dalla risposta riscritta | emerso dalla revisione di F4: innocuo, ma fuorviante nel debug |
 | CSP estendibile da `custom/` | un modo dichiarato per aggiungere origini (font, immagini, script) alla CSP generata | emerso dalla revisione di F1: oggi un fork non può usare font propri né immagini esterne senza toccare file del template |
-| URL delle copertine in `ctx` | un campo con le card già risolte (`albumsToCards`) nel `ctx` della landing | emerso dalla revisione di F1: aggiungerlo dopo non rompe nulla, toglierlo sì; valutare insieme a `src/api` in F2 |
+| URL delle copertine | **risolto in F2a**: `albumsToCards` esportata da `src/api`, non un campo in `ctx` | un'API serve a tutti gli slot e alle pagine di F3; un campo in `ctx` solo alla landing |
 | Setup dei test per `custom/` | un `custom/test-setup.js` facoltativo, aggiunto ai `setupFiles` di Vitest | emerso dalla revisione di F1: permetterebbe ai fork di simulare API del browser che jsdom non ha |
 
 ## 6. Decisioni prese dopo la revisione
@@ -218,3 +218,12 @@ Non fanno parte di questo lavoro; ognuno sarà un piano a sé, costruito sopra g
   contiene `custom.example/`; i moduli interni diventano `src/core/custom-slots.js` e
   `src/core/custom-theme.js`. Da qui in poi cambiarlo sarebbe una modifica incompatibile, da annunciare
   in `docs/upgrading.md`.
+- **Componenti di default statici su ogni pagina** (deciso il 2026-09-26). Il registro di F2 importa tutti i
+  default su ogni pagina. Costo misurato sulla build di produzione: +1,5 KB gzip sulla home, +1,8 sulla pagina
+  album, +3,9 sulla about (da 5,8 a 9,7). Nessun foglio di stile dei componenti ha selettori fuori da una
+  classe, quindi caricarli tutti non cambia l'aspetto di nessuna pagina. Le alternative — un registro per
+  pagina, o default caricati al momento — aggiungevano complessità o un giro di rete a tutti i siti per
+  risparmiare pochi KB.
+- **`src/api` anticipata e minima** (deciso il 2026-09-26). Esce prima del resto di F2, in F2a, con la sola
+  `albumsToCards`: è ciò che serve alla landing del sito personale per mostrare le copertine. Le altre funzioni
+  arrivano con F2, aggiungendole: aggiungere non rompe i fork, togliere o rinominare sì.

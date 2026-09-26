@@ -15,6 +15,7 @@ cp -r custom.example custom
 ## Rules
 
 - A slot implementation gets everything it needs as arguments: the element to render into and a context object. See `docs/slots.md`.
-- Do not import from `src/`: those files are internal and may change in any template update.
+- From the template, import only `src/api/index.js`, as `/src/api/index.js`: every other file in `src/` is internal and may change in any template update.
 - Your code runs under the site's Content Security Policy in production, and under jsdom in `npm test`, which the deploy runs: read "What your code runs under" in `docs/slots.md` before writing a landing.
+- `landing/example-landing.test.js` shows how to test your own component: `npm test` runs every `*.test.js` under `custom/`. Replace it with tests for your landing.
 - Commit `custom/` in your fork. Never commit it to the template itself.
