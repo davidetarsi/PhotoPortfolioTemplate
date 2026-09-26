@@ -46,7 +46,7 @@ describe('createStatus', () => {
   it('run(): fn che rifiuta mostra il messaggio dell\'errore con badge errore', async () => {
     const { run } = createStatus(el);
     await run(async () => { throw new Error('Rete non disponibile'); });
-    expect(el.querySelector('.admin-status__badge').textContent).toBe('Errore');
+    expect(el.querySelector('.admin-status__badge').textContent).toBe(texts.admin.status.error);
     expect(el.querySelector('.admin-status__badge').classList.contains('admin-status__badge--error')).toBe(true);
     expect(el.querySelector('.admin-status__text').textContent).toBe('Rete non disponibile');
   });

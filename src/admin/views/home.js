@@ -50,7 +50,7 @@ export function renderAdminHome(container, ctx) {
       <h2>${texts.admin.albums.sectionTitle}</h2>
       <div class="admin-album-list"></div>
       <div class="admin-new-album">
-        <input name="new-album-title" type="text" placeholder="Titolo nuovo album">
+        <input name="new-album-title" type="text" placeholder="${texts.admin.albums.newTitlePlaceholder}">
         <button class="admin-create-album">${texts.admin.albums.create}</button>
       </div>
     </section>
@@ -136,7 +136,7 @@ export function renderAdminHome(container, ctx) {
     row.innerHTML = html`
       <span class="admin-album-row__handle">⋮⋮</span>
       <a class="admin-album-row__title" href="#/album/${a.slug}"></a>
-      <button class="admin-delete-album" title="Elimina album">Elimina</button>
+      <button class="admin-delete-album" title="${texts.admin.albums.deleteTitle}">${texts.admin.albums.delete}</button>
     `;
     row.querySelector('.admin-album-row__title').textContent = a.title;
     row.querySelector('.admin-delete-album').addEventListener('click', () => run(async () => {

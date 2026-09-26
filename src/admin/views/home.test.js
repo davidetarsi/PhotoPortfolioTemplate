@@ -115,7 +115,7 @@ describe('renderAdminHome', () => {
     await Promise.resolve();
     expect(ctx.api.putAlbums).not.toHaveBeenCalled();
     expect(container.querySelector('.admin-status').textContent).not.toBe('');
-    expect(container.querySelector('.admin-status__badge').textContent).toBe('Errore');
+    expect(container.querySelector('.admin-status__badge').textContent).toBe(texts.admin.status.error);
     expect(container.querySelector('.admin-status__badge').classList.contains('admin-status__badge--error')).toBe(true);
     container.querySelector('[name="new-album-title"]').value = 'Sport';
     container.querySelector('.admin-create-album').click();

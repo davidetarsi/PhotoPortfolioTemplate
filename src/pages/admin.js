@@ -21,7 +21,7 @@ validateSiteConfig(siteConfig);
 const root = document.getElementById('admin-root');
 document.body.style.setProperty('--admin-bg-image', `url(${adminConfig.backgroundImageUrl})`);
 document.body.classList.add('admin-body');
-root.innerHTML = '<p class="admin-status">Caricamento…</p>';
+root.innerHTML = html`<p class="admin-status">${texts.admin.common.loading}</p>`;
 
 const [siteRes, albumsRes, configRes] = await Promise.all([fetchSite(), fetchAlbums(), fetchConfig()]);
 const r2PublicUrl = configRes.ok ? configRes.data.r2PublicUrl : siteConfig.r2PublicUrl;

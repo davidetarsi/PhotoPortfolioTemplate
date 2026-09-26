@@ -17,7 +17,7 @@ const texts = {
     empty: 'Nessuna foto trovata in questo album.',
     error: { network: 'Errore di rete.', unknown: 'Errore sconosciuto.' },
   },
-  admin: { site: { preview: 'Anteprima', previewClose: 'Chiudi' } },
+  admin: { site: { preview: 'Anteprima', previewClose: 'Chiudi' }, common: { allAlbums: '← Tutti gli album' } },
 };
 const ALBUMS = [
   { slug: 'sport', title: 'Sport', description: '', coverName: 'cover.webp' },

@@ -34,16 +34,16 @@ export function renderAdminAlbum(container, ctx) {
         <span class="admin-album-header__icon">📷</span>
         <div class="admin-album-header__text">
           <h2></h2>
-          <input class="admin-album-header__subtitle" name="album-description" type="text" aria-label="Sottotitolo" placeholder="Aggiungi un sottotitolo…">
+          <input class="admin-album-header__subtitle" name="album-description" type="text" aria-label="${texts.admin.album.subtitleLabel}" placeholder="${texts.admin.album.subtitlePlaceholder}">
         </div>
       </div>
       <div class="admin-album-toolbar">
         <div class="admin-view-toggle" role="group">
-          <button class="admin-view-toggle__btn admin-view-toggle__btn--grid" type="button" title="Vista griglia">▦</button>
-          <button class="admin-view-toggle__btn admin-view-toggle__btn--list" type="button" title="Vista lista">☰</button>
+          <button class="admin-view-toggle__btn admin-view-toggle__btn--grid" type="button" title="${texts.admin.album.gridView}">▦</button>
+          <button class="admin-view-toggle__btn admin-view-toggle__btn--list" type="button" title="${texts.admin.album.listView}">☰</button>
         </div>
         <button class="admin-sort-date" type="button">
-          <span class="admin-sort-date__label">Ordina per:</span>
+          <span class="admin-sort-date__label">${texts.admin.album.sortBy}</span>
           <span class="admin-sort-date__value">${texts.admin.album.date}</span>
         </button>
       </div>
@@ -203,7 +203,7 @@ export function renderAdminAlbum(container, ctx) {
             rows.set(name, li);
             progress.appendChild(li);
           }
-          rows.get(name).textContent = formatText(texts.admin.album.uploadProgress, { nome: name, fase: phase });
+          rows.get(name).textContent = formatText(texts.admin.album.uploadProgress, { nome: name, fase: texts.admin.album.uploadPhases[phase] ?? phase });
         },
       });
       manifest = result.manifest;

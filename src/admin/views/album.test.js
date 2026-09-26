@@ -272,7 +272,7 @@ describe('renderAdminAlbum', () => {
     const ctx = makeCtx();
     renderAdminAlbum(container, ctx);
     await flush();
-    expect(container.querySelector('.admin-sort-date__label').textContent).toBe('Ordina per:');
+    expect(container.querySelector('.admin-sort-date__label').textContent).toBe(texts.admin.album.sortBy);
     expect(container.querySelector('.admin-sort-date__value').textContent).toBe(texts.admin.album.date);
   });
 
@@ -359,7 +359,7 @@ describe('renderAdminAlbum', () => {
     const ctx = makeCtx();
     renderAdminAlbum(container, ctx);
     await flush();
-    expect(container.querySelector('.admin-dropzone__constraints').textContent).toBe('JPG, PNG, WebP fino a 20MB');
+    expect(container.querySelector('.admin-dropzone__constraints').textContent).toBe(texts.admin.album.dropzoneConstraints);
   });
 
   it('header album: emoji icona presente, nessuna label visibile "Sottotitolo" (solo aria-label)', async () => {
@@ -367,8 +367,8 @@ describe('renderAdminAlbum', () => {
     renderAdminAlbum(container, ctx);
     await flush();
     expect(container.querySelector('.admin-album-header__icon').textContent).toBe('📷');
-    expect(container.querySelector('[name="album-description"]').getAttribute('aria-label')).toBe('Sottotitolo');
-    expect(container.textContent).not.toContain('Sottotitolo ');
+    expect(container.querySelector('[name="album-description"]').getAttribute('aria-label')).toBe(texts.admin.album.subtitleLabel);
+    expect(container.textContent).not.toContain(`${texts.admin.album.subtitleLabel} `);
   });
 
   it('header album: il titolo resta dentro il nuovo wrapper, invariato nel contenuto', async () => {

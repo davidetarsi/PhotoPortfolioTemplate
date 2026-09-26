@@ -1,4 +1,5 @@
 import { html } from '../../shared/html.js';
+import { texts } from '../../../config/texts.config.js';
 /**
  * Generates HTML for the admin top bar with optional navigation or back link.
  * @param {Object} config - Configuration object.
@@ -8,14 +9,14 @@ import { html } from '../../shared/html.js';
 export function topBarHtml({ showBackLink }) {
   const navButtons = !showBackLink ? html`
     <nav class="admin-topbar__nav">
-      <a href="#/" class="admin-topbar__nav-link">Album</a>
-      <a href="#/messages" class="admin-topbar__nav-link">Messaggi</a>
+      <a href="#/" class="admin-topbar__nav-link">${texts.admin.common.navAlbums}</a>
+      <a href="#/messages" class="admin-topbar__nav-link">${texts.admin.common.navMessages}</a>
     </nav>
   ` : '';
   return html`
     <header class="admin-topbar">
       <span class="admin-topbar__icon">📷</span>
-      ${showBackLink ? html`<a class="admin-back" href="#/">← Tutti gli album</a>` : ''}
+      ${showBackLink ? html`<a class="admin-back" href="#/">${texts.admin.common.allAlbums}</a>` : ''}
       ${navButtons}
     </header>
   `;

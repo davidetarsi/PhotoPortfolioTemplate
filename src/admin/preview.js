@@ -126,7 +126,7 @@ async function renderAlbumView(container, slug, data, textsArg, deps) {
   const { albums = [], r2PublicUrl, social } = data;
   const content = container.querySelector('.admin-preview__content');
   content.innerHTML = html`
-    <p><button type="button" class="admin-back admin-preview__back">← Tutti gli album</button></p>
+    <p><button type="button" class="admin-back admin-preview__back">${textsArg.admin.common.allAlbums}</button></p>
     <div class="container">
       <h2 class="section-heading"></h2>
       <div class="admin-preview__photo-grid photo-grid"></div>

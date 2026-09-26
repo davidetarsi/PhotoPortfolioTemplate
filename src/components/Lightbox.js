@@ -5,6 +5,7 @@
  */
 import '../styles/lightbox.css';
 import { html } from '../shared/html.js';
+import { texts } from '../../config/texts.config.js';
 
 /**
  * Instantiates a lightbox with photo array.
@@ -16,13 +17,13 @@ export function createLightbox(photos, { onClose } = {}) {
   el.className = 'lightbox';
   el.setAttribute('role', 'dialog');
   el.setAttribute('aria-modal', 'true');
-  el.setAttribute('aria-label', 'Foto a schermo intero');
+  el.setAttribute('aria-label', texts.lightbox.label);
   el.setAttribute('aria-hidden', 'true');
   el.innerHTML = html`
-    <button class="lightbox__close" aria-label="Chiudi">×</button>
-    <button class="lightbox__prev" aria-label="Precedente">‹</button>
+    <button class="lightbox__close" aria-label="${texts.lightbox.close}">×</button>
+    <button class="lightbox__prev" aria-label="${texts.lightbox.previous}">‹</button>
     <img class="lightbox__img" src="" alt="">
-    <button class="lightbox__next" aria-label="Successiva">›</button>
+    <button class="lightbox__next" aria-label="${texts.lightbox.next}">›</button>
     <div class="lightbox__caption"></div>
   `;
   document.body.appendChild(el);

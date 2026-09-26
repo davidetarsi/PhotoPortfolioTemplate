@@ -22,7 +22,7 @@ async function readJson(request) {
 
 async function putValidatedJson(request, env, key, validate) {
   const body = await readJson(request);
-  if (!body.ok) return jsonResponse({ error: 'JSON malformato' }, 400);
+  if (!body.ok) return jsonResponse({ error: 'Malformed JSON' }, 400);
   const check = validate(body.data);
   if (!check.ok) return jsonResponse({ error: check.error }, 400);
   try {
@@ -71,15 +71,15 @@ export async function handleAdminRequest(request, env, deps = {}) {
     const [, slug, rawName] = photo;
     const name = decodeURIComponent(rawName);
     if (!SLUG_RE.test(slug) || !PHOTO_NAME_RE.test(name)) {
-      return jsonResponse({ error: 'Nome o slug invalido' }, 400);
+      return jsonResponse({ error: 'Invalid name or slug' }, 400);
     }
     const key = `${slug}/${name}`;
 
     if (method === 'PUT') {
-      if (request.headers.get('Content-Type') !== 'image/webp') return jsonResponse({ error: 'Atteso image/webp' }, 415);
+      if (request.headers.get('Content-Type') !== 'image/webp') return jsonResponse({ error: 'Expected image/webp' }, 415);
       const bytes = await request.arrayBuffer();
-      if (bytes.byteLength > MAX_PHOTO_BYTES) return jsonResponse({ error: 'File oltre 10MB' }, 413);
-      if (bytes.byteLength === 0) return jsonResponse({ error: 'Body vuoto' }, 400);
+      if (bytes.byteLength > MAX_PHOTO_BYTES) return jsonResponse({ error: 'File over 10MB' }, 413);
+      if (bytes.byteLength === 0) return jsonResponse({ error: 'Empty body' }, 400);
       try {
         await env.BUCKET.put(key, bytes, { httpMetadata: { contentType: 'image/webp' } });
       } catch {

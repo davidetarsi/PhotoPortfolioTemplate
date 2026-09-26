@@ -67,7 +67,7 @@ describe('album bootstrap from the build seed', () => {
     await import('./album.js');
 
     expect(document.querySelector('.photo-grid__error').textContent)
-      .toBe('Le immagini non sono disponibili senza un URL pubblico R2.');
+      .toBe('Images are unavailable without a public R2 URL.');
     expect(document.querySelector('#photo-grid img')).toBeNull();
   });
 
