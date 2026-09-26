@@ -22,7 +22,7 @@
 - `albums.json` valid and slug absent → same HTML, status **404**. The browser page already renders "not found"; only the status changes.
 - `site.json` missing, not JSON, or failing `validateSiteShape` → treated as `{}`: the title is the album title alone, no bio fallback, no hero fallback.
 - `rewriteHead` on HTML that has no `</head>` returns it unchanged.
-- Responses rewritten by the Worker (both 200 and 404) carry `Cache-Control: no-store`, like `/api/data/*`, so dashboard edits appear immediately; `Content-Length` and `ETag` from the asset are dropped because the body changes.
+- Responses rewritten by the Worker (both 200 and 404) carry `Cache-Control: no-store`, like `/api/data/*`, so dashboard edits appear immediately; `Content-Length` and `ETag` from the asset are dropped because the body changes. *(Revised after the final review: `no-cache` instead of `no-store` — same freshness, since the rewritten page has no validators, and the page stays eligible for the back/forward cache. The code blocks below keep the original value.)*
 - The order of the router branches in `src/worker.js` does not change; only the body of the album branch does.
 - Home and about pages are out of scope: they are static assets and never reach the Worker.
 - **Commit only the files each task names**, with explicit `git add <paths>`. Never `git add -A` or `git add .`. Never commit `package-lock.json`.

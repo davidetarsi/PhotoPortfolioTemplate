@@ -23,21 +23,21 @@ describe('album pages', () => {
     expect(await res.text()).toBe(albumHtml);
   });
 
-  it('known album → its title, cover and canonical, no-store', async () => {
+  it('known album → its title, cover and canonical, no-cache', async () => {
     const res = await run('/sport', { '_data/albums.json': albums, '_site/site.json': site });
     const body = await res.text();
     expect(res.status).toBe(200);
     expect(body).toContain('<title>Sport — Davide</title>');
     expect(body).toContain('<meta property="og:image" content="https://photos.example.com/sport/c.webp">');
     expect(body).toContain('<link rel="canonical" href="https://example.com/sport">');
-    expect(res.headers.get('Cache-Control')).toBe('no-store');
+    expect(res.headers.get('Cache-Control')).toBe('no-cache');
   });
 
-  it('unknown album with valid albums.json → 404 with the same page, no-store', async () => {
+  it('unknown album with valid albums.json → 404 with the same page, no-cache', async () => {
     const res = await run('/non-esiste', { '_data/albums.json': albums, '_site/site.json': site });
     expect(res.status).toBe(404);
     expect(await res.text()).toBe(albumHtml);
-    expect(res.headers.get('Cache-Control')).toBe('no-store');
+    expect(res.headers.get('Cache-Control')).toBe('no-cache');
   });
 
   it('albums.json with the wrong shape → page unchanged, 200', async () => {
@@ -125,6 +125,6 @@ describe('album page headers', () => {
     expect(res.headers.get('ETag')).toBeNull();
     expect(res.headers.get('Content-Length')).not.toBe('999');
     expect(res.headers.get('X-Extra')).toBe('kept');
-    expect(res.headers.get('Cache-Control')).toBe('no-store');
+    expect(res.headers.get('Cache-Control')).toBe('no-cache');
   });
 });

@@ -37,7 +37,9 @@ export async function serveAlbumPage(env, url, slug) {
   if (!validateAlbumsShape(albumsDoc).ok) return asset;
 
   const headers = new Headers(asset.headers);
-  headers.set('Cache-Control', 'no-store');
+  // no-cache, not no-store: the rewritten page has no validators, so every visit refetches it
+  // anyway, and the page stays eligible for the browser's back/forward cache.
+  headers.set('Cache-Control', 'no-cache');
   headers.delete('Content-Length');
   headers.delete('ETag');
   const html = await asset.text();

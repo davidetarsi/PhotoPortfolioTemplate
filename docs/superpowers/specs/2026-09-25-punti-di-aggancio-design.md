@@ -144,9 +144,12 @@ tutto com'è oggi.
   deploy reale nella fase 3.
 - **Home e About restano con i meta seed.** Sono serviti come file statici, il Worker non li vede.
   Estenderli richiede `run_worker_first` su quei percorsi: fuori da questo lavoro, annotato sotto.
-- **Costo e cache di F4.** Con `no-store` ogni visita a un album fa due letture R2 (`albums.json`,
-  `site.json`) e nessuna cache CDN. Irrilevante a scala hobby — il piano gratuito di R2 copre milioni di
-  letture al mese — ma se il traffico crescesse la risposta è un `max-age` breve, non togliere la lettura live.
+- **Costo e cache di F4.** Le pagine album rispondono con `no-cache` (non `no-store`: deciso dopo la
+  revisione finale). La pagina riscritta non ha validatori, quindi ogni visita la richiede comunque al
+  Worker — stessa freschezza — ma resta nella cache avanti/indietro del browser: tornando a un album lungo
+  la griglia non si ricarica. Ogni visita fa due letture R2 (`albums.json`, `site.json`) e nessuna cache
+  CDN: irrilevante a scala hobby — il piano gratuito di R2 copre milioni di letture al mese — ma se il
+  traffico crescesse la risposta è un `max-age` breve, non togliere la lettura live.
 - **Staging indicizzabile.** Oggi staging non ha né `X-Robots-Tag` né `noindex`. È un problema
   preesistente, che F4 non peggiora (il canonical di staging punta a staging stesso): va risolto a parte.
 - **Il prefisso di una collezione non è una pagina.** Con F3, `/codice` senza una pagina singola dichiarata
