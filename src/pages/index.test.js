@@ -11,6 +11,12 @@ vi.mock('../utils/validateConfig.js', () => ({ validateSiteConfig: vi.fn() }));
 vi.mock('../components/Nav.js', () => ({ renderNav: vi.fn() }));
 vi.mock('../components/Footer.js', () => ({ renderFooter: vi.fn() }));
 vi.mock('../components/Hero.js', () => ({ renderHero: vi.fn() }));
+// This test covers the home page with the template landing. Pinning the slot keeps it
+// true in a fork whose custom/ replaces the landing; custom-slots.test.js checks the fork's own slots.
+vi.mock('../core/custom-slots.js', async () => {
+  const { landing } = await import('../components/Landing.js');
+  return { slot: async () => landing };
+});
 
 describe('home album bootstrap', () => {
   beforeEach(() => {
@@ -18,9 +24,7 @@ describe('home album bootstrap', () => {
     vi.resetModules();
     document.body.innerHTML = `
       <nav id="site-nav"></nav>
-      <section id="hero"></section>
-      <h2 id="albums-heading"></h2>
-      <div id="album-cards"></div>
+      <div id="landing"></div>
       <footer id="site-footer"></footer>
     `;
     mocks.fetchSite.mockResolvedValue({
