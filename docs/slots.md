@@ -97,6 +97,7 @@ import { albumsToCards } from '/src/api/index.js';
 | `resolveAlbums` | `resolveAlbums(response, fallback)` | normalized album list or `null` |
 | `resolveSiteContent` | `resolveSiteContent(response, fallback)` | normalized site content |
 | `siteConfig` | — | build-time site fallback config |
+| `slugFromPath` | `slugFromPath('/projects/:slug', location.pathname)` | the entry slug of a collection page, or `null` (see `docs/pages.md`) |
 | `slot` | `await slot(name)` | the implementation for one of the five slots above |
 | `texts` | — | UI text config |
 
@@ -123,9 +124,11 @@ An optional `custom/setup.js` default function runs once for each page entry and
 
 The public events are `page:ready` (`{ page, site, album?, restored? }`), `page:leave` (`{ page, persisted }`), `photo:open` (`{ index, photo }`) and `photo:close` (`{ index, photo }`). `on(type, listener)` returns an idempotent unsubscribe function. Always unregister subscriptions so listeners do not outlive a component.
 
+To add whole pages rather than replace parts of existing ones, see [pages](pages.md).
+
 ## Optional custom theme
 
-If `custom/theme.css` exists, Vite processes it as a separate stylesheet, including CSS imports and relative assets. It is linked last on home, About and album pages, never `/admin`. After a lazy slot adds its stylesheet, runtime ordering restores the custom theme to the end. Equal-specificity rules in the theme therefore override the lazy stylesheet. Without the file, no custom theme stylesheet is emitted. See the matching `.example-photo-grid__item` rules in `custom.example/photo-grid/` and `custom.example/theme.css`.
+If `custom/theme.css` exists, Vite processes it as a separate stylesheet, including CSS imports and relative assets. It is linked last on home, About, album and custom pages, never `/admin`. After a lazy slot adds its stylesheet, runtime ordering restores the custom theme to the end. Equal-specificity rules in the theme therefore override the lazy stylesheet. Without the file, no custom theme stylesheet is emitted. See the matching `.example-photo-grid__item` rules in `custom.example/photo-grid/` and `custom.example/theme.css`.
 
 ## What your code runs under
 
