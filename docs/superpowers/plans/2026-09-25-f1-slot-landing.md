@@ -17,10 +17,10 @@
 ## Global Constraints
 
 - Without `custom/`, the rendered home DOM keeps the same ids and classes as today: `#hero`, `#albums-heading.section-heading`, `#album-cards.album-cards`, `.album-card__skeleton`, `.page-error`.
-- The existing assertions of `src/pages/index.test.js` keep passing; only the fixture markup changes.
+- The existing assertions of `src/pages/index.test.js` keep passing. The test changes its fixture markup and gains one `vi.mock` that pins the template landing, so a fork whose `custom/` replaces the landing never breaks it.
 - `custom/` is never committed to the template. `custom.example/` is the only template-owned example.
 - The glob pattern matches exactly `/custom/slots.js`; `custom.example/` must never be picked up.
-- An invalid `custom/slots.js` fails loudly in dev and at build, with a message that names `custom/slots.js`, the slot, and the expected contract.
+- An invalid `custom/slots.js` fails loudly: in the browser console in dev, and in `npm test` — which the documented deploy runs before building (`npm test && npm run build`) — through a test that runs only in forks that have `custom/`. Every message names `custom/slots.js`, the slot, and the expected contract. `vite build` alone never executes the resolver.
 - No inline styles or inline scripts are introduced: the CSP (`style-src 'self'`, `script-src 'self'`) stays unchanged.
 - Nav and footer stay template-owned in F1 (they become slots in F2).
 
@@ -370,19 +370,25 @@ Create `src/core/custom-slots.test.js`:
 ```js
 import { describe, expect, it } from 'vitest';
 import { landing } from '../components/Landing.js';
+import { SLOT_CONTRACTS } from './contracts.js';
 
-// In a fork that has custom/slots.js the default may legitimately be overridden:
-// the assertion only holds for the template itself.
 const hasCustom = Object.keys(import.meta.glob('/custom/slots.js')).length > 0;
 
 describe('custom slots wiring', () => {
+  // The template ships custom.example/ but never custom/: resolving the default here
+  // also proves that the example is never picked up.
   it.skipIf(hasCustom)('resolves the template landing when custom/ is absent', async () => {
     const { slot } = await import('./custom-slots.js');
     expect(await slot('landing')).toBe(landing);
   });
 
-  it('never picks up custom.example/', () => {
-    expect(Object.keys(import.meta.glob('/custom/slots.js')).some(k => k.includes('custom.example'))).toBe(false);
+  // Runs only in forks. An invalid custom/slots.js fails npm test — and therefore the
+  // deploy — instead of breaking the page in front of visitors.
+  it.runIf(hasCustom)('custom/slots.js is valid: every slot resolves', async () => {
+    const { slot } = await import('./custom-slots.js');
+    for (const name of Object.keys(SLOT_CONTRACTS)) {
+      await expect(slot(name)).resolves.toBeTruthy();
+    }
   });
 });
 ```
@@ -426,7 +432,18 @@ describe('home page delegates to the landing slot', () => {
 });
 ```
 
-In `src/pages/index.test.js`, replace only the fixture in `beforeEach`:
+In `src/pages/index.test.js`, make two changes and nothing else. First, replace the fixture in `beforeEach` — the whole `document.body.innerHTML = …;` statement — with the block below. Second, right after the line `vi.mock('../components/Hero.js', () => ({ renderHero: vi.fn() }));`, add:
+
+```js
+// This test covers the home page with the template landing. Pinning the slot keeps it
+// true in a fork whose custom/ replaces the landing; custom-slots.test.js checks the fork's own slots.
+vi.mock('../core/custom-slots.js', async () => {
+  const { landing } = await import('../components/Landing.js');
+  return { slot: async () => landing };
+});
+```
+
+The new fixture:
 
 ```js
     document.body.innerHTML = `
@@ -535,7 +552,7 @@ await mounted;
 Run: `npm test`
 Expected: PASS — all existing tests plus the new ones. In particular `index.test.js` still finds `a.album-card[href="/nome-album"]` and `.page-error`, now rendered inside `#landing`.
 
-- [ ] **Step 5: Verify the page did not change**
+- [ ] **Step 5: Verify the page did not change** *(controller, in a browser — the implementer skips this step)*
 
 Run: `npm run dev`, open `/`.
 Expected: hero, heading and album cards look exactly as before; no console error; the DOM shows the same elements one level deeper, inside `<div id="landing">`.
@@ -605,19 +622,133 @@ export default {
 };
 ```
 
-`custom.example/README.md`: three short sections — what `custom/` is (the fork's own code, never in the template), how to activate (`cp -r custom.example custom`), and the rule that code in `custom/` must not import from `src/` internals (in F1 the landing needs nothing beyond `ctx`; F2 adds `src/api/index.js`).
+`custom.example/README.md`, with exactly the content of this block (not the outer fence lines):
+
+````markdown
+# `custom/` — your own code, never in the template
+
+`custom/` is the one folder the template never ships and never changes. A fork creates it to replace whole parts of the site with its own components without editing any file that comes from the template, so `git merge upstream/main` never conflicts there.
+
+This folder, `custom.example/`, is a minimal working example.
+
+## Activate it
+
+```bash
+cp -r custom.example custom
+```
+
+`custom/slots.js` lists the parts to replace; every part it does not list keeps the template implementation. Delete `custom/` and the site is back to the template defaults.
+
+## Rules
+
+- A slot implementation gets everything it needs as arguments: the element to render into and a context object. See `docs/slots.md`.
+- Do not import from `src/`: those files are internal and may change in any template update.
+- Commit `custom/` in your fork. Never commit it to the template itself.
+````
 
 - [ ] **Step 2: Write `docs/slots.md`**
 
-Content, in this order:
-1. What a slot is, and the list from `SLOT_CONTRACTS` (F1: `landing`).
-2. The `mount(container, ctx)` contract, the `landing` ctx shape (`texts`, `data` and the four fields of the resolved data), and why `data` is a promise (skeleton before network).
-3. The error messages a fork can meet, copied from `slots.js`.
-4. Stability: slot names, contract methods and ctx fields are the public surface. Changing them is a breaking change announced in `docs/upgrading.md`.
+Create `docs/slots.md` with exactly the content of this block (not the outer fence lines):
+
+````markdown
+# Slots — replacing whole parts of the site
+
+A *slot* is a part of the site that a fork can replace with its own component, declared in `custom/slots.js`, without editing template files. At runtime the template resolves each slot to the fork's implementation when `custom/slots.js` provides one, and to its own default otherwise.
+
+| Slot | Contract | What it covers |
+|---|---|---|
+| `landing` | `mount` | home page: hero, section heading and album cards |
+
+This table is the complete list of slots in this version of the template.
+
+## Declaring an override
+
+`custom/slots.js` exports an object that maps slot names to **loaders**:
+
+```js
+export default {
+  landing: () => import('./landing/my-landing.js'),
+};
+```
+
+The loaded module exports the implementation as `default`; a loader may also return the implementation directly.
+
+## The `mount` contract
+
+```js
+export default {
+  async mount(container, ctx) {
+    // render into container
+    return { destroy() { container.replaceChildren(); } };
+  },
+};
+```
+
+`mount` receives the element to render into and a context object. It returns — or resolves to — a handle whose optional `destroy()` removes what it rendered.
+
+### `landing`
+
+- `container` — the `#landing` element of `index.html`. It has `display: contents`, so it adds no box of its own.
+- `ctx.texts` — the UI texts from `config/texts.config.js`.
+- `ctx.data` — a **promise** of `{ site, albums, albumsError, r2PublicUrl }`:
+  - `site` — name, bio, hero image URL and social links, read from R2 with the build values as fallback;
+  - `albums` — the albums to show, or `null` when they could not be loaded;
+  - `albumsError` — the error code when `albums` is `null` (for example `'NETWORK'`), otherwise `null`;
+  - `r2PublicUrl` — the public URL of the photo bucket.
+
+`ctx.data` is a promise so that a landing can draw its skeleton at once, before the network answers: render first, then `await ctx.data`. Fetching stays in the template, so every landing — default or custom — receives the same data with the same fallback rules.
+
+## Errors you can meet
+
+They appear in the browser console, and in a fork they make `npm test` fail — which also stops the deploy, since it runs `npm test && npm run build`:
+
+- `custom/slots.js: unknown slot "<name>". Known slots: …` — a key of `custom/slots.js` is not a slot.
+- `custom/slots.js: slot "<name>" must be a loader, e.g. () => import('./my-component.js').` — the value is not a function.
+- `custom/slots.js: slot "<name>" must export default { mount(…) }.` — the loaded module does not implement the contract.
+
+## Stability
+
+Slot names, contract methods and the fields of `ctx` are the public surface of `custom/`. Changing any of them is a breaking change, announced in `docs/upgrading.md`. Everything else in `src/` is internal and may change in any update.
+````
 
 - [ ] **Step 3: Update `CUSTOMIZING.md`**
 
-After "What not to touch when customizing", add a section **"Replacing a whole part: `custom/`"**: when `config/` and `theme/` are not enough, create `custom/` from `custom.example/`; the template never contains `custom/`, so merges never conflict there; link to `docs/slots.md`. In the paragraph "Behavior (`src/`)", add one sentence: replacing a part is done through `custom/`, not by editing `src/`.
+Two edits, nothing else.
+
+1. In the section whose heading is the line below:
+
+   ```text
+   ### Behavior (`src/`)
+   ```
+
+   replace this sentence:
+
+   ```text
+   Keep customizations in `config/` and `theme/`, the only designated extension points.
+   ```
+
+   with:
+
+   ```text
+   Keep customizations in `config/`, `theme/` and `custom/`, the designated extension points: to replace a whole part of the site, use `custom/` (see below) instead of editing `src/`.
+   ```
+
+2. Immediately before the line `## After every file change`, insert exactly the content of this block (not the outer fence lines). The `---` line that already precedes the insertion point stays where it is:
+
+````markdown
+## Replacing a whole part: `custom/`
+
+When `config/` and `theme/` are not enough — a different landing, for example — create `custom/` from the example and declare there the parts you replace:
+
+```bash
+cp -r custom.example custom
+```
+
+The template never contains `custom/`, so `git merge upstream/main` never conflicts there. Commit it in your fork. The parts you can replace, their contracts and the errors you can meet are in [`docs/slots.md`](docs/slots.md).
+
+---
+
+````
 
 - [ ] **Step 4: Update `docs/upgrading.md`**
 
@@ -633,12 +764,12 @@ Add a row to the table "What each file does during an update":
 cp -r custom.example custom
 npm test
 npm run build
-npm run dev   # open /: the example landing (name + album list) replaces hero and cards
 rm -rf custom
-npm run build # the default landing is back
+npm test
+npm run build
 ```
 
-Expected: tests pass with `custom/` present (the default-identity test is skipped); the dev page shows the example landing; after removing `custom/`, the build is identical in behavior to before.
+Expected: with `custom/` present, tests pass — the default-landing test is skipped and the validation test runs and passes, which proves the example is valid — and the build succeeds. After removing `custom/`, tests and build pass exactly as before. `custom/` must not exist when you commit. The browser check of the example landing is done by the controller; the implementer skips it.
 
 - [ ] **Step 6: Commit**
 
