@@ -68,6 +68,11 @@ run "staging_disabled_by_default" {
     condition     = cloudflare_r2_managed_domain.prod.bucket_name == "test-portfolio"
     error_message = "Only the photo bucket may be public: the managed domain must stay on it."
   }
+
+  assert {
+    condition     = output.prod_hostname == "portfolio.example.com"
+    error_message = "The production hostname must be an output, for the Worker route in wrangler.json."
+  }
 }
 
 run "staging_enabled_explicitly" {
