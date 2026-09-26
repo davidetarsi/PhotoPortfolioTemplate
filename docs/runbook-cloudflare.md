@@ -14,6 +14,7 @@ You need:
 
 - **Active Cloudflare account** with dashboard access and permissions to create R2 buckets, public domains, and Access applications (Zero Trust).
 - **Production domain** (optional on first deploy, required before going live). In our example we use a custom domain like `portfolio.example`, already an active Cloudflare zone. If you don't have one, for initial testing you can use the `workers.dev` domain provided by Cloudflare (read-only, with rate limiting).
+- **HTTPS on every subdomain, if you use the bare domain.** The site sends `Strict-Transport-Security` with `includeSubDomains`: once a browser has visited `mario.com`, it refuses plain HTTP on every `*.mario.com` for a year. If some subdomain still serves HTTP, put the portfolio on a subdomain such as `portfolio.mario.com` instead.
 - **Zone ID** of the custom domain, if you use it for photos. Find it in Cloudflare dashboard → select the domain → copy Zone ID from the right sidebar.
 
 ## 2. Cloudflare API Token
@@ -438,6 +439,8 @@ outside the verified workflow.
 Visitors see nothing: the widget is configured `interaction-only`, so it only appears when Cloudflare suspects something. There is no way to restyle it — it lives in an iframe — which is why it is configured to stay out of sight instead.
 
 **If you turn Turnstile off**, the form keeps working and the honeypot keeps catching the simplest bots. But there is no rate limiting: someone determined could fill your bucket with junk messages. Know that you are accepting it.
+
+**Rate limiting, with or without Turnstile.** The free plan includes one rate limiting rule. Cloudflare dashboard → your domain → **Security → WAF → Rate limiting rules → Create rule**: match *URI Path* equals `/api/contact` and *Request Method* equals `POST`, count per IP, a low limit such as 3 requests per 10 seconds, action **Block**. It applies only on your own domain, not on the `workers.dev` address.
 
 ---
 
