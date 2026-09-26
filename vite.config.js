@@ -12,6 +12,8 @@ import { customPageInputs, validateCustomPages } from './src/utils/customPages.j
 import { customPagesPlugin } from './src/utils/customPagesPlugin.js'
 import { isExpectedBuildWarning } from './src/utils/buildWarnings.js'
 import { wranglerConfigPath } from './src/utils/wranglerConfigPath.js'
+import { createFontsPlugin } from './src/utils/fontsPlugin.js'
+import { googleFontsUrl } from './theme/fonts.js'
 
 // Letto una volta: serve sia al meta og:image sia alla CSP, e leggerlo due
 // volte aprirebbe la porta a due valori diversi nello stesso build.
@@ -69,6 +71,7 @@ export default defineConfig({
   plugins: [
     devRouteFallbackPlugin(),
     siteMetaPlugin(),
+    createFontsPlugin(googleFontsUrl),
     ...createCustomThemePlugins({ root: __dirname, publicPages: customPages.map(page => page.html) }),
     customPagesPlugin(customPages),
     headersPlugin(),
