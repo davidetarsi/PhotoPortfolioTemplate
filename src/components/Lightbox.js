@@ -59,11 +59,9 @@ export function createLightbox(photos, { onClose } = {}) {
   }
 
   // For code that creates multiple lightboxes in a page's lifetime (e.g., admin preview
-  // changing photos per album): removes the element from the DOM.
-  // There is no way to unbind the document keydown listener from here, but once
-  // closed and removed it stays harmless (the guard "classList.contains('lightbox--open')"
-  // at the top of the listener will never trigger again).
+  // changing photos per album): removes both the element and its document listener.
   function destroy() {
+    document.removeEventListener('keydown', onDocumentKeydown);
     close();
     el.remove();
   }

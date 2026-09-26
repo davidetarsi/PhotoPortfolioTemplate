@@ -132,12 +132,18 @@ describe('createLightbox', () => {
   it('removes the document keyboard handler on destroy', () => {
     const onClose = vi.fn();
     lb.destroy();
+    const add = vi.spyOn(document, 'addEventListener');
+    const remove = vi.spyOn(document, 'removeEventListener');
     lb = createLightbox(photos, { onClose });
+    const keydown = add.mock.calls.find(([type]) => type === 'keydown')[1];
     lb.open(0);
     lb.destroy();
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
 
     expect(onClose).toHaveBeenCalledOnce();
+    expect(remove).toHaveBeenCalledWith('keydown', keydown);
     expect(document.querySelector('.lightbox')).toBeNull();
+    add.mockRestore();
+    remove.mockRestore();
   });
 });
