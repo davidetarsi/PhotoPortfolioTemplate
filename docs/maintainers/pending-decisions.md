@@ -8,7 +8,7 @@ Obiettivo: da 8 passi a circa 4 (fork → `npm run setup` → collega Git su Clo
 
 | # | Proposta | Cosa elimina | Impegno | Da decidere |
 |---|---|---|---|---|
-| A | Niente `migrate`: la dashboard tratta l'assenza di `albums.json` come lista vuota e il primo salvataggio crea i file | passo 6: token API R2, `.env`, `npm run migrate`, l'errore "non rilanciare migrate" | piccolo | sì/no |
+| A | Niente `migrate`: la dashboard tratta l'assenza di `albums.json` come lista vuota e il primo salvataggio crea i file | passo 6: token API R2, `.env`, `npm run migrate`, l'errore "non rilanciare migrate" | piccolo | approvata 2026-09-26, branch `feat/simplify-a-no-migrate` |
 | C | Non tracciare più `wrangler.json` nel template (solo `wrangler.example.json`); il fork aggiunge il suo | conflitti a ogni merge, trappola del fast-forward, `git checkout --ours` | piccolo-medio | sì/no; serve sapere se il template stesso viene deployato dal repo |
 | E | Font in un posto solo: un plugin Vite inserisce il link a Google Fonts da `theme/` | le modifiche coordinate su 4 HTML e sulle pagine custom | piccolo | sì/no |
 | T | Template HTML sicuri per costruzione: helper interno `html\`…\`` che fa l'escaping di ogni valore, usato in admin e componenti | la classe di errori di S1 (HTML iniettato) | piccolo-medio | sì/no |
@@ -26,4 +26,4 @@ Valutate e non consigliate per ora: foto servite dal Worker invece che da un buc
 
 ## Piccole cose
 
-- Aggiungere "Account GitHub o GitLab" alla tabella dei requisiti del README (oggi è sottinteso).
+- ~~Aggiungere "Account GitHub o GitLab" ai requisiti del README~~ — fatto nella fase A.

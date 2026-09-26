@@ -73,6 +73,7 @@ It's meant for **photographers who can code**, or for anyone setting up a site f
 | | |
 |---|---|
 | ☁️ **Cloudflare account** | the free plan is enough |
+| 🐙 **A GitHub or GitLab account** | to fork the template and let Cloudflare deploy every push |
 | 🌐 **A domain on Cloudflare** | needed for the `/admin` dashboard: Cloudflare Access can protect `/admin` alone only on your own domain. Without one you can still try the site locally |
 | 🟢 **Node.js 22.12+** | `wrangler`, used during setup, requires Node 22 |
 | 🧱 **Terraform 1.9+** | recommended; the [manual path](docs/runbook-cloudflare.md#5-manual-path--creating-resources-from-cloudflare-dashboard) works without it |
@@ -173,36 +174,21 @@ npx wrangler versions secret put CONTACT_NOTIFY_URL   # optional: a push notific
 
 `versions secret put` prepares a new version without publishing it: promote it from the Worker's **Deployments** tab, or push a commit. The secret key is in the dashboard under **Turnstile → your widget**. If the sitekey is in `wrangler.json` and this secret is missing, the contact form refuses every message on purpose. Notifications and their limits: [runbook §9](docs/runbook-cloudflare.md#9-contact-form-notifications-and-spam-protection).
 
-### 6. Load the initial content
+### 6. Personalize the seed (optional)
 
-Fill the seed files:
+The site and the dashboard start from these files, so edit them first if you like, then commit and push:
 
 - **`config/site.config.js`** — name, bio, social links, hero
-- **`config/albums.config.js`** — albums, with slug, title, description and cover file name
+- **`config/albums.config.js`** — example albums, shown on the home page until you create your first album in the dashboard
 - **`config/texts.config.js`** *(optional)* — interface copy
 - **`config/admin.config.js`** *(optional)* — dashboard styling
 - **`theme/tokens.css`** and **`theme/typography.css`** — colors, fonts and the Google Fonts link
 
-Then copy them to R2 once. `npm run migrate` reads four R2 variables from `.env` (copy `.env.example`; create an R2 API token with write access to your bucket):
-
-```bash
-R2_ACCOUNT_ID="..."
-R2_ACCESS_KEY_ID="..."
-R2_SECRET_ACCESS_KEY="..."
-R2_BUCKET_NAME="your-bucket"
-```
-
-```bash
-npm run migrate
-```
-
-> ⚠️ `migrate` is a one-time bootstrap. **Running it again after you've used the dashboard resets everything to the seed.** It notices, stops and asks for `--force`.
-
-`VITE_R2_PUBLIC_URL` in `.env` is optional: only the local preview uses it. `npm run upload` uses the same credentials to upload a prepared folder outside the dashboard.
-
 ### 7. Sign in to `/admin`
 
-Open `https://your-domain/admin`. Cloudflare Access asks for your email and sends a one-time code: only the addresses listed in `admin_emails` get in. Create an album and upload a few photos.
+Open `https://your-domain/admin`. Cloudflare Access asks for your email and sends a one-time code: only the addresses listed in `admin_emails` get in. The first time, the dashboard starts from the seed: create an album and save the site section, and the data is written to R2 — there is nothing to import beforehand. Then upload a few photos.
+
+> 💡 `npm run migrate` still exists for one case: copying many albums from `config/albums.config.js` to R2 in one go. It needs R2 API credentials in `.env` (see `.env.example`), and **running it after you've used the dashboard resets everything to the seed**. `npm run upload` uses the same credentials to upload a prepared folder outside the dashboard.
 
 ### 8. Check that everything works
 
@@ -219,7 +205,7 @@ An optional staging environment exists, but it is not turnkey for a first instal
 | Use "Use this template" | Fork it, so you can merge updates ([above](#-getting-started-and-staying-up-to-date)) |
 | Use Node 20 | Node 22.12 or later |
 | Leave the site without your domain | Attach it to the Worker (step 4): `/admin` works only there |
-| Run `npm run migrate` again after using the dashboard | Edit content from `/admin`; `migrate` is only the first bootstrap |
+| Run `npm run migrate` after using the dashboard | You don't need it: the dashboard creates the data. If you use it, only before the first save from `/admin` |
 | Merge an update without looking at `wrangler.json` | Follow [docs/upgrading.md](docs/upgrading.md): a fast-forward replaces your values with placeholders without any conflict |
 | Deploy a build made with `ALLOW_PLACEHOLDER_CSP=1` | Use it only to check that the template builds |
 | Put a notification URL or any secret in `wrangler.json` | `npx wrangler versions secret put …`: the file is public in your repository |
@@ -237,7 +223,7 @@ The `/admin` dashboard is where you shape the site while it's running:
 - **Albums section** — add albums, edit their title and description
 - **Album view** — upload photos, reorder them, delete them
 
-The files in `config/` are only the initial seed — after `migrate`, R2 is the source of truth. Changes made from the dashboard are live immediately, with no deploy.
+The files in `config/` are only the initial seed — after the first save from `/admin`, R2 is the source of truth. Changes made from the dashboard are live immediately, with no deploy.
 
 ## 🎨 Customizing
 

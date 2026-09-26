@@ -75,6 +75,7 @@ Questo template sta nel mezzo. Il sito è statico e velocissimo, ma le foto vivo
 | | |
 |---|---|
 | ☁️ **Account Cloudflare** | il piano gratuito basta |
+| 🐙 **Un account GitHub o GitLab** | per fare il fork del template e far pubblicare a Cloudflare ogni push |
 | 🌐 **Un dominio su Cloudflare** | serve per la dashboard `/admin`: Cloudflare Access sa proteggere solo `/admin` unicamente sul tuo dominio. Senza, puoi comunque provare il sito in locale |
 | 🟢 **Node.js 22.12+** | `wrangler`, usato durante l'installazione, richiede Node 22 |
 | 🧱 **Terraform 1.9+** | consigliato; il [percorso manuale](docs/runbook-cloudflare.md#5-manual-path--creating-resources-from-cloudflare-dashboard) funziona anche senza |
@@ -175,36 +176,21 @@ npx wrangler versions secret put CONTACT_NOTIFY_URL   # facoltativo: una notific
 
 `versions secret put` prepara una nuova versione senza pubblicarla: promuovila dalla scheda **Deployments** del Worker, oppure fai un push. La chiave segreta è nella dashboard in **Turnstile → il tuo widget**. Se la sitekey è in `wrangler.json` e questo segreto manca, il form di contatto rifiuta ogni messaggio, apposta. Notifiche e loro limiti: [runbook §9](docs/runbook-cloudflare.md#9-contact-form-notifications-and-spam-protection).
 
-### 6. Carica il contenuto iniziale
+### 6. Personalizza il seed (facoltativo)
 
-Compila i file del seed:
+Il sito e la dashboard partono da questi file: se vuoi, modificali prima, poi fai commit e push:
 
 - **`config/site.config.js`** — nome, bio, social, hero
-- **`config/albums.config.js`** — album, con slug, titolo, descrizione e nome del file di copertina
+- **`config/albums.config.js`** — album di esempio, mostrati in home finché non crei il primo album dalla dashboard
 - **`config/texts.config.js`** *(facoltativo)* — testi dell'interfaccia
 - **`config/admin.config.js`** *(facoltativo)* — stile della dashboard
 - **`theme/tokens.css`** e **`theme/typography.css`** — colori, font e link a Google Fonts
 
-Poi copiali in R2, una volta sola. `npm run migrate` legge quattro variabili R2 da `.env` (copia `.env.example`; crea un token API R2 con permesso di scrittura sul tuo bucket):
-
-```bash
-R2_ACCOUNT_ID="..."
-R2_ACCESS_KEY_ID="..."
-R2_SECRET_ACCESS_KEY="..."
-R2_BUCKET_NAME="il-tuo-bucket"
-```
-
-```bash
-npm run migrate
-```
-
-> ⚠️ `migrate` serve una volta sola, all'inizio. **Rilanciarlo dopo aver usato la dashboard riporta tutto al seed.** Se ne accorge, si ferma e chiede `--force`.
-
-`VITE_R2_PUBLIC_URL` in `.env` è facoltativo: lo usa solo l'anteprima locale. `npm run upload` usa le stesse credenziali per caricare una cartella già pronta senza passare dalla dashboard.
-
 ### 7. Entra in `/admin`
 
-Apri `https://il-tuo-dominio/admin`. Cloudflare Access chiede la tua email e ti manda un codice monouso: entrano solo gli indirizzi elencati in `admin_emails`. Crea un album e carica qualche foto.
+Apri `https://il-tuo-dominio/admin`. Cloudflare Access chiede la tua email e ti manda un codice monouso: entrano solo gli indirizzi elencati in `admin_emails`. La prima volta la dashboard parte dal seed: crea un album e salva la sezione del sito, e i dati vengono scritti in R2 — non c'è niente da importare prima. Poi carica qualche foto.
+
+> 💡 `npm run migrate` esiste ancora per un caso: copiare in R2 in un colpo molti album da `config/albums.config.js`. Richiede le credenziali API di R2 in `.env` (vedi `.env.example`), e **lanciarlo dopo aver usato la dashboard riporta tutto al seed**. `npm run upload` usa le stesse credenziali per caricare una cartella già pronta senza passare dalla dashboard.
 
 ### 8. Controlla che tutto funzioni
 
@@ -221,7 +207,7 @@ Esiste un ambiente di staging facoltativo, ma non è pronto all'uso per una prim
 | Usare "Use this template" | Fai un fork, così potrai ricevere gli aggiornamenti ([sopra](#-come-partire-e-come-restare-aggiornati)) |
 | Usare Node 20 | Node 22.12 o successivo |
 | Lasciare il sito senza il tuo dominio | Collegalo al Worker (passo 4): `/admin` funziona solo lì |
-| Rilanciare `npm run migrate` dopo aver usato la dashboard | Modifica i contenuti da `/admin`; `migrate` serve solo la prima volta |
+| Lanciare `npm run migrate` dopo aver usato la dashboard | Non serve: i dati li crea la dashboard. Se lo usi, solo prima del primo salvataggio da `/admin` |
 | Fare il merge di un aggiornamento senza guardare `wrangler.json` | Segui [docs/upgrading.md](docs/upgrading.md): un fast-forward sostituisce i tuoi valori coi segnaposto senza alcun conflitto |
 | Pubblicare una build fatta con `ALLOW_PLACEHOLDER_CSP=1` | Usala solo per verificare che il template compili |
 | Mettere un URL di notifica o qualunque segreto in `wrangler.json` | `npx wrangler versions secret put …`: il file è pubblico nel tuo repository |
@@ -239,7 +225,7 @@ La dashboard `/admin` è il posto dove dai forma al sito mentre è in funzione:
 - **Sezione Album** — aggiungi album, modificane titolo e descrizione
 - **Vista album** — carica foto, riordinale, eliminale
 
-I file in `config/` sono solo il seed iniziale — dopo `migrate`, la verità è R2. Le modifiche fatte dalla dashboard sono online subito, senza deploy.
+I file in `config/` sono solo il seed iniziale — dopo il primo salvataggio da `/admin`, la verità è R2. Le modifiche fatte dalla dashboard sono online subito, senza deploy.
 
 ## 🎨 Personalizzazione
 
