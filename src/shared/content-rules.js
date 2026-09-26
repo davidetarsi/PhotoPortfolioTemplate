@@ -4,7 +4,33 @@
  */
 
 export const SLUG_RE = /^[a-z0-9][a-z0-9-]*$/;
-export const RESERVED_SLUGS = ['admin', 'api', 'assets', 'about'];
+
+/**
+ * Paths the template answers before the Worker's album branch: the one list that routing
+ * (Worker, Vite dev server) and reservations (dashboard, custom pages) derive from.
+ */
+export const TEMPLATE_ROUTES = Object.freeze({
+  // Served by the Worker from a static file with another name.
+  pages: Object.freeze({ '/about': '/about.html', '/admin': '/admin.html' }),
+  // Built files that Workers Static Assets serves before the Worker runs:
+  // /album is album.html itself, /index answers 307 → /.
+  builtFiles: Object.freeze(['/album', '/index']),
+  // Worker API routes and Vite build output.
+  prefixes: Object.freeze(['/api', '/assets']),
+});
+
+/**
+ * First path segments taken by the template. Refused for NEW names only: the dashboard
+ * when it creates an album, and custom/pages.config.js. Not checked when reading or
+ * saving albums.json: an existing album with one of these slugs keeps working in the
+ * dashboard, and on the public site the template route wins.
+ */
+export const RESERVED_SLUGS = Object.freeze([
+  ...Object.keys(TEMPLATE_ROUTES.pages),
+  ...TEMPLATE_ROUTES.builtFiles,
+  ...TEMPLATE_ROUTES.prefixes,
+].map(path => path.split('/')[1]).sort());
+
 // Legacy photo names uploaded by upload.js contain uppercase letters; the server accepts them.
 export const PHOTO_NAME_RE = /^[A-Za-z0-9][A-Za-z0-9._-]*\.webp$/;
 export const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
@@ -52,7 +78,7 @@ export function validateSiteShape(data) {
 
 /**
  * Validates the structure of the albums collection.
- * Ensures slugs are unique, reserved names are not used, and all required fields are present.
+ * Ensures slugs are valid and unique and all required fields are present. Reserved slugs are not checked here: see RESERVED_SLUGS.
  * @param {unknown} data - The albums configuration object to validate.
  * @returns {{ok: true} | {ok: false, error: string}} Validation result.
  */
@@ -62,7 +88,6 @@ export function validateAlbumsShape(data) {
   for (const a of data.albums) {
     if (!isObj(a)) return fail('albums: entry is not an object');
     if (typeof a.slug !== 'string' || !SLUG_RE.test(a.slug)) return fail(`invalid slug: "${a?.slug}"`);
-    if (RESERVED_SLUGS.includes(a.slug)) return fail(`reserved slug: "${a.slug}"`);
     if (seen.has(a.slug)) return fail(`duplicate slug: "${a.slug}"`);
     seen.add(a.slug);
     if (typeof a.title !== 'string' || !a.title.trim()) return fail(`title is required for "${a.slug}"`);

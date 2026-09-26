@@ -49,4 +49,11 @@ describe('createAlbum', () => {
     expect(result).toEqual({ ok: true, slug: 'montagne' });
     expect(ctx.albums[0].title).toBe('Montagne');
   });
+
+  it('slug di un file del template (album, index) → ok:false con messaggio dedicato', async () => {
+    const ctx = makeCtx();
+    expect(await createAlbum('Album', ctx)).toEqual({ ok: false, error: formatText(texts.admin.albums.titleReserved, { slug: 'album' }) });
+    expect(await createAlbum('Index', ctx)).toEqual({ ok: false, error: formatText(texts.admin.albums.titleReserved, { slug: 'index' }) });
+    expect(ctx.api.putAlbums).not.toHaveBeenCalled();
+  });
 });

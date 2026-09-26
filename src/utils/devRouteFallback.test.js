@@ -37,7 +37,7 @@ describe('devRouteFallback', () => {
       expect(response.end).not.toHaveBeenCalled();
     });
 
-  it.each(['/api/contact', '/assets/logo.svg', '/about', '/about/', '/admin', '/contatti', '/'])(
+  it.each(['/api/contact', '/assets/logo.svg', '/about', '/about/', '/admin', '/album', '/index', '/'])(
     'passes through non-data route %s', url => {
       const request = { url };
       const response = responseDouble();
@@ -50,4 +50,10 @@ describe('devRouteFallback', () => {
       expect(response.end).not.toHaveBeenCalled();
     },
   );
+
+  it('treats /contatti as an ordinary album slug', () => {
+    const request = { url: '/contatti' };
+    devRouteFallback(request, responseDouble(), vi.fn());
+    expect(request.url).toBe('/album.html');
+  });
 });

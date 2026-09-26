@@ -6,7 +6,7 @@
 import { jsonResponse } from './http.js';
 import { verifyAccessJwt } from './access-jwt.js';
 import {
-  SLUG_RE, RESERVED_SLUGS, PHOTO_NAME_RE, MAX_PHOTO_BYTES,
+  SLUG_RE, PHOTO_NAME_RE, MAX_PHOTO_BYTES,
   validateSiteShape, validateAlbumsShape, validateManifestShape,
 } from '../shared/content-rules.js';
 
@@ -62,7 +62,7 @@ export async function handleAdminRequest(request, env, deps = {}) {
   if (manifest) {
     if (method !== 'PUT') return jsonResponse({ error: 'METHOD_NOT_ALLOWED' }, 405);
     const slug = manifest[1];
-    if (!SLUG_RE.test(slug) || RESERVED_SLUGS.includes(slug)) return jsonResponse({ error: 'NOT_FOUND' }, 404);
+    if (!SLUG_RE.test(slug)) return jsonResponse({ error: 'NOT_FOUND' }, 404);
     return putValidatedJson(request, env, `${slug}/manifest.json`, validateManifestShape);
   }
 
@@ -70,7 +70,7 @@ export async function handleAdminRequest(request, env, deps = {}) {
   if (photo) {
     const [, slug, rawName] = photo;
     const name = decodeURIComponent(rawName);
-    if (!SLUG_RE.test(slug) || RESERVED_SLUGS.includes(slug) || !PHOTO_NAME_RE.test(name)) {
+    if (!SLUG_RE.test(slug) || !PHOTO_NAME_RE.test(name)) {
       return jsonResponse({ error: 'Nome o slug invalido' }, 400);
     }
     const key = `${slug}/${name}`;
@@ -114,7 +114,6 @@ export async function handleAdminRequest(request, env, deps = {}) {
   if (albumDelete) {
     if (method !== 'DELETE') return jsonResponse({ error: 'METHOD_NOT_ALLOWED' }, 405);
     const slug = albumDelete[1];
-    if (RESERVED_SLUGS.includes(slug)) return jsonResponse({ error: 'NOT_FOUND' }, 404);
 
     // Paginated loop: list() returns max 1000 keys/page, delete() takes max 1000 keys/call.
     // Delete photos first, THEN albums.json: if the loop dies halfway, the album
