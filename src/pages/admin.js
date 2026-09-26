@@ -14,6 +14,7 @@ import { runBatch, attachBeforeUnloadGuard } from '../admin/upload-manager.js';
 import { processFile } from '../admin/pipeline.js';
 import { makeProcessDeps } from '../admin/encoder.js';
 import { showPreview } from '../admin/preview.js';
+import { resolveAdminAlbums } from '../admin/bootstrap.js';
 
 validateSiteConfig(siteConfig);
 const root = document.getElementById('admin-root');
@@ -23,13 +24,14 @@ root.innerHTML = '<p class="admin-status">Caricamento…</p>';
 
 const [siteRes, albumsRes, configRes] = await Promise.all([fetchSite(), fetchAlbums(), fetchConfig()]);
 const r2PublicUrl = configRes.ok ? configRes.data.r2PublicUrl : siteConfig.r2PublicUrl;
+const adminAlbums = resolveAdminAlbums(albumsRes);
 
 // First startup: _site/site.json may not exist yet → start with editable build defaults.
 const ctx = {
   site: siteRes.ok
     ? siteRes.data
     : { name: siteConfig.name, bio: siteConfig.bio ?? '', hero: null, social: {} },
-  albums: albumsRes.ok ? albumsRes.data : [],
+  albums: adminAlbums.albums,
   r2PublicUrl,
   api: adminApi,
   navigate: hash => { window.location.hash = hash; },
@@ -55,7 +57,7 @@ function renderRoute() {
   else renderAdminHome(root, ctx);
 }
 window.addEventListener('hashchange', renderRoute);
-if (!albumsRes.ok) {
+if (!adminAlbums.ok) {
   root.innerHTML = `<p class="admin-status">${texts.admin.albums.loadError}</p>`;
 } else {
   renderRoute();
