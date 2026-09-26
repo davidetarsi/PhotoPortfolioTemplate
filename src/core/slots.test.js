@@ -62,6 +62,11 @@ describe('createSlotResolver', () => {
     expect(error.message).toMatch(/custom\/slots\.js.*"landing".*failed to load.*Failed to fetch/);
     expect(error.cause).toBe(cause);
   });
+
+  it('refuses a default that does not implement its contract', () => {
+    expect(() => createSlotResolver({ ...defaults, lightbox: { mount() {} } }, {}, contracts))
+      .toThrow(/default implementation.*"lightbox".*create\(/);
+  });
 });
 
 describe('overridesFrom', () => {

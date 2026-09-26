@@ -12,8 +12,8 @@ export function createSlotResolver(defaults, overrides, contracts) {
   const known = Object.keys(contracts);
 
   for (const name of known) {
-    if (!defaults[name]) {
-      throw new Error(`Template bug: no default implementation for slot "${name}".`);
+    if (typeof defaults[name]?.[contracts[name]] !== 'function') {
+      throw new Error(`Template bug: the default implementation of slot "${name}" must have ${contracts[name]}(…).`);
     }
   }
   for (const [name, loader] of Object.entries(overrides ?? {})) {

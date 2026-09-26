@@ -71,4 +71,14 @@ describe('default landing slot', () => {
     handle.destroy();
     expect(container.children).toHaveLength(0);
   });
+
+  it('passes the resolved site and the texts to the hero', async () => {
+    const { landing } = await import('./Landing.js');
+    const { renderHero } = await import('./Hero.js');
+    await landing.mount(container, {
+      texts,
+      data: Promise.resolve({ site, albums: [], albumsError: null, r2PublicUrl: undefined }),
+    });
+    expect(renderHero).toHaveBeenCalledWith(container.querySelector('#hero'), site, texts);
+  });
 });

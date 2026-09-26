@@ -11,11 +11,11 @@ vi.mock('../utils/validateConfig.js', () => ({ validateSiteConfig: vi.fn() }));
 vi.mock('../components/Nav.js', () => ({ renderNav: vi.fn() }));
 vi.mock('../components/Footer.js', () => ({ renderFooter: vi.fn() }));
 vi.mock('../components/Hero.js', () => ({ renderHero: vi.fn() }));
-// This test covers the home page with the template landing. Pinning the slot keeps it
-// true in a fork whose custom/ replaces the landing; custom-slots.test.js checks the fork's own slots.
+// This test covers the home page with the template's own parts. Pinning every slot to its
+// default keeps it true in a fork whose custom/ replaces them; custom-slots.test.js checks the fork's slots.
 vi.mock('../core/custom-slots.js', async () => {
-  const { landing } = await import('../components/Landing.js');
-  return { slot: async () => landing };
+  const defaults = await import('../core/default-slots.js');
+  return { slot: async name => defaults[name] };
 });
 
 describe('home album bootstrap', () => {
