@@ -128,7 +128,7 @@ Follow the steps in order: each one needs the previous. The [Cloudflare runbook]
 
 ### 1. Create the infrastructure
 
-With Terraform (recommended): copy `infra/terraform.tfvars.example` to `infra/terraform.tfvars`, fill it using the [field-by-field reference](docs/runbook-cloudflare.md#32-variable-reference), then plan and apply as the [Terraform path](docs/runbook-cloudflare.md#3-terraform-path) explains, including the API token and its permissions. It creates the R2 bucket, the Access application that protects `/admin` and `/api/admin`, and the Turnstile widget of the contact form.
+With Terraform (recommended): copy `infra/terraform.tfvars.example` to `infra/terraform.tfvars`, fill it using the [field-by-field reference](docs/runbook-cloudflare.md#32-variable-reference), then plan and apply as the [Terraform path](docs/runbook-cloudflare.md#3-terraform-path) explains, including the API token and its permissions. It creates two R2 buckets — a public one for photos and a private one for contact messages — the Access application that protects `/admin` and `/api/admin`, and the Turnstile widget of the contact form.
 
 Then write the results into `wrangler.json`:
 

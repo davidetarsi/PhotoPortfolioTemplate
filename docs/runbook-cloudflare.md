@@ -163,6 +163,7 @@ See [the staging guide](staging.md) for the optional environment and its two-ste
 2. Name: `{project_name}` (e.g. `mario-portfolio`)
 3. Replica region: no (optional, only for geographic redundancy)
 4. Create
+5. Create a second bucket named `{project_name}-messages` (e.g. `mario-portfolio-messages`) for contact messages. **Do not enable public access on it**: only the Worker reads it, through the `MESSAGES_BUCKET` binding.
 
 ### R2 managed domains (r2.dev)
 
@@ -442,11 +443,11 @@ Visitors see nothing: the widget is configured `interaction-only`, so it only ap
 
 ## Manual path flow summary
 
-1. Create the production R2 bucket and its r2.dev managed domain from the dashboard.
+1. Create the production R2 bucket and its r2.dev managed domain from the dashboard, plus the private `{project_name}-messages` bucket without public access.
 2. Create the production Access application (`/admin` + `/api/admin/*`) with Allow policy for your email.
 3. Copy team domain + AUD from the dashboard.
 4. (Optional) Create the Turnstile widget and set `TURNSTILE_SECRET` for production.
-5. Populate `wrangler.json` manually (copy `wrangler.example.json`, fill bucket name, public R2 URL, team domain, AUD, Turnstile sitekey).
+5. Populate `wrangler.json` manually (copy `wrangler.example.json`, fill both bucket names (photos and messages), public R2 URL, team domain, AUD, Turnstile sitekey).
 6. Connect the repository to Cloudflare and set `main` as the production branch.
 7. Push to trigger the first production deploy.
 8. If using Terraform later, import existing production resources with `terraform import`.

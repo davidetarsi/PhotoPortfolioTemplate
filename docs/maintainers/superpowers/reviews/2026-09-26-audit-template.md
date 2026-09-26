@@ -157,6 +157,6 @@ Rilievo aggiunto durante le correzioni:
 
 - **U7 — Media: nessuna guida spiegava come collegare il dominio del sito al Worker.** Terraform crea Access su `prod_hostname`, ma non collega quel dominio al Worker; il README ora lo fa al passo 4 (Workers & Pages → Settings → Domains & Routes). Possibile miglioramento futuro: generare `routes` con `custom_domain: true` in `wrangler.json` da `infra:sync`.
 
-Restano aperti: S2 (bucket privato per i messaggi; esiste già il piano `docs/maintainers/superpowers/plans/2026-09-25-private-contact-buckets-template.md`, da riprendere), S4 (`workers_dev`/`preview_urls` a `false` con dominio proprio), S5, S6.
+S2 corretto sul branch `feat/s2-private-messages` (piano `docs/maintainers/superpowers/plans/2026-09-26-s2-private-messages-bucket.md`). Restano aperti: S4 (`workers_dev`/`preview_urls` a `false` con dominio proprio), S5, S6.
 
 Verifica finale: `npm test` 73 file, 581 test passati; build riuscita, 0 avvisi; link dei documenti: 0 rotti.
