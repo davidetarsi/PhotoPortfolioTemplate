@@ -69,6 +69,7 @@ does not have. From then on your branch is genuinely divergent, merges are real 
 | `wrangler.json` | replaced by the template's placeholders | **no** — restore it, as above |
 | `public/_headers` | deleted | yes: the CSP is generated at build time from `wrangler.json`. If you restore it, Vite copies it over the generated one and pins stale URLs in production |
 | `config/*.config.js` | back to the neutral seed | yes: at runtime the truth lives in R2, not in these files |
+| `custom/` | untouched — the template never ships it | yes. Read the release notes for slot contract changes |
 
 After the merge, **do not run `npm run migrate`**. It would push the empty seed over your
 real content.

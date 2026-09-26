@@ -110,7 +110,7 @@ h1, h2, h3 {
 
 ### Behavior (`src/`)
 
-Files in `src/` are the application's behavior: modifying them creates conflicts on future template merges. Keep customizations in `config/` and `theme/`, the only designated extension points.
+Files in `src/` are the application's behavior: modifying them creates conflicts on future template merges. Keep customizations in `config/`, `theme/` and `custom/`, the designated extension points: to replace a whole part of the site, use `custom/` (see below) instead of editing `src/`.
 
 Exception: if you fix a bug or add a feature to the template itself, do it in `src/`, but contribute it back to the repository you forked from — so the next fork of your copy has it already.
 
@@ -129,6 +129,18 @@ The template ships it with placeholders; you fill in your values **and commit it
 The values it contains aren't secrets — bucket names, team domain, AUD, and public bucket URL are all already visible externally. Real credentials live in `.env`, which isn't versioned.
 
 Two practical consequences: it will conflict on every `git merge upstream/main` (resolve with `git checkout --ours wrangler.json`), and `npm run infra:sync` rewrites it from Terraform outputs, so any manual changes need to be redone or moved to `.tf`.
+
+---
+
+## Replacing a whole part: `custom/`
+
+When `config/` and `theme/` are not enough — a different landing, for example — create `custom/` from the example and declare there the parts you replace:
+
+```bash
+cp -r custom.example custom
+```
+
+The template never contains `custom/`, so `git merge upstream/main` never conflicts there. Commit it in your fork. The parts you can replace, their contracts and the errors you can meet are in [`docs/slots.md`](docs/slots.md).
 
 ---
 
