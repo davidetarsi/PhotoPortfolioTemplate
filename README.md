@@ -180,7 +180,7 @@ The site and the dashboard start from these files, so edit them first if you lik
 - **`config/albums.config.js`** — example albums, shown on the home page until you create your first album in the dashboard
 - **`config/texts.config.js`** *(optional)* — interface copy
 - **`config/admin.config.js`** *(optional)* — dashboard styling
-- **`theme/tokens.css`** and **`theme/typography.css`** — colors, fonts and the Google Fonts link
+- **`theme/tokens.css`**, **`theme/typography.css`** and **`theme/fonts.js`** — colors, type and the one Google Fonts link every page uses
 
 ### 7. Sign in to `/admin`
 

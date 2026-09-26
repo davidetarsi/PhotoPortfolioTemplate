@@ -35,7 +35,7 @@ Values are HTML-escaped. A `<meta>` whose `content` ends up empty is removed. In
 
 No inline `<script>` or `<style>`: the Content Security Policy blocks them. Use `<script type="module" src="/custom/pages/….js">`.
 
-Copy the Google Fonts `<link>` tags from the `<head>` of `index.html` into your pages, as the examples do: the template's typography expects those fonts.
+The build adds the Google Fonts links from `theme/fonts.js` to your pages too: do not copy them into your HTML.
 
 ## The script
 

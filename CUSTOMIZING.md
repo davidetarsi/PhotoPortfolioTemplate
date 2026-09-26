@@ -77,18 +77,17 @@ Changing fonts requires **three coordinated changes** — skipping one causes si
 --font-heading: 'Playfair Display', serif;
 ```
 
-2. **In all four HTML files** (`index.html`, `album.html`, `about.html`, `admin.html`), and in your custom pages (`custom/pages/*.html`): replace the Google Fonts `<link>` tag.
-   Forgetting `admin.html` is the easiest mistake: the site changes fonts and the dashboard lags behind.
+2. **`theme/fonts.js`:** replace `googleFontsUrl` with the Google Fonts URL of the new families. The build adds it to every page — the site, the dashboard and your custom pages — so there is nothing to change in the HTML files.
 
-```html
-<!-- Before -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@300&family=Fraunces:wght@400&family=IBM+Plex+Mono:wght@400&display=swap">
+```js
+// Before
+export const googleFontsUrl = 'https://fonts.googleapis.com/css2?family=Fraunces:…&family=Sora:…&family=IBM+Plex+Mono:wght@400&display=swap';
 
-<!-- After: include only the fonts you use, with the weights you use -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400&family=Playfair+Display:wght@600&family=IBM+Plex+Mono:wght@400&display=swap">
+// After: include only the fonts you use, with the weights you use
+export const googleFontsUrl = 'https://fonts.googleapis.com/css2?family=Poppins:wght@400&family=Playfair+Display:wght@600&family=IBM+Plex+Mono:wght@400&display=swap';
 ```
+
+   An empty string loads no external fonts: the CSS falls back to the next font in each `--font-*` stack. Only Google Fonts URLs are accepted, because the Content Security Policy allows only Google Fonts.
 
 3. **`theme/typography.css`:** if the new font has different weights, update the `font-weight` values in CSS rules
 

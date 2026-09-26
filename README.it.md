@@ -182,7 +182,7 @@ Il sito e la dashboard partono da questi file: se vuoi, modificali prima, poi fa
 - **`config/albums.config.js`** — album di esempio, mostrati in home finché non crei il primo album dalla dashboard
 - **`config/texts.config.js`** *(facoltativo)* — testi dell'interfaccia
 - **`config/admin.config.js`** *(facoltativo)* — stile della dashboard
-- **`theme/tokens.css`** e **`theme/typography.css`** — colori, font e link a Google Fonts
+- **`theme/tokens.css`**, **`theme/typography.css`** e **`theme/fonts.js`** — colori, tipografia e l'unico link a Google Fonts usato da tutte le pagine
 
 ### 7. Entra in `/admin`
 
