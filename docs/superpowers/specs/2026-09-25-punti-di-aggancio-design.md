@@ -171,7 +171,7 @@ documentazione compresi.
 | 2 | **F1** | Registro degli slot, slot `landing`, `custom.example/`, documentazione di base | `plans/2026-09-25-f1-slot-landing.md` | 3–4 h | — | modello economico |
 | 3 | **F2a** | API pubblica minima per `custom/`: `src/api/index.js` con `albumsToCards` | `plans/2026-09-26-f2a-api-pubblica-minima.md` | 1 h | F1 | modello economico |
 | 4 | **F2** | Slot `nav`, `footer`, `photoGrid`, `lightbox`; eventi; `custom/setup.js`; `custom/theme.css`; `src/api` | `plans/2026-09-25-f2-slot-album-ed-eventi.md` | 3–4 h | F1, F2a | modello economico |
-| 5 | **F3** | Pagine del sito (singole e collezioni), dev server, slug riservati | `plans/2026-09-25-f3-pagine-del-sito.md` | 6–8 h | F2, percorsi riservati unificati | modello standard, dopo aver dettagliato i task in prosa |
+| 5 | **F3** | Pagine del sito (singole e collezioni), dev server, slug riservati | `plans/2026-09-26-f3-custom-pages.md` (sostituisce `plans/2026-09-25-f3-pagine-del-sito.md`) | 6–8 h | F2, percorsi riservati unificati | modello standard, dopo aver dettagliato i task in prosa |
 
 **Totale: 15–20 ore.**
 
@@ -223,6 +223,15 @@ These decisions supersede the earlier F2 implementation sketches. F2 remains fra
 - **Public API.** Preserve `albumsToCards` and the planned data/event exports. Expose `slot` through an asynchronous facade that imports the registry only when called; data helpers and events must not eagerly import that registry. Export stability tests cover behavior as well as names. Custom modules declare loaders at module scope; resolving/mounting slots is a runtime action, not module initialization. Include a real custom fixture with a statically imported component that imports the public API.
 - **Routes/language audit.** Built-in canonical routes and newly shipped example routes use lowercase English. User-created album slugs are not constrained to English. `/about` remains the page containing profile and contacts; `/contatti` is an existing legacy 301 alias and is retained in F2. Whether to remove it, add `/contacts`, or keep only About is deferred explicitly to F3. Report Italian example paths in the older F3 plan as pending migration, not as implemented routes. Do not silently alter routing or reserved slug rules in this phase.
 - **Verification.** Run full test/build and browser checks without `custom/` and with a disposable copy of `custom.example/`. Use placeholder CSP only for template validation, never for a deploy. Include home, album success/error/empty cases, about/contact rendering, dashboard theme isolation, and no unhandled rejection when a custom loader fails.
+
+### F3: decisions approved on 2026-09-26
+
+These decisions supersede the names and examples of §2.5 and the older F3 plan.
+
+- **Reserved slugs block only new names.** One exported list of template routes (`TEMPLATE_ROUTES`) feeds the Worker, the dev server, the dashboard and the page validator; `RESERVED_SLUGS` (`about`, `admin`, `album`, `api`, `assets`, `index`) derives from it. It is checked when the dashboard creates an album and when `custom/pages.config.js` declares a page, not when `albums.json` is read or saved, nor in the photo, manifest and delete routes. An existing album with a reserved slug keeps working in the dashboard; on the public site the template route wins. Reason: `validateAlbumsShape` also validates reads, so a longer reserved list would have rejected a fork's whole album list.
+- **English names with the `custom` prefix.** `custom/pages.config.js`, `custom/pages/`, `virtual:custom-pages`, `docs/pages.md`; examples `/archive` and `/projects/:slug`.
+- **`/contatti` is removed.** The 301 to `/about` goes; `/contatti` becomes an ordinary album path. No `/contacts`.
+- **Execution.** Plan `plans/2026-09-26-f3-custom-pages.md`: one Haiku 4.5 implementer per task, maintainer review between tasks.
 
 
 - **Il nome della cartella: `custom/`** (deciso il 2026-09-26). Il nome iniziale, `site/`, conviveva con
