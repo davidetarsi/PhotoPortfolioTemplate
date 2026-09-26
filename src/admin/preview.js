@@ -13,6 +13,7 @@ import { createLightbox } from '../components/Lightbox.js';
 import { albumsToCards } from '../pages/home-logic.js';
 import { resolveAlbumPage } from '../pages/album-logic.js';
 import { photosFromManifest } from '../providers/r2.js';
+import { html } from '../shared/html.js';
 
 let _keyboardBound = false;
 // Incremented on every view change: an in-flight manifest fetch that resolves
@@ -79,7 +80,7 @@ function ensureKeyboardHandling() {
  */
 export function showPreview(container, data, textsArg, deps) {
   ensureKeyboardHandling();
-  container.innerHTML = `
+  container.innerHTML = html`
     <div class="admin-preview__header">
       <h2>${textsArg.admin.site.preview}</h2>
       <button class="admin-preview__close" type="button">${textsArg.admin.site.previewClose}</button>
@@ -97,7 +98,7 @@ function renderLandingView(container, data, textsArg, deps) {
   teardownLightbox();
   const { name, bio, heroUrl, social, albums = [], r2PublicUrl } = data;
   const content = container.querySelector('.admin-preview__content');
-  content.innerHTML = `
+  content.innerHTML = html`
     <div class="admin-preview__hero"></div>
     <div class="container">
       <h2 class="section-heading"></h2>
@@ -124,7 +125,7 @@ async function renderAlbumView(container, slug, data, textsArg, deps) {
   teardownLightbox();
   const { albums = [], r2PublicUrl, social } = data;
   const content = container.querySelector('.admin-preview__content');
-  content.innerHTML = `
+  content.innerHTML = html`
     <p><button type="button" class="admin-back admin-preview__back">← Tutti gli album</button></p>
     <div class="container">
       <h2 class="section-heading"></h2>
@@ -146,13 +147,13 @@ async function renderAlbumView(container, slug, data, textsArg, deps) {
 
   if (page.kind === 'not_found') {
     titleEl.textContent = '';
-    gridEl.innerHTML = `<p class="photo-grid__error">${textsArg.album.notFound}</p>`;
+    gridEl.innerHTML = html`<p class="photo-grid__error">${textsArg.album.notFound}</p>`;
   } else {
     titleEl.textContent = page.album.title;
     if (page.kind === 'empty') {
-      gridEl.innerHTML = `<p class="photo-grid__error">${textsArg.album.empty}</p>`;
+      gridEl.innerHTML = html`<p class="photo-grid__error">${textsArg.album.empty}</p>`;
     } else if (page.kind === 'error') {
-      gridEl.innerHTML = `<p class="photo-grid__error">${page.code === 'network' ? textsArg.album.error.network : textsArg.album.error.unknown}</p>`;
+      gridEl.innerHTML = html`<p class="photo-grid__error">${page.code === 'network' ? textsArg.album.error.network : textsArg.album.error.unknown}</p>`;
     } else {
       const photos = photosFromManifest(page.entries, slug, r2PublicUrl);
       const lb = createLightbox(photos);

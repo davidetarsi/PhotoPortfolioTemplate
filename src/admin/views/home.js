@@ -5,6 +5,7 @@ import { formatText } from '../../utils/formatText.js';
 import { createStatus } from '../status.js';
 import { createAlbum } from '../album-creation.js';
 import { topBarHtml } from './top-bar.js';
+import { html } from '../../shared/html.js';
 
 /**
  * Builds a pending site object with updated name, bio, and social info.
@@ -31,7 +32,7 @@ export function renderAdminHome(container, ctx) {
   const { site, albums, r2PublicUrl, api, navigate, deps } = ctx;
   const heroSrc = site.hero ? photoUrl(r2PublicUrl, site.hero.album, site.hero.name) : null;
 
-  container.innerHTML = `
+  container.innerHTML = html`
     <section class="admin-panel">
       ${topBarHtml({ showBackLink: false })}
       <h2>${texts.admin.site.sectionTitle}</h2>
@@ -40,7 +41,7 @@ export function renderAdminHome(container, ctx) {
       <label>${texts.admin.site.instagramLabel} <input name="site-instagram" type="url" placeholder="https://instagram.com/…"></label>
       <div class="admin-hero">
         <span>HeroImage:</span>
-        ${heroSrc ? `<img class="admin-hero__thumb" alt="">` : `<em>${texts.admin.site.heroNone}</em>`}
+        ${heroSrc ? html`<img class="admin-hero__thumb" alt="">` : html`<em>${texts.admin.site.heroNone}</em>`}
         <select name="hero-album"><option value="">${texts.admin.site.heroChooseAlbum}</option></select>
         <div class="admin-hero__picker"></div>
       </div>
@@ -132,7 +133,7 @@ export function renderAdminHome(container, ctx) {
     const row = document.createElement('div');
     row.className = 'admin-album-row';
     row.draggable = true;
-    row.innerHTML = `
+    row.innerHTML = html`
       <span class="admin-album-row__handle">⋮⋮</span>
       <a class="admin-album-row__title" href="#/album/${a.slug}"></a>
       <button class="admin-delete-album" title="Elimina album">Elimina</button>

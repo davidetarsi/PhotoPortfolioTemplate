@@ -1,4 +1,5 @@
 import '../styles/footer.css';
+import { html } from '../shared/html.js';
 
 /**
  * Renders the site footer with copyright and social links.
@@ -8,10 +9,10 @@ import '../styles/footer.css';
  */
 export function renderFooter(container, texts, social = {}) {
   const links = Object.entries(social).filter(([, url]) => typeof url === 'string' && url.trim());
-  container.innerHTML = `
+  container.innerHTML = html`
     <footer class="site-footer">
       <span class="site-footer__copyright"></span>
-      ${links.length ? '<nav class="site-footer__links"></nav>' : ''}
+      ${links.length ? html`<nav class="site-footer__links"></nav>` : ''}
     </footer>
   `;
   container.querySelector('.site-footer__copyright').textContent = texts.footer.copyright;

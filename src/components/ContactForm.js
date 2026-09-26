@@ -1,4 +1,5 @@
 import '../styles/contact-form.css';
+import { html } from '../shared/html.js';
 
 const TURNSTILE_SCRIPT = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
 
@@ -31,14 +32,14 @@ export function createContactForm(siteConfig, texts) {
 
   const hasTurnstile = siteConfig.turnstileSitekey?.trim();
 
-  form.innerHTML = `
+  form.innerHTML = html`
     <div class="contact-form__fields">
       <input class="contact-form__input" type="text" name="name" required>
       <input class="contact-form__input" type="email" name="email" required>
       <input class="contact-form__input" type="text" name="subject">
       <textarea class="contact-form__textarea" name="message" required></textarea>
       <input class="contact-form__honeypot" type="checkbox" name="botcheck">
-      ${hasTurnstile ? '<div class="contact-form__turnstile" data-sitekey="' + siteConfig.turnstileSitekey + '" data-theme="auto"></div>' : ''}
+      ${hasTurnstile ? html`<div class="contact-form__turnstile" data-sitekey="${siteConfig.turnstileSitekey}" data-theme="auto"></div>` : ''}
       <button class="contact-form__submit" type="submit"></button>
     </div>
     <p class="contact-form__feedback" aria-live="polite"></p>

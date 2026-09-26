@@ -15,6 +15,7 @@ import { processFile } from '../admin/pipeline.js';
 import { makeProcessDeps } from '../admin/encoder.js';
 import { showPreview } from '../admin/preview.js';
 import { resolveAdminAlbums } from '../admin/bootstrap.js';
+import { html } from '../shared/html.js';
 
 validateSiteConfig(siteConfig);
 const root = document.getElementById('admin-root');
@@ -58,7 +59,7 @@ function renderRoute() {
 }
 window.addEventListener('hashchange', renderRoute);
 if (!adminAlbums.ok) {
-  root.innerHTML = `<p class="admin-status">${texts.admin.albums.loadError}</p>`;
+  root.innerHTML = html`<p class="admin-status">${texts.admin.albums.loadError}</p>`;
 } else {
   renderRoute();
 }

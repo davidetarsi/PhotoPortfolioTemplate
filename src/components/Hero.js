@@ -1,4 +1,5 @@
 import '../styles/hero.css';
+import { html } from '../shared/html.js';
 
 /**
  * Renders the hero section with background image, name, and bio.
@@ -7,8 +8,8 @@ import '../styles/hero.css';
  * @param {object} texts - UI text strings.
  */
 export function renderHero(container, { name, bio, heroUrl }, texts) {
-  const imgHtml = heroUrl ? `<img class="hero__bg" alt="" fetchpriority="high" decoding="sync">` : '';
-  container.innerHTML = `
+  const imgHtml = heroUrl ? html`<img class="hero__bg" alt="" fetchpriority="high" decoding="sync">` : '';
+  container.innerHTML = html`
     <div class="hero__inner">
       ${imgHtml}
       <div class="hero__content">

@@ -4,6 +4,7 @@
  * touch swipe gestures, and click-outside-to-close.
  */
 import '../styles/lightbox.css';
+import { html } from '../shared/html.js';
 
 /**
  * Instantiates a lightbox with photo array.
@@ -17,7 +18,7 @@ export function createLightbox(photos, { onClose } = {}) {
   el.setAttribute('aria-modal', 'true');
   el.setAttribute('aria-label', 'Foto a schermo intero');
   el.setAttribute('aria-hidden', 'true');
-  el.innerHTML = `
+  el.innerHTML = html`
     <button class="lightbox__close" aria-label="Chiudi">×</button>
     <button class="lightbox__prev" aria-label="Precedente">‹</button>
     <img class="lightbox__img" src="" alt="">

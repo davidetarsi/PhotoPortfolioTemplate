@@ -1,5 +1,6 @@
 import '../styles/album-card.css';
 import '../../theme/card.css';
+import { html } from '../shared/html.js';
 
 /**
  * Creates an album card element for display in the album grid.
@@ -11,10 +12,10 @@ export function createAlbumCard({ slug, title, description, coverUrl }) {
   a.className = 'album-card';
   a.href = `/${slug}`;
 
-  const imgHtml = coverUrl ? `<img class="album-card__img" alt="" loading="lazy">` : '';
-  const descHtml = description ? `<p class="album-card__desc"></p>` : '';
+  const imgHtml = coverUrl ? html`<img class="album-card__img" alt="" loading="lazy">` : '';
+  const descHtml = description ? html`<p class="album-card__desc"></p>` : '';
 
-  a.innerHTML = `
+  a.innerHTML = html`
     <div class="album-card__cover">${imgHtml}</div>
     <div class="album-card__info">
       <h3 class="album-card__title"></h3>

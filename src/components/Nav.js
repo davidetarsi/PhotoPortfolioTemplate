@@ -1,4 +1,5 @@
 import '../styles/nav.css';
+import { html } from '../shared/html.js';
 
 /**
  * Renders the site navigation bar.
@@ -7,7 +8,7 @@ import '../styles/nav.css';
  * @param {object} texts - UI text strings.
  */
 export function renderNav(container, siteConfig, texts) {
-  container.innerHTML = `
+  container.innerHTML = html`
     <nav class="site-nav">
       <a href="/" class="site-nav__brand"></a>
       <div class="site-nav__links">

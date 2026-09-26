@@ -1,6 +1,7 @@
 import { renderHero } from './Hero.js';
 import { createAlbumCard } from './AlbumCard.js';
 import { albumsToCards } from '../pages/home-logic.js';
+import { html } from '../shared/html.js';
 
 /**
  * Default "landing" slot: hero, section heading, album cards.
@@ -13,7 +14,7 @@ export const landing = {
    * @returns {Promise<{destroy: Function}>} Handle.
    */
   async mount(container, { texts, data }) {
-    container.innerHTML = `
+    container.innerHTML = html`
       <section id="hero"></section>
       <main class="page-main">
         <div class="container">

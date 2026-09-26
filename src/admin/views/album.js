@@ -6,6 +6,7 @@ import { siteConfig } from '../../../config/site.config.js';
 import { formatText } from '../../utils/formatText.js';
 import { createStatus } from '../status.js';
 import { topBarHtml } from './top-bar.js';
+import { html } from '../../shared/html.js';
 
 /**
  * Builds a pending album object with updated description and cover.
@@ -26,7 +27,7 @@ export function buildPendingAlbum({ description, coverName }, currentAlbum) {
 export function renderAdminAlbum(container, ctx) {
   const { slug, r2PublicUrl, api, deps } = ctx;
   const album = ctx.albums.find(a => a.slug === slug);
-  container.innerHTML = `
+  container.innerHTML = html`
     <section class="admin-panel">
       ${topBarHtml({ showBackLink: true })}
       <div class="admin-album-header">
@@ -125,7 +126,7 @@ export function renderAdminAlbum(container, ctx) {
     const cell = document.createElement('figure');
     cell.className = 'admin-photo';
     cell.draggable = true;
-    cell.innerHTML = `
+    cell.innerHTML = html`
       <img class="admin-photo__img" alt="" loading="lazy">
       <div class="admin-photo__actions">
         <button class="admin-photo__cover${isCover ? ' admin-photo__cover--selected' : ''}" title="${texts.admin.album.coverAsButton}">Cover</button>
@@ -142,7 +143,7 @@ export function renderAdminAlbum(container, ctx) {
     const row = document.createElement('div');
     row.className = 'admin-photo-row';
     row.draggable = true;
-    row.innerHTML = `
+    row.innerHTML = html`
       <img class="admin-photo-row__thumb" alt="" loading="lazy">
       <span class="admin-photo-row__name"></span>
       <span class="admin-photo-row__date"></span>

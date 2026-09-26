@@ -1,6 +1,7 @@
 import { topBarHtml } from './top-bar.js';
 import { formatText } from '../../utils/formatText.js';
 import { siteConfig } from '../../../config/site.config.js';
+import { html } from '../../shared/html.js';
 
 /**
  * Renders the admin messages view for contact form submissions.
@@ -11,7 +12,7 @@ import { siteConfig } from '../../../config/site.config.js';
  * @returns {Promise<void>}
  */
 export async function renderMessages(container, deps, texts) {
-  container.innerHTML = `
+  container.innerHTML = html`
     <section class="admin-panel">
       ${topBarHtml({ showBackLink: false })}
       <h2>${texts.admin.messages.sectionTitle}</h2>
@@ -54,7 +55,7 @@ export async function renderMessages(container, deps, texts) {
 
     // Fixed markup only: every value below comes from the public contact form,
     // so it is set as text, never parsed as HTML.
-    row.innerHTML = `
+    row.innerHTML = html`
       <div class="admin-message__header">
         <div class="admin-message__name"></div>
         <div class="admin-message__date"></div>
