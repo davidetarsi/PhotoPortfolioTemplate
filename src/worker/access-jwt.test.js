@@ -61,17 +61,20 @@ describe('verifyAccessJwt', () => {
     expect(calls).toBe(1);
   });
 
-  it('kid sconosciuto → refresh JWKS; TTL scaduto → refresh', async () => {
+  it('kid sconosciuto → refresh JWKS, se l ultimo download ha almeno un minuto; TTL scaduto → refresh', async () => {
     let calls = 0;
     const rotating = await makeJwtTestKit({ kid: 'nuova-chiave' });
+    const LATER = NOW + 60_000;
+    let now = NOW;
     const d = {
-      now: () => NOW,
+      now: () => now,
       fetchJwks: async () => { calls++; return calls === 1 ? kit.fetchJwks() : rotating.fetchJwks(); },
     };
     await verifyAccessJwt(reqWith(await kit.signToken(basePayload())), ENV, d); // popola cache (kit)
+    now = LATER;
     const res = await verifyAccessJwt(reqWith(await rotating.signToken(basePayload())), ENV, d);
     expect(res.ok).toBe(true);
-    expect(calls).toBe(2); // refresh su kid sconosciuto
+    expect(calls).toBe(2); // refresh su kid sconosciuto, un minuto dopo
 
     _resetJwksCache();
     let calls2 = 0;
@@ -81,5 +84,25 @@ describe('verifyAccessJwt', () => {
     const late = { ...basePayload(), exp: Math.floor((NOW + 3_600_001) / 1000) + 3600, iat: Math.floor((NOW + 3_600_001) / 1000) };
     await verifyAccessJwt(reqWith(await kit.signToken(late)), ENV, d3);
     expect(calls2).toBe(2); // refresh su TTL
+  });
+
+  it('kid sconosciuti ripetuti: al massimo un download al minuto', async () => {
+    let calls = 0;
+    const d = { fetchJwks: async () => { calls++; return kit.fetchJwks(); }, now: () => NOW };
+    await verifyAccessJwt(reqWith(await kit.signToken(basePayload())), ENV, d); // popola cache
+    for (let i = 0; i < 5; i++) {
+      const stranger = await makeJwtTestKit({ kid: `ignota-${i}` });
+      expect((await verifyAccessJwt(reqWith(await stranger.signToken(basePayload())), ENV, d)).ok).toBe(false);
+    }
+    expect(calls).toBe(1);
+  });
+
+  it('un token senza kid non scarica le chiavi', async () => {
+    let calls = 0;
+    const d = { fetchJwks: async () => { calls++; return kit.fetchJwks(); }, now: () => NOW };
+    const [, payload, signature] = (await kit.signToken(basePayload())).split('.');
+    const header = btoa(JSON.stringify({ alg: 'RS256', typ: 'JWT' })).replace(/=+$/, '').replace(/\+/g, '-').replace(/\//g, '_');
+    expect((await verifyAccessJwt(reqWith(`${header}.${payload}.${signature}`), ENV, d)).ok).toBe(false);
+    expect(calls).toBe(0);
   });
 });
