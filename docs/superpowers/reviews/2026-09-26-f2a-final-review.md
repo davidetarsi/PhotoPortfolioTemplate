@@ -2,7 +2,7 @@
 
 ## Esito
 
-F2a è pronta per il merge locale dopo verifica del maintainer. API, esempio, test e documentazione risultano coerenti; non sono emerse regressioni funzionali nel diff `09b6954..13bd30f`.
+F2a è integrata nel `main` locale con merge commit `8f3b4d8785fa840c5c311a73390c398c5721dee0` (parent `e609df7`, branch sorgente `2fe94d2ef78f6fa35349ae4dbc56e0e0eb8243d0`). API, esempio, test e documentazione risultano coerenti; non sono emerse regressioni funzionali nel diff `09b6954..13bd30f`. Non è stato eseguito push né deploy.
 
 ## Rilievi risolti
 
@@ -14,6 +14,7 @@ F2a è pronta per il merge locale dopo verifica del maintainer. API, esempio, te
 
 - Sul commit `13bd30f`, il maintainer ha verificato `custom.example/` copiata in una directory temporanea `custom/`: `npm test` 60 file, 472 passati, 1 saltato; build con `ALLOW_PLACEHOLDER_CSP=1` riuscita.
 - Sul worktree finale dopo l’esclusione: `npm test` 59 file, 470 passati, 1 saltato; `ALLOW_PLACEHOLDER_CSP=1 npm run build` riuscita.
+- Sul merge `8f3b4d8785fa840c5c311a73390c398c5721dee0` in `main`: `npm test` 59 file, 470 passati, 1 saltato; `ALLOW_PLACEHOLDER_CSP=1 npm run build` riuscita; `git diff --check` pulito.
 - `git diff --check` passato prima del commit.
 
 ## Note minori
@@ -23,4 +24,4 @@ F2a è pronta per il merge locale dopo verifica del maintainer. API, esempio, te
 
 ## Perimetro escluso
 
-Nessuna modifica o review dell’implementazione futura F2, nessun framework React nel template, nessun deploy, push, pull, checkout o rimozione di worktree/branch.
+Nessuna modifica o review dell’implementazione futura F2, nessun framework React nel template, nessun deploy, push, pull o rimozione di worktree/branch. Il worktree corrente è stato spostato sul `main` locale; il branch `feature/f2a-public-api` resta disponibile.
