@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { renderWrangler } from '../src/utils/renderWrangler.js';
+import { publicOutputs } from '../src/utils/setup.js';
 
 const ESEMPIO = 'wrangler.example.json';
 const OUTPUTS = 'infra/outputs.json';
@@ -11,11 +12,8 @@ if (!existsSync(OUTPUTS)) {
   process.exit(1);
 }
 
-// `terraform output -json` wraps each value in { value, type, sensitive }.
-const grezzi = JSON.parse(readFileSync(OUTPUTS, 'utf8'));
-const outputs = Object.fromEntries(
-  Object.entries(grezzi).map(([k, v]) => [k, v?.value ?? v]),
-);
+// Sensitive outputs (the Turnstile secret) are dropped: they never reach wrangler.json.
+const outputs = publicOutputs(JSON.parse(readFileSync(OUTPUTS, 'utf8')));
 
 const esempio = JSON.parse(readFileSync(ESEMPIO, 'utf8'));
 writeFileSync(DESTINAZIONE, `${JSON.stringify(renderWrangler(esempio, outputs), null, 2)}\n`);
