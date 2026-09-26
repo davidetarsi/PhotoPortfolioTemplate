@@ -22,9 +22,9 @@ export default {
 };
 ```
 
-The loaded module exports the implementation as `default`; a loader may also return the implementation directly. A loader runs only when its slot is mounted. Keep `custom/slots.js` to loaders: static imports in that file are evaluated with the registry, while `() => import(...)` defers the implementation chunk.
+The loaded module exports the implementation as `default`; a loader may also return the implementation directly. A loader runs only when its slot is mounted.
 
-Keep `custom/slots.js` to loaders only: the template imports it when the page loads, so anything else in it runs on every visit.
+Keep `custom/slots.js` to loaders only: the template imports it when the page loads, so anything else in it runs on every visit. The same holds for its static imports: they are evaluated with the file, on every page, while `() => import(…)` defers the implementation until the slot is mounted.
 
 A loader written as `() => import(…)` puts your component in its own file, downloaded after the page starts: one extra round trip before your landing appears. To ship it with the page instead, import it at the top and return it:
 
@@ -75,7 +75,7 @@ Receives `{ photos, texts, onPhotoClick }`. `photos` contains manifest entries e
 
 ### `lightbox`
 
-`create(photos, { onClose })` returns an instance with `open(index, triggerElement)` and `destroy()`. The close callback receives the photo index; the template emits `photo:close` from that callback.
+`create(photos, { onClose })` returns an instance with `open(index, triggerElement)`, `close()` and `destroy()`. Call `onClose(index)` once each time an open lightbox closes, including when `destroy()` closes it, and never for an instance that is already closed; the template emits `photo:close` from that callback.
 
 ## The public API: `src/api/index.js`
 
