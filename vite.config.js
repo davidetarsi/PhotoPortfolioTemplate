@@ -11,12 +11,13 @@ import { createCustomThemePlugins, customThemeRollupInput } from './src/utils/cu
 import { customPageInputs, validateCustomPages } from './src/utils/customPages.js'
 import { customPagesPlugin } from './src/utils/customPagesPlugin.js'
 import { isExpectedBuildWarning } from './src/utils/buildWarnings.js'
+import { wranglerConfigPath } from './src/utils/wranglerConfigPath.js'
 
 // Letto una volta: serve sia al meta og:image sia alla CSP, e leggerlo due
 // volte aprirebbe la porta a due valori diversi nello stesso build.
-const wranglerConfig = existsSync('wrangler.json')
-  ? JSON.parse(readFileSync('wrangler.json', 'utf8'))
-  : null
+// Il template non contiene wrangler.json: senza, si legge wrangler.example.json, i cui
+// segnaposto fermano la build di produzione e passano solo con ALLOW_PLACEHOLDER_CSP=1.
+const wranglerConfig = JSON.parse(readFileSync(wranglerConfigPath(existsSync), 'utf8'))
 const r2PublicUrl = wranglerConfig?.vars?.R2_PUBLIC_URL ?? ''
 
 // Pagine aggiuntive del fork, facoltative: il template non spedisce mai custom/pages.config.js.
@@ -52,15 +53,12 @@ const headersPlugin = () => ({
   name: 'generate-headers',
   apply: 'build',
   generateBundle() {
-    if (!existsSync('wrangler.json')) {
-      this.error('wrangler.json non trovato. Crealo con `cp wrangler.example.json wrangler.json` e compilalo, oppure genera tutto con `npm run infra:sync`.')
-    }
     // ALLOW_PLACEHOLDER_CSP=1 serve solo a verificare che il template
     // compili prima che qualcuno ci metta i propri valori. Mai in un deploy.
     this.emitFile({
       type: 'asset',
       fileName: '_headers',
-      source: buildHeaders(JSON.parse(readFileSync('wrangler.json', 'utf8')), {
+      source: buildHeaders(wranglerConfig, {
         allowPlaceholders: process.env.ALLOW_PLACEHOLDER_CSP === '1',
       }),
     })
