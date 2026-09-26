@@ -1,12 +1,11 @@
-// Initial albums seed: used by the public fallback while R2 has no albums.json
-// and on first `npm run migrate`. After that, the source of truth is the
-// manifest on R2, managed by the dashboard.
-// Re-running `migrate` after using the dashboard will overwrite its work.
+// Initial albums seed: shown by the public site while R2 has no albums.json, and
+// copied to R2 by the optional `npm run migrate`. After the first album saved from
+// the dashboard, R2 is the source of truth.
 export const albums = [
   {
     slug: 'album-name',
-    title: 'Titolo Album',
-    description: 'Descrizione breve dell\'album.',
+    title: 'Album Title',
+    description: 'A short description of the album.',
     coverName: '',  // cover filename inside album, e.g. 'cover.webp'. Empty string = no cover.
   },
 ];

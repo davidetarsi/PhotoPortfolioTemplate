@@ -52,7 +52,7 @@ describe('album bootstrap from the build seed', () => {
   it('recognizes the seeded album and renders the empty-album state', async () => {
     await import('./album.js');
 
-    expect(document.getElementById('album-title').textContent).toBe('Titolo Album');
+    expect(document.getElementById('album-title').textContent).toBe('Album Title');
     expect(document.querySelector('.photo-grid__error')).not.toBeNull();
     expect(document.querySelector('#photo-grid a[href="/"]')).toBeNull();
   });

@@ -55,7 +55,7 @@ describe('home album bootstrap', () => {
 
     const card = document.querySelector('a.album-card[href="/album-name"]');
     expect(card).not.toBeNull();
-    expect(card.querySelector('.album-card__title').textContent).toBe('Titolo Album');
+    expect(card.querySelector('.album-card__title').textContent).toBe('Album Title');
     expect(document.querySelector('.page-error')).toBeNull();
   });
 

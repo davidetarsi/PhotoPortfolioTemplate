@@ -315,7 +315,7 @@ describe('renderAdminAlbum', () => {
     container.querySelector('.admin-view-toggle__btn--list').click();
     const row = container.querySelector('.admin-photo-row');
     expect(row.querySelector('.admin-photo-row__name').textContent).toBe('a.webp');
-    expect(row.querySelector('.admin-photo-row__date').textContent).toBe('14/06/2025');
+    expect(row.querySelector('.admin-photo-row__date').textContent).toBe('06/14/2025');
   });
 
   it('vista lista mostra "—" per foto legacy senza capturedAt né uploadedAt', async () => {

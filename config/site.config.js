@@ -1,12 +1,13 @@
 /**
- * Initial seed for site identity: used only on first `npm run migrate`.
- * After that, name, bio, hero, and social are edited from the dashboard
- * and R2 becomes the source of truth.
+ * Initial seed for site identity: the site and the dashboard start from it until the
+ * first save from /admin. After that, name, bio, hero and social are edited from the
+ * dashboard and R2 is the source of truth. `language` sets <html lang> and the date
+ * format of the dashboard ('it' together with config/texts.it.js for Italian).
  */
 export const siteConfig = {
-  name: 'Nome Fotografo',
-  bio: 'Una breve descrizione del fotografo.',
-  language: 'it',
+  name: 'Photographer Name',
+  bio: 'A short description of the photographer.',
+  language: 'en',
   heroImage: null,  // after upload: { album: 'album-name', name: 'photo.webp' }
   social: {
     // instagram: 'https://instagram.com/...',

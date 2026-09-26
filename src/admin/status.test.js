@@ -55,7 +55,7 @@ describe('createStatus', () => {
     const { say } = createStatus(el);
     say('Sito salvato.');
     const time = el.querySelector('.admin-status__time').textContent;
-    expect(time).toMatch(/^\d{2}\/\d{2}\/\d{4}, \d{2}:\d{2}$/);
+    expect(time).toMatch(/^\d{2}\/\d{2}\/\d{4}, \d{2}:\d{2}( [AP]M)?$/);
   });
 
   it('chiamate successive aggiornano il timestamp (non si accumula testo)', () => {
@@ -64,7 +64,7 @@ describe('createStatus', () => {
     const first = el.querySelector('.admin-status__time').textContent;
     say('Secondo.');
     const second = el.querySelector('.admin-status__time').textContent;
-    expect(second).toMatch(/^\d{2}\/\d{2}\/\d{4}, \d{2}:\d{2}$/);
-    expect(first).toMatch(/^\d{2}\/\d{2}\/\d{4}, \d{2}:\d{2}$/);
+    expect(second).toMatch(/^\d{2}\/\d{2}\/\d{4}, \d{2}:\d{2}( [AP]M)?$/);
+    expect(first).toMatch(/^\d{2}\/\d{2}\/\d{4}, \d{2}:\d{2}( [AP]M)?$/);
   });
 });
