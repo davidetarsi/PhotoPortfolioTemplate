@@ -1,0 +1,4 @@
+/* A landing can ship its own stylesheet: Vite bundles it, and the CSP allows it (style-src 'self'). */
+.example-landing a {
+  color: var(--color-text);
+}
