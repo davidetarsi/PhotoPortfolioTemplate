@@ -69,7 +69,7 @@ does not have. From then on your branch is genuinely divergent, merges are real 
 | `wrangler.json` | replaced by the template's placeholders | **no** — restore it, as above |
 | `public/_headers` | deleted | yes: the CSP is generated at build time from `wrangler.json`. If you restore it, Vite copies it over the generated one and pins stale URLs in production |
 | `config/*.config.js` | back to the neutral seed | yes: at runtime the truth lives in R2, not in these files |
-| `custom/` | untouched — the template never ships it | yes. Read the release notes for slot contract changes |
+| `custom/` | untouched — the template never ships it | yes. Slot changes are listed under "When an update changes behaviour" below |
 
 After the merge, **do not run `npm run migrate`**. It would push the empty seed over your
 real content.
@@ -138,6 +138,10 @@ Two kinds of change deserve a second look, because tests pass either way:
   case.
   See the [runbook](runbook-cloudflare.md#9-contact-form-notifications-and-spam-protection),
   which spells out which values must be set together and what breaks when only one is.
+
+### Slots and `custom/`
+
+An update that renames a slot, changes a contract method or changes a field of a slot's `ctx` is listed here. After merging, run `npm test`: it catches a renamed slot or contract method in your `custom/slots.js`, but not a changed `ctx` field — check your components against `docs/slots.md`. No such change so far.
 
 ## If it goes wrong
 

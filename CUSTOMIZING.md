@@ -38,6 +38,7 @@ Buckets, domains, Access applications: this configuration lives in `infra/variab
 | **Admin dashboard text** | `config/texts.config.js`, `admin` section | Same mechanism: dashboard is translatable just like the site |
 | **Date language** | `config/site.config.js`, `language` field | Used to format dates in the dashboard |
 | **Album card appearance** | `theme/card.css`: activate one of three `@import` | `cinematic` (default), `editorial`, `minimal`. See section below |
+| **Home page landing** (hero and album cards) | `custom/`: copy `custom.example/` and replace the `landing` slot | Your own component, no template file edited. See [Replacing a whole part](#replacing-a-whole-part-custom) and `docs/slots.md` |
 | **Admin dashboard background** | `config/admin.config.js`, `backgroundImageUrl` field | URL of a photo already uploaded to R2 |
 | **Who can access `/admin`** | `infra/variables.tf`, `admin_emails` field (Terraform) or dashboard Access for `/admin` and `/api/admin` paths (manual) | Requires Terraform apply or manual Access modification. See [runbook](docs/runbook-cloudflare.md). |
 | **Photo domain** | `infra/variables.tf`, `custom_photo_domain` (Terraform), or dashboard R2 (manual) | See [runbook section 8](docs/runbook-cloudflare.md#8-custom-domain-for-photos). Do once before production. |
