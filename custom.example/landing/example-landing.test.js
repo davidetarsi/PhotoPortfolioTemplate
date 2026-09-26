@@ -15,15 +15,15 @@ describe('example landing', () => {
     const container = await mountWith({
       albums: [
         { slug: 'sport', title: 'Sport', description: '', coverName: 'c.webp' },
-        { slug: 'viaggi', title: 'Viaggi', description: '', coverName: null },
+        { slug: 'travel', title: 'Viaggi', description: '', coverName: null },
       ],
     });
     const sport = container.querySelector('a[href="/sport"]');
     expect(sport.textContent).toBe('Sport');
     expect(sport.querySelector('img').getAttribute('src')).toBe('https://photos.example.com/sport/c.webp');
-    const viaggi = container.querySelector('a[href="/viaggi"]');
-    expect(viaggi.textContent).toBe('Viaggi');
-    expect(viaggi.querySelector('img')).toBeNull();
+    const travel = container.querySelector('a[href="/travel"]');
+    expect(travel.textContent).toBe('Viaggi');
+    expect(travel.querySelector('img')).toBeNull();
   });
 
   it('shows the error message when the albums could not be loaded', async () => {

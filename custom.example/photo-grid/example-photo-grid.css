@@ -1,0 +1,21 @@
+.example-photo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 1rem;
+}
+
+.example-photo-grid__item {
+  display: block;
+  overflow: hidden;
+  padding: 0;
+  border: 2px solid var(--color-accent);
+  background: transparent;
+  cursor: zoom-in;
+}
+
+.example-photo-grid__item img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+}

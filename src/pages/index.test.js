@@ -53,7 +53,7 @@ describe('home album bootstrap', () => {
     mocks.fetchAlbums.mockResolvedValue({ ok: false, error: 'NOT_FOUND' });
     await import('./index.js');
 
-    const card = document.querySelector('a.album-card[href="/nome-album"]');
+    const card = document.querySelector('a.album-card[href="/album-name"]');
     expect(card).not.toBeNull();
     expect(card.querySelector('.album-card__title').textContent).toBe('Titolo Album');
     expect(document.querySelector('.page-error')).toBeNull();

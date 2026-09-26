@@ -1,0 +1,16 @@
+/* Optional public-page theme. Vite processes imports and relative assets. */
+:root {
+  --color-text: #23354a;
+  --color-bg: #f3f0e9;
+  --color-accent: #b64f36;
+}
+
+.site-nav,
+.site-footer {
+  background-color: var(--color-bg);
+}
+
+/* Same specificity as the lazy grid rule: this wins because the theme is linked last. */
+.example-photo-grid__item {
+  border-color: #23354a;
+}

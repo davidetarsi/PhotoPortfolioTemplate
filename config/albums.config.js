@@ -4,7 +4,7 @@
 // Re-running `migrate` after using the dashboard will overwrite its work.
 export const albums = [
   {
-    slug: 'nome-album',
+    slug: 'album-name',
     title: 'Titolo Album',
     description: 'Descrizione breve dell\'album.',
     coverName: '',  // cover filename inside album, e.g. 'cover.webp'. Empty string = no cover.

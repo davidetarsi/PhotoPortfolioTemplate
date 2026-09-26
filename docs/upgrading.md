@@ -143,6 +143,8 @@ Two kinds of change deserve a second look, because tests pass either way:
 
 An update that renames a slot, changes a contract method, changes a field of a slot's `ctx`, or removes, renames or changes what an export of `src/api/index.js` takes or returns is listed here. After merging, run `npm test` and `npm run build`. `npm test` catches a renamed slot or contract method in your `custom/slots.js`, but not a changed `ctx` field — check your components against `docs/slots.md`. A removed or renamed export of `src/api/index.js` fails `npm run build`; `npm test` catches it only where a test of yours calls it. No such change so far.
 
+The current slot contracts, handle ownership, page events, custom CSS ordering and explicit override errors are documented in [the extension guide](slots.md). `custom.example/` is the runnable reference; copy it to `custom/` in a disposable checkout before trying it.
+
 ## If it goes wrong
 
 Nothing here is destructive as long as you have not pushed. A fast-forward only moved a

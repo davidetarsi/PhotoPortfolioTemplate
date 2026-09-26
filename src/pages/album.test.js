@@ -25,7 +25,7 @@ describe('album bootstrap from the build seed', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.resetModules();
-    window.history.replaceState({}, '', '/nome-album');
+    window.history.replaceState({}, '', '/album-name');
     document.body.innerHTML = `
       <nav id="site-nav"></nav>
       <h1 id="album-title"></h1>
@@ -78,7 +78,7 @@ describe('album bootstrap from the build seed', () => {
     const ready = vi.fn();
     const off = [on('photo:open', opened), on('photo:close', closed), on('page:ready', ready)];
     const photo = { name: 'photo.webp', width: 100, height: 80 };
-    mocks.fetchAlbums.mockResolvedValue({ ok: true, data: [{ slug: 'nome-album', title: 'Titolo Album', description: '', coverName: null }] });
+    mocks.fetchAlbums.mockResolvedValue({ ok: true, data: [{ slug: 'album-name', title: 'Titolo Album', description: '', coverName: null }] });
     mocks.fetchManifest.mockResolvedValue({ ok: true, data: [photo] });
 
     await import('./album.js');
@@ -89,13 +89,13 @@ describe('album bootstrap from the build seed', () => {
 
     expect(opened).toHaveBeenCalledWith({ index: 0, photo: expect.objectContaining({ name: 'photo.webp' }) });
     expect(closed).toHaveBeenCalledWith({ index: 0, photo: expect.objectContaining({ name: 'photo.webp' }) });
-    expect(ready).toHaveBeenCalledWith(expect.objectContaining({ page: 'album', album: expect.objectContaining({ slug: 'nome-album' }) }));
+    expect(ready).toHaveBeenCalledWith(expect.objectContaining({ page: 'album', album: expect.objectContaining({ slug: 'album-name' }) }));
     off.forEach(unsubscribe => unsubscribe());
   });
 
   it('keeps chrome and reports a failed custom photo slot without rejecting the page entry', async () => {
     const error = vi.spyOn(console, 'error').mockImplementation(() => {});
-    mocks.fetchAlbums.mockResolvedValue({ ok: true, data: [{ slug: 'nome-album', title: 'Album', description: '', coverName: null }] });
+    mocks.fetchAlbums.mockResolvedValue({ ok: true, data: [{ slug: 'album-name', title: 'Album', description: '', coverName: null }] });
     mocks.fetchManifest.mockResolvedValue({ ok: true, data: [{ name: 'photo.webp', width: 100, height: 80 }] });
     mocks.slot.mockImplementation(async name => {
       if (name === 'photoGrid') throw new Error('custom grid failed');
@@ -124,7 +124,7 @@ describe('album bootstrap from the build seed', () => {
     resolveManifest({ ok: false, error: 'NOT_FOUND' });
     await loadingPage;
 
-    expect(ready).toHaveBeenCalledWith(expect.objectContaining({ page: 'album', album: expect.objectContaining({ slug: 'nome-album' }) }));
+    expect(ready).toHaveBeenCalledWith(expect.objectContaining({ page: 'album', album: expect.objectContaining({ slug: 'album-name' }) }));
     off();
   });
 });
