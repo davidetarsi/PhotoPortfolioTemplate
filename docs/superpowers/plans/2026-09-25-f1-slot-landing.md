@@ -357,6 +357,8 @@ git commit -m "feat(slots): move home rendering into the default landing slot"
 
 ### Task 3: Wire the landing slot into the home page
 
+> Added after review: `overridesFrom(module)` in `src/core/slots.js` rejects a `custom/slots.js` without a default export instead of silently treating it as absent, and `index.slots.test.js` asserts that the slot requested is `'landing'`. The code below is the version originally requested.
+
 **Files:**
 - Create: `src/core/default-slots.js`, `src/core/custom-slots.js`, `src/core/custom-slots.test.js`, `src/pages/index.slots.test.js`
 - Modify: `index.html`, `src/styles/main.css`, `src/pages/index.js`, `src/pages/index.test.js`
@@ -704,6 +706,7 @@ export default {
 
 They appear in the browser console, and in a fork they make `npm test` fail — which also stops the deploy, since it runs `npm test && npm run build`:
 
+- ``custom/slots.js: must `export default` an object that maps slot names to loaders, …`` — the file exists but has no default export, or its default is not an object.
 - `custom/slots.js: unknown slot "<name>". Known slots: …` — a key of `custom/slots.js` is not a slot.
 - `custom/slots.js: slot "<name>" must be a loader, e.g. () => import('./my-component.js').` — the value is not a function.
 - `custom/slots.js: slot "<name>" must export default { mount(…) }.` — the loaded module does not implement the contract.
