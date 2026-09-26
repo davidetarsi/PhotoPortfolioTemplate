@@ -1,5 +1,7 @@
 # F2 — Chrome and album slots, page events, custom theme, public API Implementation Plan
 
+> **Superseded for execution (2026-09-26):** use [the revised F2 plan](2026-09-26-f2-extension-lifecycle.md), implementing the approved contracts in spec section 6. The code below is historical context, not execution instructions. In particular its page cleanup, chrome barrier, CSS glob and eager `slot` export must not be copied into the revised implementation.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Complete the extension surface started in F1: nav, footer, photo grid and lightbox become slots; pages emit lifecycle and photo events that `custom/setup.js` can listen to; `custom/theme.css` loads after `theme/`; `src/api/index.js` becomes the only module code in `custom/` may import.

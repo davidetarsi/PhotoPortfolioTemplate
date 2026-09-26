@@ -6,6 +6,8 @@ import { siteConfig } from './config/site.config.js'
 import { injectSiteMeta } from './src/utils/injectSiteMeta.js'
 import { buildHeaders } from './src/utils/buildHeaders.js'
 import { devRouteFallback } from './src/utils/devRouteFallback.js'
+import { createCustomThemePlugins, customThemeRollupInput } from './src/utils/customTheme.js'
+import { isExpectedBuildWarning } from './src/utils/buildWarnings.js'
 
 // Letto una volta: serve sia al meta og:image sia alla CSP, e leggerlo due
 // volte aprirebbe la porta a due valori diversi nello stesso build.
@@ -54,7 +56,7 @@ const headersPlugin = () => ({
 })
 
 export default defineConfig({
-  plugins: [devRouteFallbackPlugin(), siteMetaPlugin(), headersPlugin()],
+  plugins: [devRouteFallbackPlugin(), siteMetaPlugin(), ...createCustomThemePlugins({ root: __dirname }), headersPlugin()],
   test: {
     environment: 'jsdom',
     exclude: [...configDefaults.exclude, '**/.worktrees/**'],
@@ -62,11 +64,17 @@ export default defineConfig({
   build: {
     modulePreload: { polyfill: false },
     rollupOptions: {
+      // Nasconde solo l'avviso atteso sull'import dinamico del registro degli slot
+      // (vedi src/utils/buildWarnings.js); ogni altro avviso resta visibile.
+      onwarn(warning, warn) {
+        if (!isExpectedBuildWarning(warning)) warn(warning)
+      },
       input: {
         main: resolve(__dirname, 'index.html'),
         album: resolve(__dirname, 'album.html'),
         about: resolve(__dirname, 'about.html'),
         admin: resolve(__dirname, 'admin.html'),
+        ...customThemeRollupInput(resolve(__dirname, 'custom/theme.css')),
       },
     },
   },

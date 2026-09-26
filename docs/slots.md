@@ -4,7 +4,11 @@ A *slot* is a part of the site that a fork can replace with its own component, d
 
 | Slot | Contract | What it covers |
 |---|---|---|
-| `landing` | `mount` | home page: hero, section heading and album cards |
+| `landing` | `mount(container, ctx)` | home page: hero, section heading and album cards |
+| `nav` | `mount(container, ctx)` | site navigation |
+| `footer` | `mount(container, ctx)` | shared page footer |
+| `photoGrid` | `mount(container, ctx)` | album photo grid and click callback |
+| `lightbox` | `create(photos, ctx)` | album lightbox and close callback |
 
 This table is the complete list of slots in this version of the template.
 
@@ -18,9 +22,9 @@ export default {
 };
 ```
 
-The loaded module exports the implementation as `default`; a loader may also return the implementation directly.
+The loaded module exports the implementation as `default`; a loader may also return the implementation directly. A loader runs only when its slot is mounted.
 
-Keep `custom/slots.js` to loaders only: the template imports it when the page loads, so anything else in it runs on every visit.
+Keep `custom/slots.js` to loaders only: the template imports it when the page loads, so anything else in it runs on every visit. The same holds for its static imports: they are evaluated with the file, on every page, while `() => import(…)` defers the implementation until the slot is mounted.
 
 A loader written as `() => import(…)` puts your component in its own file, downloaded after the page starts: one extra round trip before your landing appears. To ship it with the page instead, import it at the top and return it:
 
@@ -45,6 +49,8 @@ export default {
 
 `mount` receives the element to render into and a context object. It returns — or resolves to — a handle whose optional `destroy()` removes what it rendered.
 
+The page lifecycle owns each returned handle and calls `destroy()` once on a non-persisted `pagehide`. On a back/forward-cache restore, existing DOM and handles are retained and `page:ready` fires again with `restored: true`. Readiness means template mount operations settled; it does not promise that an arbitrary framework has committed asynchronous rendering.
+
 ### `landing`
 
 - `container` — the `#landing` element of `index.html`. It has `display: contents`, so it adds no box of its own.
@@ -59,6 +65,18 @@ export default {
 
 To show covers, turn `albums` into cards with `albumsToCards` from the public API (below): each card has a `coverUrl`.
 
+### `nav` and `footer`
+
+Both receive `{ site, texts }`. `site` is the resolved site content above; `texts` is the UI copy from `config/texts.config.js`. Each returns an optional `{ destroy() }` handle.
+
+### `photoGrid`
+
+Receives `{ photos, texts, onPhotoClick }`. `photos` contains manifest entries enriched with image URLs. Call `onPhotoClick(index, triggerElement)` to open the template lightbox and emit `photo:open`. Return an optional destroy handle.
+
+### `lightbox`
+
+`create(photos, { onClose })` returns an instance with `open(index, triggerElement)`, `close()` and `destroy()`. Call `onClose(index)` once each time an open lightbox closes, including when `destroy()` closes it, and never for an instance that is already closed; the template emits `photo:close` from that callback.
+
 ## The public API: `src/api/index.js`
 
 Code in `custom/` imports from the template only through `src/api/index.js`. Import it with a path from the project root: it works at any depth inside `custom/`, in `npm test` and in the build.
@@ -70,6 +88,17 @@ import { albumsToCards } from '/src/api/index.js';
 | Export | Call | Returns |
 |---|---|---|
 | `albumsToCards` | `albumsToCards(albums, r2PublicUrl)` | an array of `{ slug, title, description, coverUrl }`. `coverUrl` is the full URL of the cover, or `null` when the album has no cover or `r2PublicUrl` is missing |
+| `fetchAlbums` | `fetchAlbums()` | response envelope for the album list |
+| `fetchConfig` | `fetchConfig()` | response envelope for runtime config |
+| `fetchManifest` | `fetchManifest(slug)` | response envelope for an album photo manifest |
+| `fetchSite` | `fetchSite()` | response envelope for site content |
+| `on` | `on(type, listener)` | idempotent unsubscribe function |
+| `photosFromManifest` | `photosFromManifest(entries, slug, r2PublicUrl)` | photo objects with `gridUrl`, `fullUrl`, dimensions and name |
+| `resolveAlbums` | `resolveAlbums(response, fallback)` | normalized album list or `null` |
+| `resolveSiteContent` | `resolveSiteContent(response, fallback)` | normalized site content |
+| `siteConfig` | — | build-time site fallback config |
+| `slot` | `await slot(name)` | the implementation for one of the five slots above |
+| `texts` | — | UI text config |
 
 In a landing, pass the two fields of `ctx.data`. Check `albums` first: it is `null` when the albums could not be loaded, and `albumsToCards` needs an array. `custom.example/landing/example-landing.js` shows both branches.
 
@@ -85,6 +114,18 @@ if (albums === null) {
 ```
 
 This is the complete list today. It grows as later versions of the template need it; an export is never removed, renamed or changed in what it takes or returns without a note in `docs/upgrading.md`.
+
+Do not resolve a slot at module top level. Declare its loader in `custom/slots.js` and request it from the page mount path. This keeps API imports cycle-safe when a component also imports the public API.
+
+## Page setup and events
+
+An optional `custom/setup.js` default function runs once for each page entry and receives `{ page, on, emit }`. It may return a cleanup function, called when the page is permanently left. `custom.example/setup.js` shows a subscription that returns its unsubscribe function.
+
+The public events are `page:ready` (`{ page, site, album?, restored? }`), `page:leave` (`{ page, persisted }`), `photo:open` (`{ index, photo }`) and `photo:close` (`{ index, photo }`). `on(type, listener)` returns an idempotent unsubscribe function. Always unregister subscriptions so listeners do not outlive a component.
+
+## Optional custom theme
+
+If `custom/theme.css` exists, Vite processes it as a separate stylesheet, including CSS imports and relative assets. It is linked last on home, About and album pages, never `/admin`. After a lazy slot adds its stylesheet, runtime ordering restores the custom theme to the end. Equal-specificity rules in the theme therefore override the lazy stylesheet. Without the file, no custom theme stylesheet is emitted. See the matching `.example-photo-grid__item` rules in `custom.example/photo-grid/` and `custom.example/theme.css`.
 
 ## What your code runs under
 
@@ -116,10 +157,12 @@ They appear in the browser console, and in a fork they make `npm test` fail — 
 - `custom/slots.js: slot "<name>" must export default { mount(…) }.` — the loaded module does not implement the contract.
 - `custom/slots.js: slot "<name>" failed to load: …` — the module could not be imported, or threw while being imported: a wrong path, or an error at the top level of your code. The original error follows the colon. Errors thrown inside `mount` are not wrapped: they appear in the console when the page runs.
 
+A declared override that fails validation or loading is reported explicitly; it is not silently replaced by the default slot. Fix the loader or implementation contract, otherwise that page area cannot render.
+
 ## What stays the template's
 
 - The dashboard preview in `/admin` always shows the template landing, not yours.
-- Nav and footer are the template's in this version.
+- Every slot not listed in `custom/slots.js` uses the template implementation.
 
 ## Stability
 

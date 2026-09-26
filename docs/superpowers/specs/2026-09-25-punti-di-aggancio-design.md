@@ -1,7 +1,7 @@
 # Punti di aggancio (`custom/`) — Design e roadmap
 
 **Data**: 2026-09-25
-**Stato**: F4, F1 e F2a incluse nel `main` locale; F2a integrata con merge `8f3b4d8785fa840c5c311a73390c398c5721dee0` il 2026-09-26. Cartella del fork: `custom/` (§6)
+**Stato**: F4, F1 e F2a incluse nel `main` locale; F2a integrata con merge `8f3b4d8785fa840c5c311a73390c398c5721dee0` il 2026-09-26. F2 completata sul branch `codex/f2-extension-lifecycle` il 2026-09-26 (verifica: `docs/superpowers/reviews/2026-09-26-f2-verification.md`), in attesa di PR e merge. Cartella del fork: `custom/` (§6)
 **Verificato su**: `main` locale @ `8f3b4d8785fa840c5c311a73390c398c5721dee0` (genitore precedente `e609df7`). Suite e build locali passate sul merge; nessuna verifica di remoto o deploy.
 **Origine**: il sito personale (davidetarsi.com) vuole una landing completamente diversa — una carta
 nautica a due livelli — senza modificare i file del template, così che ogni `git merge upstream/main`
@@ -211,6 +211,19 @@ Non fanno parte di questo lavoro; ognuno sarà un piano a sé, costruito sopra g
 | Setup dei test per `custom/` | un `custom/test-setup.js` facoltativo, aggiunto ai `setupFiles` di Vitest | emerso dalla revisione di F1: permetterebbe ai fork di simulare API del browser che jsdom non ha |
 
 ## 6. Decisioni prese dopo la revisione
+
+### F2: contracts approved on 2026-09-26
+
+These decisions supersede the earlier F2 implementation sketches. F2 remains framework-neutral: no React, router, new UI dependency, F3 page generator, deployment or personal-site change is part of this phase.
+
+- **Page ownership and cleanup.** Pages retain every slot handle. `mount(container, ctx)` may return a handle or a promise of a handle; `destroy()` remains optional. A small page owner tracks handles and runs each cleanup at most once, isolating cleanup errors. If a pending mount resolves after the owner was destroyed, its handle is destroyed immediately. `custom/setup.js` may return a cleanup function. Setup runs once per page initialization; duplicate starts cannot register duplicate global listeners. This is not an SPA lifecycle framework.
+- **Back/forward cache.** `pagehide` with `persisted === true` emits the leave event but preserves mounted DOM, listeners and state. `pageshow` restoration does not rerun setup or mount slots. Non-persisted departure disposes the page. `page:leave` detail includes `persisted`; a restored page emits `page:ready` with `restored: true` using the last ready detail. Initial readiness is emitted only after page mounting completes. Errors in event listeners or cleanup do not block other listeners/cleanup.
+- **Independent chrome.** Nav and footer resolve and mount independently of each other and the landing/grid/lightbox. Page entries start those tasks independently as soon as resolved site data is available; they never await a custom content loader before starting chrome. A failed custom slot is reported explicitly, not silently replaced by a default. A rejected task cannot block a successful sibling or become an unhandled rejection.
+- **Custom CSS.** Preserve `template styles -> theme/ -> custom/theme.css`, without cascade layers. The optional custom theme must be a final explicit stylesheet in each public production HTML, and absent from admin. Its imports and URL references must be handled by Vite, not copied as unprocessed CSS. First prove this mechanism in a temporary production-build fixture; also verify a lazy custom slot importing CSS. If Vite inserts later lazy CSS links, restore the custom-theme link to the last stylesheet position after slot loading. The guarantee concerns the template's styles and `theme/`; fork component styles still need sensible selector specificity. Verify actual computed overrides in a browser, not only source import order.
+- **Public API.** Preserve `albumsToCards` and the planned data/event exports. Expose `slot` through an asynchronous facade that imports the registry only when called; data helpers and events must not eagerly import that registry. Export stability tests cover behavior as well as names. Custom modules declare loaders at module scope; resolving/mounting slots is a runtime action, not module initialization. Include a real custom fixture with a statically imported component that imports the public API.
+- **Routes/language audit.** Built-in canonical routes and newly shipped example routes use lowercase English. User-created album slugs are not constrained to English. `/about` remains the page containing profile and contacts; `/contatti` is an existing legacy 301 alias and is retained in F2. Whether to remove it, add `/contacts`, or keep only About is deferred explicitly to F3. Report Italian example paths in the older F3 plan as pending migration, not as implemented routes. Do not silently alter routing or reserved slug rules in this phase.
+- **Verification.** Run full test/build and browser checks without `custom/` and with a disposable copy of `custom.example/`. Use placeholder CSP only for template validation, never for a deploy. Include home, album success/error/empty cases, about/contact rendering, dashboard theme isolation, and no unhandled rejection when a custom loader fails.
+
 
 - **Il nome della cartella: `custom/`** (deciso il 2026-09-26). Il nome iniziale, `site/`, conviveva con
   `site.config.js`, `siteConfig`, `_site/site.json` su R2 e con i moduli `site-slots.js` e `site-theme.js`

@@ -227,6 +227,8 @@ Read [`CUSTOMIZING.md`](CUSTOMIZING.md) to find out:
 - The distinction between content (R2 + dashboard) and appearance/copy (files)
 - What not to touch, to avoid conflicts on future merges from the template
 
+For replacing page components, lifecycle events and the optional custom theme, see the [extension guide](docs/slots.md) and copy [`custom.example/`](custom.example/) into `custom/` to try it locally.
+
 ## 🏗️ Project structure
 
 ```

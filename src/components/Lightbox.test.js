@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { createLightbox } from './Lightbox.js';
 
 const photos = [
@@ -98,5 +98,52 @@ describe('createLightbox', () => {
     const el = document.querySelector('.lightbox');
     el.click();
     expect(el.classList.contains('lightbox--open')).toBe(false);
+  });
+
+  it.each([
+    ['Escape', () => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))],
+    ['close button', () => document.querySelector('.lightbox__close').click()],
+    ['backdrop', () => document.querySelector('.lightbox').click()],
+    ['destroy', () => lb.destroy()],
+  ])('calls onClose once when %s closes an open lightbox', (_, close) => {
+    const onClose = vi.fn();
+    lb.destroy();
+    lb = createLightbox(photos, { onClose });
+    lb.open(1);
+
+    close();
+    lb.close();
+
+    expect(onClose).toHaveBeenCalledOnce();
+    expect(onClose).toHaveBeenCalledWith(1);
+  });
+
+  it('does not call onClose when the lightbox is already closed', () => {
+    const onClose = vi.fn();
+    lb.destroy();
+    lb = createLightbox(photos, { onClose });
+
+    lb.close();
+    lb.destroy();
+
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('removes the document keyboard handler on destroy', () => {
+    const onClose = vi.fn();
+    lb.destroy();
+    const add = vi.spyOn(document, 'addEventListener');
+    const remove = vi.spyOn(document, 'removeEventListener');
+    lb = createLightbox(photos, { onClose });
+    const keydown = add.mock.calls.find(([type]) => type === 'keydown')[1];
+    lb.open(0);
+    lb.destroy();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+
+    expect(onClose).toHaveBeenCalledOnce();
+    expect(remove).toHaveBeenCalledWith('keydown', keydown);
+    expect(document.querySelector('.lightbox')).toBeNull();
+    add.mockRestore();
+    remove.mockRestore();
   });
 });

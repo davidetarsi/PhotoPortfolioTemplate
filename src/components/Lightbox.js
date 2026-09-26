@@ -10,7 +10,7 @@ import '../styles/lightbox.css';
  * @param {Array} photos - Array of photo objects with fullUrl, name.
  * @returns {object} Object with open(index, triggerEl), close(), and destroy() methods.
  */
-export function createLightbox(photos) {
+export function createLightbox(photos, { onClose } = {}) {
   const el = document.createElement('div');
   el.className = 'lightbox';
   el.setAttribute('role', 'dialog');
@@ -50,18 +50,18 @@ export function createLightbox(photos) {
   }
 
   function close() {
+    const wasOpen = el.classList.contains('lightbox--open');
     el.classList.remove('lightbox--open');
     el.setAttribute('aria-hidden', 'true');
     imgEl.src = '';
     if (_triggerEl) { _triggerEl.focus(); _triggerEl = null; }
+    if (wasOpen) onClose?.(current);
   }
 
   // For code that creates multiple lightboxes in a page's lifetime (e.g., admin preview
-  // changing photos per album): removes the element from the DOM.
-  // There is no way to unbind the document keydown listener from here, but once
-  // closed and removed it stays harmless (the guard "classList.contains('lightbox--open')"
-  // at the top of the listener will never trigger again).
+  // changing photos per album): removes both the element and its document listener.
   function destroy() {
+    document.removeEventListener('keydown', onDocumentKeydown);
     close();
     el.remove();
   }
@@ -90,12 +90,13 @@ export function createLightbox(photos) {
     }
   });
 
-  document.addEventListener('keydown', e => {
+  function onDocumentKeydown(e) {
     if (!el.classList.contains('lightbox--open')) return;
     if (e.key === 'Escape') close();
     if (e.key === 'ArrowLeft') step(-1);
     if (e.key === 'ArrowRight') step(1);
-  });
+  }
+  document.addEventListener('keydown', onDocumentKeydown);
 
   let touchX = null;
   el.addEventListener('touchstart', e => { touchX = e.touches[0].clientX; }, { passive: true });

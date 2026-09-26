@@ -6,4 +6,8 @@
  */
 export const SLOT_CONTRACTS = {
   landing: 'mount',
+  nav: 'mount',
+  footer: 'mount',
+  photoGrid: 'mount',
+  lightbox: 'create',
 };

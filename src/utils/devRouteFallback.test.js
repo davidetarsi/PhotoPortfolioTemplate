@@ -24,7 +24,7 @@ describe('devRouteFallback', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
-  it.each(['/nome-album?preview=1', '/nome-album/?preview=1'])
+  it.each(['/album-name?preview=1', '/album-name/?preview=1'])
     ('rewrites a clean album slug with or without trailing slash and keeps the query string', url => {
       const request = { url };
       const response = responseDouble();

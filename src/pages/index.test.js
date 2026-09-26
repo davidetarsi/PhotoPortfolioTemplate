@@ -37,11 +37,23 @@ describe('home album bootstrap', () => {
     });
   });
 
+  it('shows the default landing skeleton before runtime data resolves', async () => {
+    let resolveAlbums;
+    mocks.fetchAlbums.mockReturnValue(new Promise(resolve => { resolveAlbums = resolve; }));
+    const loadingPage = import('./index.js');
+
+    await vi.waitFor(() => expect(document.querySelector('.album-card__skeleton')).not.toBeNull());
+    resolveAlbums({ ok: true, data: [] });
+    await loadingPage;
+
+    expect(document.querySelector('.album-card__skeleton')).toBeNull();
+  });
+
   it('renders the real seed card when albums.json is missing', async () => {
     mocks.fetchAlbums.mockResolvedValue({ ok: false, error: 'NOT_FOUND' });
     await import('./index.js');
 
-    const card = document.querySelector('a.album-card[href="/nome-album"]');
+    const card = document.querySelector('a.album-card[href="/album-name"]');
     expect(card).not.toBeNull();
     expect(card.querySelector('.album-card__title').textContent).toBe('Titolo Album');
     expect(document.querySelector('.page-error')).toBeNull();
