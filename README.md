@@ -128,7 +128,7 @@ Follow the steps in order: each one needs the previous. The [Cloudflare runbook]
 
 ### 1. Create the infrastructure
 
-With Terraform (recommended): copy `infra/terraform.tfvars.example` to `infra/terraform.tfvars`, fill it using the [field-by-field reference](docs/runbook-cloudflare.md#32-variable-reference), then plan and apply as the [Terraform path](docs/runbook-cloudflare.md#3-terraform-path) explains, including the API token and its permissions. It creates the R2 bucket, the Access application that protects `/admin` and `/api/admin`, and the Turnstile widget of the contact form.
+With Terraform (recommended): copy `infra/terraform.tfvars.example` to `infra/terraform.tfvars`, fill it using the [field-by-field reference](docs/runbook-cloudflare.md#32-variable-reference), then plan and apply as the [Terraform path](docs/runbook-cloudflare.md#3-terraform-path) explains, including the API token and its permissions. It creates two R2 buckets — a public one for photos and a private one for contact messages — the Access application that protects `/admin` and `/api/admin`, and the Turnstile widget of the contact form.
 
 Then write the results into `wrangler.json`:
 
@@ -160,7 +160,7 @@ Every push to `main` deploys the site.
 
 ### 4. Attach your domain to the Worker
 
-Workers & Pages → your Worker → **Settings → Domains & Routes → Add → Custom domain**, and enter the hostname you used as `prod_hostname`. Until you do, the site answers only on its `workers.dev` address, where the dashboard cannot sign you in.
+With Terraform and `npm run infra:sync`, there is nothing to do: `wrangler.json` already names your domain, and the first deploy attaches it to the Worker and turns off the duplicate `workers.dev` address (it stays on if you enabled staging). Check it under Workers & Pages → your Worker → **Settings → Domains & Routes**. By hand, add it there with **Add → Custom domain**, using the hostname you chose for Access. Until the domain is attached, the dashboard cannot sign you in.
 
 ### 5. Set the secrets
 
@@ -208,7 +208,7 @@ Open `https://your-domain/admin`. Cloudflare Access asks for your email and send
 
 - The home page lists your albums, and an album shows the photos you uploaded.
 - On the About page, send yourself a message: it appears in the dashboard under **Messages**, and as a notification if you configured one.
-- The same Worker also answers on `https://<worker>.<account>.workers.dev`: there, `/admin` must not let you in.
+- `https://<worker>.<account>.workers.dev` no longer answers; if you attached the domain by hand or enabled staging it still does, and there `/admin` must not let you in.
 
 An optional staging environment exists, but it is not turnkey for a first install: see [`docs/staging.md`](docs/staging.md).
 

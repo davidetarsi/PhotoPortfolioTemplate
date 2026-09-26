@@ -22,7 +22,9 @@ beforeEach(async () => {
   });
 });
 
-const makeEnv = (initial = {}) => ({ ...ENV_VARS, ASSETS: makeFakeAssets(), BUCKET: makeFakeBucket(initial) });
+const makeEnv = (initial = {}, messages = {}) => ({
+  ...ENV_VARS, ASSETS: makeFakeAssets(), BUCKET: makeFakeBucket(initial), MESSAGES_BUCKET: makeFakeBucket(messages),
+});
 const call = (env, method, path, body, headers = {}) =>
   handleAdminRequest(new Request(`https://x.dev${path}`, {
     method,
@@ -205,8 +207,8 @@ describe('messaggi', () => {
   const M1 = { name: 'Mario', email: 'm@e.it', message: 'Primo', receivedAt: 1000 };
   const M2 = { name: 'Lucia', email: 'l@e.it', message: 'Secondo', receivedAt: 2000 };
 
-  it('elenca i messaggi, dal piu recente', async () => {
-    const env = makeEnv({
+  it('elenca i messaggi del bucket privato, dal piu recente', async () => {
+    const env = makeEnv({}, {
       '_messages/2026-01-01T00-00-00-000Z-aaa.json': M1,
       '_messages/2026-02-01T00-00-00-000Z-bbb.json': M2,
     });
@@ -217,33 +219,56 @@ describe('messaggi', () => {
     expect(messages[0].id).toBe('2026-02-01T00-00-00-000Z-bbb');
   });
 
+  it('elenca anche oltre i 1000 oggetti di una pagina di R2', async () => {
+    const many = {};
+    for (let i = 0; i < 1001; i++) {
+      many[`_messages/2026-01-01T00-00-00-${String(i).padStart(4, '0')}Z-aaa.json`] = { ...M1, receivedAt: i };
+    }
+    const { messages } = await (await call(makeEnv({}, many), 'GET', '/api/admin/messages')).json();
+    expect(messages).toHaveLength(1001);
+    expect(messages[0].receivedAt).toBe(1000);
+  });
+
+  it('non legge i vecchi messaggi rimasti nel bucket pubblico', async () => {
+    const env = makeEnv({ '_messages/2026-01-01T00-00-00-000Z-aaa.json': M1 });
+    const { messages } = await (await call(env, 'GET', '/api/admin/messages')).json();
+    expect(messages).toEqual([]);
+  });
+
   it('elenco vuoto quando non ce ne sono', async () => {
     const res = await call(makeEnv(), 'GET', '/api/admin/messages');
     expect((await res.json()).messages).toEqual([]);
   });
 
   it('non tira dentro oggetti che non sono messaggi', async () => {
-    const env = makeEnv({ '_site/site.json': SITE, '_messages/2026-01-01T00-00-00-000Z-aaa.json': M1 });
+    const env = makeEnv({}, { 'altro/x.json': SITE, '_messages/2026-01-01T00-00-00-000Z-aaa.json': M1 });
     const { messages } = await (await call(env, 'GET', '/api/admin/messages')).json();
     expect(messages).toHaveLength(1);
   });
 
-  it('cancella un messaggio', async () => {
-    const env = makeEnv({ '_messages/2026-01-01T00-00-00-000Z-aaa.json': M1 });
+  it('cancella un messaggio dal bucket privato', async () => {
+    const env = makeEnv({}, { '_messages/2026-01-01T00-00-00-000Z-aaa.json': M1 });
     const res = await call(env, 'DELETE', '/api/admin/messages/2026-01-01T00-00-00-000Z-aaa');
     expect(res.status).toBe(200);
-    expect(env.BUCKET.store.size).toBe(0);
+    expect(env.MESSAGES_BUCKET.store.size).toBe(0);
   });
 
   it('un id con una barra non puo uscire da _messages/', async () => {
-    const env = makeEnv({ '_site/site.json': SITE });
-    const res = await call(env, 'DELETE', '/api/admin/messages/..%2F_site%2Fsite.json');
+    const env = makeEnv({}, { 'altro/x.json': SITE });
+    const res = await call(env, 'DELETE', '/api/admin/messages/..%2Faltro%2Fx.json');
     expect(res.status).toBe(400);
-    expect(env.BUCKET.store.has('_site/site.json')).toBe(true);
+    expect(env.MESSAGES_BUCKET.store.has('altro/x.json')).toBe(true);
+  });
+
+  it('senza bucket privato risponde 500, senza leggere quello pubblico', async () => {
+    const env = { ...makeEnv({ '_messages/2026-01-01T00-00-00-000Z-aaa.json': M1 }), MESSAGES_BUCKET: undefined };
+    const res = await call(env, 'GET', '/api/admin/messages');
+    expect(res.status).toBe(500);
+    expect(await res.json()).toEqual({ error: 'STORAGE_UNAVAILABLE' });
   });
 
   it('senza token di Access non si elencano i messaggi', async () => {
-    const env = makeEnv({ '_messages/2026-01-01T00-00-00-000Z-aaa.json': M1 });
+    const env = makeEnv({}, { '_messages/2026-01-01T00-00-00-000Z-aaa.json': M1 });
     const res = await handleAdminRequest(
       new Request('https://x.dev/api/admin/messages', { method: 'GET' }), env, deps);
     expect(res.status).toBe(401);

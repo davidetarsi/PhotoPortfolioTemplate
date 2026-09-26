@@ -13,7 +13,8 @@ const makeDeps = (over = {}) => ({
   ...over,
 });
 
-const makeEnv = (over = {}) => ({ BUCKET: makeFakeBucket(), ...over });
+// BUCKET is the public photo bucket: present so tests can prove messages never land there.
+const makeEnv = (over = {}) => ({ BUCKET: makeFakeBucket(), MESSAGES_BUCKET: makeFakeBucket(), ...over });
 
 const post = (env, body, deps = makeDeps()) =>
   handleContactRequest(
@@ -30,10 +31,35 @@ describe('handleContactRequest', () => {
     const env = makeEnv();
     const res = await post(env, VALIDO);
     expect(res.status).toBe(200);
-    const chiavi = [...env.BUCKET.store.keys()];
+    const chiavi = [...env.MESSAGES_BUCKET.store.keys()];
     expect(chiavi).toHaveLength(1);
     expect(chiavi[0]).toBe('_messages/2027-01-15T08-00-00-000Z-aaaaaa.json');
-    expect(JSON.parse(env.BUCKET.store.get(chiavi[0]).text).name).toBe('Mario');
+    expect(JSON.parse(env.MESSAGES_BUCKET.store.get(chiavi[0]).text).name).toBe('Mario');
+  });
+
+  it('non scrive mai i messaggi nel bucket pubblico delle foto', async () => {
+    const env = makeEnv();
+    await post(env, VALIDO);
+    expect(env.BUCKET.store.size).toBe(0);
+    expect(env.MESSAGES_BUCKET.store.size).toBe(1);
+  });
+
+  it('senza bucket privato rifiuta con 500, senza ripiegare su quello pubblico', async () => {
+    const env = makeEnv({ MESSAGES_BUCKET: undefined });
+    const res = await post(env, VALIDO);
+    expect(res.status).toBe(500);
+    expect(await res.json()).toEqual({ error: 'STORAGE_UNAVAILABLE' });
+    expect(env.BUCKET.store.size).toBe(0);
+  });
+
+  it('se la scrittura fallisce risponde 500 senza notificare', async () => {
+    const env = makeEnv();
+    env.MESSAGES_BUCKET.put = async () => { throw new Error('R2 down'); };
+    const deps = makeDeps();
+    const res = await post(env, VALIDO, deps);
+    expect(res.status).toBe(500);
+    expect(await res.json()).toEqual({ error: 'STORAGE_ERROR' });
+    expect(deps.notify).not.toHaveBeenCalled();
   });
 
   it('rifiuta con 503 se c è la sitekey di Turnstile ma manca il secret, senza salvare', async () => {
@@ -42,7 +68,7 @@ describe('handleContactRequest', () => {
     const res = await post(env, VALIDO);
     expect(res.status).toBe(503);
     expect(await res.json()).toEqual({ error: 'TURNSTILE_NOT_CONFIGURED' });
-    expect(env.BUCKET.store.size).toBe(0);
+    expect(env.MESSAGES_BUCKET.store.size).toBe(0);
     expect(error).toHaveBeenCalled();
     error.mockRestore();
   });
@@ -51,7 +77,7 @@ describe('handleContactRequest', () => {
     const env = makeEnv({ TURNSTILE_SITEKEY: '0x4AAAAAAA', TURNSTILE_SECRET: 's' });
     const res = await post(env, VALIDO);
     expect(res.status).toBe(200);
-    expect(env.BUCKET.store.size).toBe(1);
+    expect(env.MESSAGES_BUCKET.store.size).toBe(1);
   });
 
   it('rifiuta i metodi diversi da POST', async () => {
@@ -64,14 +90,14 @@ describe('handleContactRequest', () => {
     const env = makeEnv();
     const res = await post(env, { name: 'Mario' });
     expect(res.status).toBe(400);
-    expect(env.BUCKET.store.size).toBe(0);
+    expect(env.MESSAGES_BUCKET.store.size).toBe(0);
   });
 
   it('rifiuta JSON malformato senza esplodere', async () => {
     const env = makeEnv();
     const res = await post(env, '{non json');
     expect(res.status).toBe(400);
-    expect(env.BUCKET.store.size).toBe(0);
+    expect(env.MESSAGES_BUCKET.store.size).toBe(0);
   });
 
   it('scarta in silenzio se l honeypot e compilato', async () => {
@@ -80,14 +106,14 @@ describe('handleContactRequest', () => {
     const env = makeEnv();
     const res = await post(env, { ...VALIDO, botcheck: 'sono un bot' });
     expect(res.status).toBe(200);
-    expect(env.BUCKET.store.size).toBe(0);
+    expect(env.MESSAGES_BUCKET.store.size).toBe(0);
   });
 
   it('blocca se Turnstile non passa, senza toccare R2', async () => {
     const env = makeEnv();
     const res = await post(env, VALIDO, makeDeps({ verify: async () => false }));
     expect(res.status).toBe(403);
-    expect(env.BUCKET.store.size).toBe(0);
+    expect(env.MESSAGES_BUCKET.store.size).toBe(0);
   });
 
   it('notifica dopo aver salvato', async () => {
@@ -116,7 +142,7 @@ describe('handleContactRequest', () => {
     const deps = makeDeps({ notify: async () => { throw new Error('webhook giu'); } });
     const res = await post(env, VALIDO, deps);
     expect(res.status).toBe(200);
-    expect(env.BUCKET.store.size).toBe(1);
+    expect(env.MESSAGES_BUCKET.store.size).toBe(1);
   });
 
   it('registra un HTTP 429 del provider senza perdere il messaggio o esporre il secret', async () => {
@@ -126,7 +152,7 @@ describe('handleContactRequest', () => {
     try {
       const res = await post(env, VALIDO, makeDeps({ notify: undefined }));
       expect(res.status).toBe(200);
-      expect(env.BUCKET.store.size).toBe(1);
+      expect(env.MESSAGES_BUCKET.store.size).toBe(1);
       expect(fetchSpy).toHaveBeenCalledOnce();
       expect(logSpy).toHaveBeenCalledWith('notification failed:', 'HTTP 429');
       expect(JSON.stringify(logSpy.mock.calls)).not.toContain('topic-segreto');
@@ -145,7 +171,7 @@ describe('handleContactRequest', () => {
     try {
       const res = await post(env, VALIDO, makeDeps({ notify: undefined }));
       expect(res.status).toBe(200);
-      expect(env.BUCKET.store.size).toBe(1);
+      expect(env.MESSAGES_BUCKET.store.size).toBe(1);
       expect(logSpy).toHaveBeenCalledWith('notification failed:', 'request error');
       expect(JSON.stringify(logSpy.mock.calls)).not.toContain('topic-segreto');
     } finally {
@@ -158,7 +184,7 @@ describe('handleContactRequest', () => {
     const env = makeEnv();
     const res = await post(env, { ...VALIDO, message: 'x'.repeat(100_000) });
     expect(res.status).toBe(400);
-    expect(env.BUCKET.store.size).toBe(0);
+    expect(env.MESSAGES_BUCKET.store.size).toBe(0);
   });
 
   it('respinge sul Content-Length, prima ancora di leggere il corpo', async () => {
@@ -182,7 +208,7 @@ describe('handleContactRequest', () => {
     const res = await handleContactRequest(spiato, env, makeDeps());
     expect(res.status).toBe(400);
     expect(letto).toBe(false);
-    expect(env.BUCKET.store.size).toBe(0);
+    expect(env.MESSAGES_BUCKET.store.size).toBe(0);
   });
 
   it('receivedAt e la chiave dichiarano lo stesso istante', async () => {
@@ -192,8 +218,8 @@ describe('handleContactRequest', () => {
     const env = makeEnv();
     let t = 1_000_000;
     await post(env, VALIDO, makeDeps({ now: () => t++ }));
-    const [chiave] = [...env.BUCKET.store.keys()];
-    const salvato = JSON.parse(env.BUCKET.store.get(chiave).text);
+    const [chiave] = [...env.MESSAGES_BUCKET.store.keys()];
+    const salvato = JSON.parse(env.MESSAGES_BUCKET.store.get(chiave).text);
     const nellaChiave = new Date(
       chiave.slice('_messages/'.length, -'-aaaaaa.json'.length).replace(
         /^(\d{4}-\d{2}-\d{2})T(\d{2})-(\d{2})-(\d{2})-(\d{3})Z$/, '$1T$2:$3:$4.$5Z'),
@@ -204,7 +230,7 @@ describe('handleContactRequest', () => {
   it('non salva i campi estranei arrivati dal client', async () => {
     const env = makeEnv();
     await post(env, { ...VALIDO, receivedAt: 1, ip: '1.2.3.4' });
-    const salvato = JSON.parse([...env.BUCKET.store.values()][0].text);
+    const salvato = JSON.parse([...env.MESSAGES_BUCKET.store.values()][0].text);
     expect(salvato.receivedAt).toBe(NOW);
     expect('ip' in salvato).toBe(false);
   });

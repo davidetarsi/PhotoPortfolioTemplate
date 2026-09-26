@@ -2,12 +2,27 @@ output "project_name" {
   value = var.project_name
 }
 
+# Il dominio di produzione: infra:sync lo scrive in wrangler.json come custom domain
+# del Worker, cosi il deploy lo collega da solo.
+output "prod_hostname" {
+  value = var.prod_hostname
+}
+
 output "bucket_prod" {
   value = cloudflare_r2_bucket.prod.name
 }
 
 output "bucket_staging" {
   value = var.enable_staging ? cloudflare_r2_bucket.staging[0].name : ""
+}
+
+# Bucket privati dei messaggi: solo il nome, per il binding del Worker. Nessun URL pubblico.
+output "messages_bucket_prod" {
+  value = cloudflare_r2_bucket.messages_prod.name
+}
+
+output "messages_bucket_staging" {
+  value = var.enable_staging ? cloudflare_r2_bucket.messages_staging[0].name : ""
 }
 
 # Se e stato configurato un dominio custom vince quello: e l'unico

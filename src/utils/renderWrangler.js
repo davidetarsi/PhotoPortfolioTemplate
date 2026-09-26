@@ -1,6 +1,7 @@
 const REQUIRED_PRODUCTION_KEYS = [
   'project_name',
   'bucket_prod',
+  'messages_bucket_prod',
   'r2_public_url_prod',
   'access_aud_prod',
   'access_team_domain',
@@ -10,6 +11,7 @@ const STAGING_KEYS = [
   'bucket_staging',
   'r2_public_url_staging',
   'access_aud_staging',
+  'messages_bucket_staging',
 ];
 
 /**
@@ -34,7 +36,13 @@ export function renderWrangler(example, outputs) {
   const out = structuredClone(example);
 
   out.name = outputs.project_name;
-  out.r2_buckets[0].bucket_name = outputs.bucket_prod;
+  const photos = out.r2_buckets?.find(b => b.binding === 'BUCKET');
+  const messages = out.r2_buckets?.find(b => b.binding === 'MESSAGES_BUCKET');
+  if (!photos || !messages) {
+    throw new Error('wrangler.example.json: r2_buckets must declare both BUCKET and MESSAGES_BUCKET.');
+  }
+  photos.bucket_name = outputs.bucket_prod;
+  messages.bucket_name = outputs.messages_bucket_prod;
   out.vars.R2_PUBLIC_URL = outputs.r2_public_url_prod;
   out.vars.ACCESS_AUD = outputs.access_aud_prod;
   out.vars.ACCESS_TEAM_DOMAIN = outputs.access_team_domain;
@@ -44,10 +52,10 @@ export function renderWrangler(example, outputs) {
     out.env = out.env ?? {};
     out.env.staging = {
       name: `${outputs.project_name}-staging`,
-      r2_buckets: [{
-        binding: out.r2_buckets[0].binding,
-        bucket_name: outputs.bucket_staging,
-      }],
+      r2_buckets: [
+        { binding: 'BUCKET', bucket_name: outputs.bucket_staging },
+        { binding: 'MESSAGES_BUCKET', bucket_name: outputs.messages_bucket_staging },
+      ],
       vars: {
         ACCESS_TEAM_DOMAIN: outputs.access_team_domain,
         ACCESS_AUD: outputs.access_aud_staging,
@@ -58,6 +66,21 @@ export function renderWrangler(example, outputs) {
   } else if (out.env) {
     delete out.env.staging;
     if (Object.keys(out.env).length === 0) delete out.env;
+  }
+
+  // Your own domain: the deploy attaches it to the Worker (custom domain), and without
+  // staging the duplicate workers.dev address and preview URLs are turned off. With
+  // staging they stay: the staging version preview is served on a workers.dev preview URL.
+  delete out.routes;
+  delete out.workers_dev;
+  delete out.preview_urls;
+  const host = outputs.prod_hostname;
+  if (host && !host.endsWith('.workers.dev')) {
+    out.routes = [{ pattern: host, custom_domain: true }];
+    if (!out.env?.staging) {
+      out.workers_dev = false;
+      out.preview_urls = false;
+    }
   }
 
   return out;

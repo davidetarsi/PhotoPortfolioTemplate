@@ -6,6 +6,10 @@
 
 const JWKS_TTL_MS = 3_600_000; // 1h
 
+// An unknown kid may mean a key rotation, so it triggers a download — but at most one a
+// minute: otherwise anyone could force a fetch to the team domain with every forged token.
+const UNKNOWN_KID_REFETCH_MS = 60_000;
+
 // Module-level cache: survives across requests within the same isolate.
 let jwksCache = null; // { teamDomain, fetchedAt, keys: Map<kid, CryptoKey> }
 
@@ -39,7 +43,8 @@ async function importJwks(jwks) {
 
 async function getKey(kid, teamDomain, fetchJwks, now) {
   const stale = !jwksCache || jwksCache.teamDomain !== teamDomain || now - jwksCache.fetchedAt > JWKS_TTL_MS;
-  if (stale || !jwksCache.keys.has(kid)) {
+  const unknownKid = !stale && !jwksCache.keys.has(kid);
+  if (stale || (unknownKid && now - jwksCache.fetchedAt >= UNKNOWN_KID_REFETCH_MS)) {
     const keys = await importJwks(await fetchJwks(teamDomain));
     jwksCache = { teamDomain, fetchedAt: now, keys };
   }
@@ -68,7 +73,7 @@ export async function verifyAccessJwt(request, env, deps = {}) {
   try {
     const header = decodeSegment(parts[0]);
     const payload = decodeSegment(parts[1]);
-    if (header.alg !== 'RS256') return { ok: false };
+    if (header.alg !== 'RS256' || typeof header.kid !== 'string') return { ok: false };
 
     const audOk = Array.isArray(payload.aud) ? payload.aud.includes(aud) : payload.aud === aud;
     if (!audOk) return { ok: false };
