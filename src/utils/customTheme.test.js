@@ -84,4 +84,23 @@ describe('custom theme Vite integration', () => {
     expect(readFileSync(join(root, 'dist/index.html'), 'utf8')).not.toContain('data-custom-theme');
     expect(readdirSync(join(root, 'dist/assets')).some(name => name.startsWith('theme-') && name.endsWith('.css'))).toBe(false);
   });
+
+  it('drops the empty JavaScript entry that the CSS-only theme input leaves in the bundle', () => {
+    const root = fixtureRoot();
+    const themeFile = join(root, 'custom/theme.css');
+    mkdirSync(join(root, 'custom'));
+    writeFileSync(themeFile, '.theme { color: red; }');
+    const bundle = {
+      'assets/theme-a.js': { type: 'chunk', isEntry: true, facadeModuleId: themeFile, code: '/* empty css              */' },
+      'assets/theme-b.css': { type: 'asset', source: '.theme{color:red}' },
+      'assets/main-c.js': { type: 'chunk', isEntry: true, facadeModuleId: join(root, 'index.html'), code: 'console.log(1)' },
+    };
+
+    for (const plugin of createCustomThemePlugins({ root, themeFile })) {
+      const hook = plugin.generateBundle;
+      (typeof hook === 'function' ? hook : hook?.handler)?.call({}, {}, bundle);
+    }
+
+    expect(Object.keys(bundle).sort()).toEqual(['assets/main-c.js', 'assets/theme-b.css']);
+  });
 });

@@ -45,5 +45,24 @@ export function createCustomThemePlugins({ root = process.cwd(), themeFile = res
         },
       },
     },
+    {
+      // The `theme` input is CSS only; when its CSS is shared with the public pages,
+      // Vite keeps an empty JavaScript entry for it that nothing loads.
+      name: 'drop-empty-custom-theme-chunk',
+      apply: 'build',
+      enforce: 'post',
+      generateBundle: {
+        // After Vite's HTML generation, which reads the chunk to link the theme CSS.
+        order: 'post',
+        handler(_options, bundle) {
+          for (const [fileName, output] of Object.entries(bundle)) {
+            const empty = output.code?.replace(/\/\*[\s\S]*?\*\//g, '').trim() === '';
+            if (output.type === 'chunk' && output.isEntry && output.facadeModuleId === themeFile && empty) {
+              delete bundle[fileName];
+            }
+          }
+        },
+      },
+    },
   ];
 }
