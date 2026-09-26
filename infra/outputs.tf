@@ -50,10 +50,16 @@ output "access_team_domain" {
   value = var.access_team_domain
 }
 
-# Solo la sitekey: e' pubblica e finisce nell'HTML. Il secret NON e' un
-# output — va messo a mano con `wrangler secret put TURNSTILE_SECRET`,
-# perche' outputs.json viene letto da uno script e non deve contenere
-# credenziali.
+# La sitekey e' pubblica e finisce nell'HTML.
 output "turnstile_sitekey" {
   value = var.enable_turnstile ? cloudflare_turnstile_widget.contact[0].sitekey : ""
+}
+
+# Il secret e' sensibile: `npm run setup:secrets` lo passa al Worker con una pipe,
+# senza scriverlo su file. `terraform output -json` lo stampa in chiaro, per questo
+# `npm run setup` e `npm run infra:sync` scartano gli output sensibili prima di
+# scrivere qualsiasi file. Lo stato di Terraform lo contiene comunque: resta locale.
+output "turnstile_secret" {
+  value     = var.enable_turnstile ? cloudflare_turnstile_widget.contact[0].secret : ""
+  sensitive = true
 }

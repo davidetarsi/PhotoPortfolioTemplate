@@ -73,6 +73,11 @@ run "staging_disabled_by_default" {
     condition     = output.prod_hostname == "portfolio.example.com"
     error_message = "The production hostname must be an output, for the Worker route in wrangler.json."
   }
+
+  assert {
+    condition     = output.turnstile_secret == ""
+    error_message = "With Turnstile disabled the secret output must be empty."
+  }
 }
 
 run "staging_enabled_explicitly" {
