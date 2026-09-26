@@ -35,7 +35,7 @@
 - `src/core/custom-theme.js` (create): eager glob of `/custom/theme.css`.
 - `src/components/Lightbox.js` (modify) + test: optional `onClose`.
 - `src/pages/index.js`, `src/pages/album.js`, `src/pages/about.js` (modify).
-- `src/api/index.js` (create) + test.
+- `src/api/index.js` (modify, created in F2a) + its test.
 - `custom.example/setup.js`, `custom.example/theme.css` (create), `docs/slots.md` (modify).
 
 ---
@@ -411,16 +411,13 @@ git commit -m "feat(slots): pages mount chrome and album parts through slots and
 
 > After F2a, `src/api/index.js` and its pinned test already exist, exporting `albumsToCards`. This task **adds** the other exports and extends the pinned list; it never removes or renames `albumsToCards`.
 
-**Files:** Create `src/api/index.js`, `src/api/index.test.js`
+**Files:** Modify `src/api/index.js`, `src/api/index.test.js` (both created in F2a)
 
-- [ ] **Step 1: Write the failing test** — the export list is pinned on purpose:
+Import cycle to keep harmless: exporting `slot` from `custom-slots.js` closes the loop `custom-slots.js` → eager glob → `custom/slots.js` → a statically imported landing → `src/api/index.js` → `custom-slots.js`. ES modules resolve it as long as no module calls `slot` at its top level. Keep it that way.
+
+- [ ] **Step 1: Write the failing test** — in `src/api/index.test.js`, replace only the array in the test `exports exactly the documented surface` with the one below. Keep the rest of the file: its `albumsToCards` tests pin what forks rely on. Each new export also gets tests of what it returns, in the same style; write them when this plan is re-verified before execution. The array:
 
 ```js
-import { describe, expect, it } from 'vitest';
-import * as api from './index.js';
-
-describe('public API for custom/', () => {
-  it('exports exactly the documented surface', () => {
     expect(Object.keys(api).sort()).toEqual([
       'albumsToCards',
       'fetchAlbums',
@@ -435,8 +432,6 @@ describe('public API for custom/', () => {
       'slot',
       'texts',
     ]);
-  });
-});
 ```
 
 - [ ] **Step 2: Run to verify failure.**
@@ -446,8 +441,9 @@ describe('public API for custom/', () => {
 ```js
 /**
  * The only module code in custom/ may import. Everything else in src/ is internal
- * and may change in any template update. Changing this list is a breaking change:
- * note it in docs/upgrading.md.
+ * and may change in any template update. Removing or renaming an export here, or
+ * changing its arguments or what it returns, is a breaking change for forks: note it
+ * in docs/upgrading.md. Adding an export, or a field to an object it returns, is safe.
  */
 export { fetchSite, fetchAlbums, fetchManifest, fetchConfig } from '../providers/data.js';
 export { photosFromManifest } from '../providers/r2.js';
@@ -488,7 +484,7 @@ export default function setup({ on, page }) {
 
 `custom.example/theme.css`: two rules that are visibly different (for example the accent colour token and the section heading weight), with a comment explaining it loads after `theme/`.
 
-- [ ] **Step 2: `docs/slots.md`** — add: the table of the five slots with contract and ctx; the four events with their detail shapes (`page:ready { page, site, album? }`, `page:leave { page }`, `photo:open { index, photo }`, `photo:close { index, photo }`); `custom/setup.js`; `custom/theme.css`; the rule "import only from `src/api/index.js`" with the list of exports.
+- [ ] **Step 2: `docs/slots.md`** — add: the table of the five slots with contract and ctx; the four events with their detail shapes (`page:ready { page, site, album? }`, `page:leave { page }`, `photo:open { index, photo }`, `photo:close { index, photo }`); `custom/setup.js`; `custom/theme.css`; one row per new export in the table of the section "The public API: `src/api/index.js`" (created in F2a), keeping the `/src/api/index.js` import form.
 
 - [ ] **Step 3: End-to-end check with the example**
 

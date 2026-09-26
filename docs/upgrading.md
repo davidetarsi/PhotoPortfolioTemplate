@@ -141,7 +141,7 @@ Two kinds of change deserve a second look, because tests pass either way:
 
 ### Slots and `custom/`
 
-An update that renames a slot, changes a contract method, changes a field of a slot's `ctx`, or removes or renames an export of `src/api/index.js` is listed here. After merging, run `npm test`: it catches a renamed slot or contract method in your `custom/slots.js`, but not a changed `ctx` field — check your components against `docs/slots.md`. No such change so far.
+An update that renames a slot, changes a contract method, changes a field of a slot's `ctx`, or removes, renames or changes what an export of `src/api/index.js` takes or returns is listed here. After merging, run `npm test` and `npm run build`. `npm test` catches a renamed slot or contract method in your `custom/slots.js`, but not a changed `ctx` field — check your components against `docs/slots.md`. A removed or renamed export of `src/api/index.js` fails `npm run build`; `npm test` catches it only where a test of yours calls it. No such change so far.
 
 ## If it goes wrong
 

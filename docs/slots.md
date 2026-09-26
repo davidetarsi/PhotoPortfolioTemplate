@@ -71,14 +71,20 @@ import { albumsToCards } from '/src/api/index.js';
 |---|---|---|
 | `albumsToCards` | `albumsToCards(albums, r2PublicUrl)` | an array of `{ slug, title, description, coverUrl }`. `coverUrl` is the full URL of the cover, or `null` when the album has no cover or `r2PublicUrl` is missing |
 
-In a landing, pass the two fields of `ctx.data`:
+In a landing, pass the two fields of `ctx.data`. Check `albums` first: it is `null` when the albums could not be loaded, and `albumsToCards` needs an array. `custom.example/landing/example-landing.js` shows both branches.
 
 ```js
-const { albums, r2PublicUrl } = await ctx.data;
-const cards = albums === null ? [] : albumsToCards(albums, r2PublicUrl);
+const { albums, albumsError, r2PublicUrl } = await ctx.data;
+if (albums === null) {
+  // show a message: albumsError says what went wrong
+} else {
+  for (const card of albumsToCards(albums, r2PublicUrl)) {
+    // one link per album; card.coverUrl may be null
+  }
+}
 ```
 
-This is the complete list today. It grows as later versions of the template need it; an export is never removed or renamed without a note in `docs/upgrading.md`.
+This is the complete list today. It grows as later versions of the template need it; an export is never removed, renamed or changed in what it takes or returns without a note in `docs/upgrading.md`.
 
 ## What your code runs under
 
@@ -117,4 +123,4 @@ They appear in the browser console, and in a fork they make `npm test` fail — 
 
 ## Stability
 
-Slot names, contract methods, the fields of `ctx` and the exports of `src/api/index.js` are the public surface of `custom/`. Removing or renaming any of them is a breaking change, announced in `docs/upgrading.md`; adding one is not. Everything else in `src/` is internal and may change in any update.
+Slot names, contract methods, the fields of `ctx` and the exports of `src/api/index.js` are the public surface of `custom/`. Removing, renaming or changing any of them (what a contract method receives, what a `ctx` field contains, what an export takes or returns) is a breaking change, announced in `docs/upgrading.md`. Adding one, or adding a field to an object the template passes or returns, is not. Everything else in `src/` is internal and may change in any update.

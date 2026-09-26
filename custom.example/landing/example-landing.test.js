@@ -21,7 +21,9 @@ describe('example landing', () => {
     const sport = container.querySelector('a[href="/sport"]');
     expect(sport.textContent).toBe('Sport');
     expect(sport.querySelector('img').getAttribute('src')).toBe('https://photos.example.com/sport/c.webp');
-    expect(container.querySelector('a[href="/viaggi"] img')).toBeNull();
+    const viaggi = container.querySelector('a[href="/viaggi"]');
+    expect(viaggi.textContent).toBe('Viaggi');
+    expect(viaggi.querySelector('img')).toBeNull();
   });
 
   it('shows the error message when the albums could not be loaded', async () => {

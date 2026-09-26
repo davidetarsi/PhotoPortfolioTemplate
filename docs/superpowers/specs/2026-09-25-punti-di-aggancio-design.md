@@ -1,7 +1,7 @@
 # Punti di aggancio (`custom/`) — Design e roadmap
 
 **Data**: 2026-09-25
-**Stato**: F4 e F1 unite in `main` il 2026-09-26; F2a in corso. Cartella del fork: `custom/` (§6)
+**Stato**: F4, F1 e F2a unite in `main` il 2026-09-26. Cartella del fork: `custom/` (§6)
 **Verificato su**: `main` @ `a757c45` (merge PR #19, 2026-09-24) · **Ricontrollato su** `6b0d6db`
 (2026-09-25): i tre commit successivi toccano solo `contact-routes`, nessun file dei piani
 **Origine**: il sito personale (davidetarsi.com) vuole una landing completamente diversa — una carta
@@ -171,7 +171,7 @@ documentazione compresi.
 | 1 | **F4** | Meta per album nel Worker, 404 per album inesistenti | `plans/2026-09-25-f4-meta-album-worker.md` | 2–3 h | — | modello economico: il piano contiene tutto il codice |
 | 2 | **F1** | Registro degli slot, slot `landing`, `custom.example/`, documentazione di base | `plans/2026-09-25-f1-slot-landing.md` | 3–4 h | — | modello economico |
 | 3 | **F2a** | API pubblica minima per `custom/`: `src/api/index.js` con `albumsToCards` | `plans/2026-09-26-f2a-api-pubblica-minima.md` | 1 h | F1 | modello economico |
-| 4 | **F2** | Slot `nav`, `footer`, `photoGrid`, `lightbox`; eventi; `custom/setup.js`; `custom/theme.css`; `src/api` | `plans/2026-09-25-f2-slot-album-ed-eventi.md` | 3–4 h | F1 | modello economico |
+| 4 | **F2** | Slot `nav`, `footer`, `photoGrid`, `lightbox`; eventi; `custom/setup.js`; `custom/theme.css`; `src/api` | `plans/2026-09-25-f2-slot-album-ed-eventi.md` | 3–4 h | F1, F2a | modello economico |
 | 5 | **F3** | Pagine del sito (singole e collezioni), dev server, slug riservati | `plans/2026-09-25-f3-pagine-del-sito.md` | 6–8 h | F2, percorsi riservati unificati | modello standard, dopo aver dettagliato i task in prosa |
 
 **Totale: 15–20 ore.**
