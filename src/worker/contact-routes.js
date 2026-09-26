@@ -44,6 +44,13 @@ async function inviaNotifica(env, messaggio, adminUrl) {
 export async function handleContactRequest(request, env, deps = {}) {
   if (request.method !== 'POST') return jsonResponse({ error: 'METHOD_NOT_ALLOWED' }, 405);
 
+  // A sitekey without its secret would draw the widget and verify nothing. Refuse instead,
+  // so a forgotten `wrangler versions secret put TURNSTILE_SECRET` shows up at once.
+  if (env.TURNSTILE_SITEKEY && !env.TURNSTILE_SECRET) {
+    console.error('contact: TURNSTILE_SITEKEY is set but TURNSTILE_SECRET is missing; refusing submissions.');
+    return jsonResponse({ error: 'TURNSTILE_NOT_CONFIGURED' }, 503);
+  }
+
   const now = deps.now ?? Date.now;
   const rand = deps.rand ?? randSuffix;
   const notify = deps.notify ?? inviaNotifica;

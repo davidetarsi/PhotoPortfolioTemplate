@@ -187,12 +187,10 @@ outside the verified workflow.
 `versions secret put` attaches the value to a new Worker version without promoting it, so
 it is not active in production until that version is promoted. Before serving traffic,
 verify that every version intended for staging or production contains the
-`TURNSTILE_SECRET` binding. A missing binding fails **open**, not closed:
-`verifyTurnstile` reads an absent secret as "Turnstile isn't in use here" and accepts
-every submission. With the sitekey present but no secret on the target version, the
-widget is still drawn on the page but nothing validates behind it. Nothing in the UI
-tells you. Configure the secret binding on each target version before serving it, or
-decide deliberately that staging goes without.
+`TURNSTILE_SECRET` binding. With the sitekey present but no secret on the target
+version, the Worker refuses every contact submission with `503 TURNSTILE_NOT_CONFIGURED`.
+Configure the secret binding on each target version before serving it, or leave both
+the sitekey and the secret out of staging.
 
 ### Git integration — Connect repository
 

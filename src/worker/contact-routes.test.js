@@ -36,6 +36,24 @@ describe('handleContactRequest', () => {
     expect(JSON.parse(env.BUCKET.store.get(chiavi[0]).text).name).toBe('Mario');
   });
 
+  it('rifiuta con 503 se c è la sitekey di Turnstile ma manca il secret, senza salvare', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const env = makeEnv({ TURNSTILE_SITEKEY: '0x4AAAAAAA' });
+    const res = await post(env, VALIDO);
+    expect(res.status).toBe(503);
+    expect(await res.json()).toEqual({ error: 'TURNSTILE_NOT_CONFIGURED' });
+    expect(env.BUCKET.store.size).toBe(0);
+    expect(error).toHaveBeenCalled();
+    error.mockRestore();
+  });
+
+  it('con sitekey e secret il form verifica e salva', async () => {
+    const env = makeEnv({ TURNSTILE_SITEKEY: '0x4AAAAAAA', TURNSTILE_SECRET: 's' });
+    const res = await post(env, VALIDO);
+    expect(res.status).toBe(200);
+    expect(env.BUCKET.store.size).toBe(1);
+  });
+
   it('rifiuta i metodi diversi da POST', async () => {
     const res = await handleContactRequest(
       new Request('https://x.dev/api/contact', { method: 'GET' }), makeEnv(), makeDeps());

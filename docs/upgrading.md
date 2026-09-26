@@ -151,6 +151,11 @@ The current slot contracts, handle ownership, page events, custom CSS ordering a
 - The dashboard refuses new albums named `album` or `index`, as it already did for `about`, `admin`, `api` and `assets`. Albums that already have one of these slugs are not touched: they stay in the list and in the dashboard, and on the public site the template page answers at that address.
 - The Worker no longer refuses reserved slugs when albums are saved or photos are uploaded. The dashboard is where new names are checked.
 
+### Before sharing (2026-09-26): Node and Turnstile
+
+- Node.js 22.12 or later is required; `package.json` now declares it in `engines`.
+- With `TURNSTILE_SITEKEY` set and no `TURNSTILE_SECRET`, the contact form now answers `503 TURNSTILE_NOT_CONFIGURED` instead of accepting unverified messages. Set the secret with `npx wrangler versions secret put TURNSTILE_SECRET`, or remove the sitekey.
+
 ## If it goes wrong
 
 Nothing here is destructive as long as you have not pushed. A fast-forward only moved a
