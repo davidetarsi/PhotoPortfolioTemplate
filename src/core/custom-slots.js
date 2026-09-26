@@ -6,8 +6,17 @@
 import { createSlotResolver, overridesFrom } from './slots.js';
 import { SLOT_CONTRACTS } from './contracts.js';
 import * as defaults from './default-slots.js';
+import { keepCustomThemeLast } from './custom-theme.js';
 
 const found = import.meta.glob('/custom/slots.js', { eager: true });
 const customModule = Object.values(found)[0];
 
-export const slot = createSlotResolver({ ...defaults }, overridesFrom(customModule), SLOT_CONTRACTS);
+const resolveSlot = createSlotResolver({ ...defaults }, overridesFrom(customModule), SLOT_CONTRACTS);
+
+export async function slot(name) {
+  try {
+    return await resolveSlot(name);
+  } finally {
+    keepCustomThemeLast();
+  }
+}

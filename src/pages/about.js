@@ -33,8 +33,10 @@ const chromeMount = owner.track(sitePromise.then(({ site }) => {
 // only the build value, and the chain terraform → wrangler.json → form
 // would break silently without warning.
 const { site, configRes } = await sitePromise;
-const turnstileSitekey = configRes.ok ? configRes.data.turnstileSitekey : siteConfig.turnstileSitekey;
-document.getElementById('about-form')
-  .appendChild(createContactForm({ ...siteConfig, turnstileSitekey }, texts));
-await chromeMount;
-if (!owner.destroyed) owner.ready({ site });
+if (!owner.destroyed) {
+  const turnstileSitekey = configRes.ok ? configRes.data.turnstileSitekey : siteConfig.turnstileSitekey;
+  document.getElementById('about-form')
+    .appendChild(createContactForm({ ...siteConfig, turnstileSitekey }, texts));
+  await chromeMount;
+  if (!owner.destroyed) owner.ready({ site });
+}
