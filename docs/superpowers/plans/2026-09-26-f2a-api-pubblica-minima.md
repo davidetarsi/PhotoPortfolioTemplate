@@ -42,7 +42,7 @@
 - Consumes: `albumsToCards(albums, r2PublicUrl)` from `src/pages/home-logic.js` (unchanged).
 - Produces: `src/api/index.js` exporting `albumsToCards`. Task 2 imports it as `/src/api/index.js`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `src/api/index.test.js`:
 
@@ -70,12 +70,12 @@ describe('public API for custom/', () => {
 });
 ```
 
-- [ ] **Step 2: Run it and verify it fails**
+- [x] **Step 2: Run it and verify it fails**
 
 Run: `npx vitest run src/api/index.test.js`
 Expected: FAIL — cannot find module `./index.js`.
 
-- [ ] **Step 3: Create the module**
+- [x] **Step 3: Create the module**
 
 Create `src/api/index.js`:
 
@@ -88,12 +88,12 @@ Create `src/api/index.js`:
 export { albumsToCards } from '../pages/home-logic.js';
 ```
 
-- [ ] **Step 4: Run it and verify it passes**
+- [x] **Step 4: Run it and verify it passes**
 
 Run: `npx vitest run src/api/index.test.js`
 Expected: PASS, 2 tests.
 
-- [ ] **Step 5: Document the API in `docs/slots.md`**
+- [x] **Step 5: Document the API in `docs/slots.md`**
 
 Three edits.
 
@@ -147,7 +147,7 @@ This is the complete list today. It grows as later versions of the template need
    Slot names, contract methods, the fields of `ctx` and the exports of `src/api/index.js` are the public surface of `custom/`. Removing or renaming any of them is a breaking change, announced in `docs/upgrading.md`; adding one is not.
    ```
 
-- [ ] **Step 6: Update the rule in `custom.example/README.md`**
+- [x] **Step 6: Update the rule in `custom.example/README.md`**
 
 Replace this line:
 
@@ -161,7 +161,7 @@ with:
 - From the template, import only `src/api/index.js`, as `/src/api/index.js`: every other file in `src/` is internal and may change in any template update.
 ```
 
-- [ ] **Step 7: Update `docs/upgrading.md`**
+- [x] **Step 7: Update `docs/upgrading.md`**
 
 In the subsection whose heading is the line below:
 
@@ -181,7 +181,7 @@ with:
 An update that renames a slot, changes a contract method, changes a field of a slot's `ctx`, or removes or renames an export of `src/api/index.js` is listed here.
 ```
 
-- [ ] **Step 8: Full suite and commit**
+- [x] **Step 8: Full suite and commit**
 
 Run: `npm test`
 Expected: 466 passed, 1 skipped, 58 files.
@@ -205,7 +205,7 @@ git commit -m "feat(api): public API for custom/ code, starting with albumsToCar
 
 Why a test inside `custom.example/`: `docs/slots.md` tells forks to test their own component in `custom/**/*.test.js`. The example shows how, and because Vitest's default include also picks up `custom.example/`, the template's own suite keeps the example from breaking.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `custom.example/landing/example-landing.test.js`:
 
@@ -244,12 +244,12 @@ describe('example landing', () => {
 });
 ```
 
-- [ ] **Step 2: Run it and verify it fails**
+- [x] **Step 2: Run it and verify it fails**
 
 Run: `npx vitest run custom.example/landing/example-landing.test.js`
 Expected: FAIL on the first test — the example does not render covers yet. The second test may already pass: it pins behavior that exists.
 
-- [ ] **Step 3: Use the API in the example**
+- [x] **Step 3: Use the API in the example**
 
 Replace the whole content of `custom.example/landing/example-landing.js` with:
 
@@ -309,7 +309,7 @@ export default {
 
 `alt` is empty on purpose: the album title follows the image inside the same link, so the image is decorative.
 
-- [ ] **Step 4: Size the covers**
+- [x] **Step 4: Size the covers**
 
 Append to `custom.example/landing/example-landing.css`:
 
@@ -323,7 +323,7 @@ Append to `custom.example/landing/example-landing.css`:
 }
 ```
 
-- [ ] **Step 5: Point to the example test in `custom.example/README.md`**
+- [x] **Step 5: Point to the example test in `custom.example/README.md`**
 
 In the `## Rules` list, after the bullet that begins `- Your code runs under the site's Content Security Policy`, add:
 
@@ -331,7 +331,7 @@ In the `## Rules` list, after the bullet that begins `- Your code runs under the
 - `landing/example-landing.test.js` shows how to test your own component: `npm test` runs every `*.test.js` under `custom/`. Replace it with tests for your landing.
 ```
 
-- [ ] **Step 6: Run the tests**
+- [x] **Step 6: Run the tests**
 
 Run: `npx vitest run custom.example/landing/example-landing.test.js`
 Expected: PASS, 2 tests.
@@ -339,7 +339,7 @@ Expected: PASS, 2 tests.
 Run: `npm test`
 Expected: 468 passed, 1 skipped, 59 files.
 
-- [ ] **Step 7: Verify the example as a fork uses it**
+- [x] **Step 7: Verify the example as a fork uses it**
 
 ```bash
 cp -r custom.example custom
@@ -353,9 +353,13 @@ Expected: with `custom/` present, 470 passed and 1 skipped in 60 files — the e
 
 The browser check of the example is done by the controller; the implementer skips it.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add custom.example/landing/example-landing.js custom.example/landing/example-landing.css custom.example/landing/example-landing.test.js custom.example/README.md
 git commit -m "docs(api): the example shows covers through the public API, with its own test"
 ```
+
+## Completion record — 2026-09-26
+
+Implemented on local branch `feature/f2a-public-api`; F2a is awaiting local merge. At `13bd30f`, the controller verified the example copied to a temporary `custom/`: 60 files, 472 passed, 1 skipped, and placeholder-CSP build passed. The final-review correction to Vitest discovery was then verified with a temporary nested `.worktrees` test fixture: RED collected it (60 files); GREEN excluded it (59 files). The fixture was removed. On the resulting worktree, `npm test` passed with 59 files, 470 passed, 1 skipped; `ALLOW_PLACEHOLDER_CSP=1 npm run build` passed. No remote or deployment was checked.

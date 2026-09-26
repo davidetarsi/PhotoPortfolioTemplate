@@ -1,9 +1,8 @@
 # Punti di aggancio (`custom/`) — Design e roadmap
 
 **Data**: 2026-09-25
-**Stato**: F4, F1 e F2a unite in `main` il 2026-09-26. Cartella del fork: `custom/` (§6)
-**Verificato su**: `main` @ `a757c45` (merge PR #19, 2026-09-24) · **Ricontrollato su** `6b0d6db`
-(2026-09-25): i tre commit successivi toccano solo `contact-routes`, nessun file dei piani
+**Stato**: F4 e F1 incluse nel `main` locale (`e609df7`); F2a verificata sul branch `feature/f2a-public-api` (`13bd30f`), in attesa di merge locale. Cartella del fork: `custom/` (§6)
+**Verificato su**: `main` locale @ `e609df7` per F4/F1 · branch locale `feature/f2a-public-api` @ `13bd30f` per F2a. Nessuna verifica di remoto o deploy.
 **Origine**: il sito personale (davidetarsi.com) vuole una landing completamente diversa — una carta
 nautica a due livelli — senza modificare i file del template, così che ogni `git merge upstream/main`
 resti pulito. Oggi il template permette di personalizzare solo `config/` e `theme/`: tutto il resto è
