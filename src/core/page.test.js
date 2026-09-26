@@ -102,4 +102,16 @@ describe('page lifecycle owner', () => {
     expect(error).toHaveBeenCalledOnce();
     error.mockRestore();
   });
+
+  it('does not emit ready when a pending mount settles after final disposal', () => {
+    const start = createPageLifecycle({ target: pageTarget() });
+    const owner = start('home');
+    const ready = vi.fn();
+    on('page:ready', ready);
+    owner.destroy();
+
+    owner.ready({ site: { name: 'Late' } });
+
+    expect(ready).not.toHaveBeenCalled();
+  });
 });

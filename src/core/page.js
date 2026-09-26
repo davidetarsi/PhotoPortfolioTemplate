@@ -58,6 +58,7 @@ export function createPageLifecycle({ setup, bus = defaultBus, target = globalTh
         return handleOrPromise;
       },
       ready(detail = {}) {
+        if (destroyed) return;
         lastReadyDetail = { page, ...detail };
         bus.emit('page:ready', lastReadyDetail);
       },

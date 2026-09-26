@@ -5,9 +5,12 @@ export function on(type, listener) {
   let group = listeners.get(type);
   if (!group) listeners.set(type, group = new Set());
   group.add(listener);
+  let active = true;
   return () => {
+    if (!active) return;
+    active = false;
     group.delete(listener);
-    if (group.size === 0) listeners.delete(type);
+    if (group.size === 0 && listeners.get(type) === group) listeners.delete(type);
   };
 }
 

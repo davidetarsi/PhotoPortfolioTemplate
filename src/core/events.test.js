@@ -27,4 +27,18 @@ describe('page event bus', () => {
     expect(error).toHaveBeenCalledOnce();
     error.mockRestore();
   });
+
+  it('keeps a later subscription when an earlier unsubscribe is called twice', () => {
+    const first = vi.fn();
+    const second = vi.fn();
+    const offFirst = on('page:ready', first);
+    offFirst();
+    on('page:ready', second);
+    offFirst();
+
+    emit('page:ready', 'home');
+
+    expect(first).not.toHaveBeenCalled();
+    expect(second).toHaveBeenCalledWith('home');
+  });
 });
