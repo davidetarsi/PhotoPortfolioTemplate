@@ -9,7 +9,7 @@ describe('public API for custom/', () => {
     // deliberate change, announced in docs/upgrading.md. Adding one is safe.
     expect(Object.keys(api).sort()).toEqual([
       'albumsToCards', 'fetchAlbums', 'fetchConfig', 'fetchManifest', 'fetchSite', 'on',
-      'photosFromManifest', 'resolveAlbums', 'resolveSiteContent', 'siteConfig', 'slot', 'texts',
+      'photosFromManifest', 'resolveAlbums', 'resolveSiteContent', 'siteConfig', 'slot', 'slugFromPath', 'texts',
     ]);
   });
 
@@ -55,6 +55,12 @@ describe('public API for custom/', () => {
     expect(api.texts.about.heading).toBeTruthy();
     expect(api.siteConfig.name).toBeTruthy();
     expect(api.on('public-api-test', () => {})).toEqual(expect.any(Function));
+  });
+
+  describe('slugFromPath', () => {
+    it('reads the entry slug of a collection page', () => {
+      expect(api.slugFromPath('/projects/:slug', '/projects/sea-sentinels')).toBe('sea-sentinels');
+    });
   });
 
   it('fetches validated runtime data through the public function', async () => {

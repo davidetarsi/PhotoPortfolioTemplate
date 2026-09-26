@@ -9,6 +9,7 @@ export { fetchSite, fetchAlbums, fetchManifest, fetchConfig } from '../providers
 export { photosFromManifest } from '../providers/r2.js';
 export { resolveSiteContent, resolveAlbums } from '../pages/home-logic.js';
 export { on } from '../core/events.js';
+export { slugFromPath } from '../utils/slugFromPath.js';
 export { texts } from '../../config/texts.config.js';
 export { siteConfig } from '../../config/site.config.js';
 
