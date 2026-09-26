@@ -9,7 +9,7 @@ Obiettivo: da 8 passi a circa 4 (fork → `npm run setup` → collega Git su Clo
 | # | Proposta | Cosa elimina | Impegno | Da decidere |
 |---|---|---|---|---|
 | A | Niente `migrate`: la dashboard tratta l'assenza di `albums.json` come lista vuota e il primo salvataggio crea i file | passo 6: token API R2, `.env`, `npm run migrate`, l'errore "non rilanciare migrate" | piccolo | approvata 2026-09-26, branch `feat/simplify-a-no-migrate` |
-| C | Non tracciare più `wrangler.json` nel template (solo `wrangler.example.json`); il fork aggiunge il suo | conflitti a ogni merge, trappola del fast-forward, `git checkout --ours` | piccolo-medio | approvata 2026-09-26, branch `feat/simplify-c-untracked-wrangler` (assunzione: il template non viene pubblicato dal suo repository) |
+| C | Non tracciare più `wrangler.json` nel template (solo `wrangler.example.json`); il fork aggiunge il suo | conflitti a ogni merge, trappola del fast-forward, `git checkout --ours` | piccolo-medio | approvata 2026-09-26, branch `feat/simplify-c-untracked-wrangler`; confermato il 2026-09-27 che il template non viene pubblicato dal suo repository |
 | E | Font in un posto solo: un plugin Vite inserisce il link a Google Fonts da `theme/` | le modifiche coordinate su 4 HTML e sulle pagine custom | piccolo | approvata 2026-09-26, branch `feat/simplify-e-fonts` |
 | T | Template HTML sicuri per costruzione: helper interno `html\`…\`` che fa l'escaping di ogni valore, usato in admin e componenti | la classe di errori di S1 (HTML iniettato) | piccolo-medio | approvata 2026-09-26, branch `feat/simplify-t-safe-html` |
 | D | `npm run setup`: `terraform apply`, legge gli output, scrive `wrangler.json`, imposta `TURNSTILE_SECRET` | unisce i passi 1 e 5; niente `outputs.json` a mano | medio, da provare su Cloudflare | approvata 2026-09-26, branch `feat/simplify-d-setup`, da provare su un account reale |
@@ -20,6 +20,8 @@ Ordine proposto: A, C, E, T, D.
 Valutate e non consigliate per ora: foto servite dal Worker invece che da un bucket pubblico (limite di 100.000 richieste al giorno del piano gratuito); procedura guidata via API di Cloudflare al posto di Terraform (molto codice da mantenere).
 
 ## Da verificare su un account Cloudflare reale
+
+Procedura passo passo: [prova-cloudflare.md](prova-cloudflare.md).
 
 - **D** (branch `feat/simplify-d-setup`): `npm run setup` su un account di prova crea l'infrastruttura e scrive `wrangler.json`; dopo il primo deploy `npm run setup:secrets` imposta `TURNSTILE_SECRET` (verificare che `wrangler versions secret put` legga il valore dalla pipe).
 - **S4+U7** (branch `feat/s4-u7-domain`), prima del merge: il deploy collega il dominio da `wrangler.json`; `workers.dev` si spegne senza staging; lo staging non viene toccato; Workers Builds ha i permessi per creare il custom domain.
