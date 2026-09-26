@@ -1,11 +1,16 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import * as api from './index.js';
+
+afterEach(() => vi.unstubAllGlobals());
 
 describe('public API for custom/', () => {
   it('exports exactly the documented surface', () => {
     // Pinned on purpose: removing or renaming an export breaks forks and must be a
     // deliberate change, announced in docs/upgrading.md. Adding one is safe.
-    expect(Object.keys(api).sort()).toEqual(['albumsToCards']);
+    expect(Object.keys(api).sort()).toEqual([
+      'albumsToCards', 'fetchAlbums', 'fetchConfig', 'fetchManifest', 'fetchSite', 'on',
+      'photosFromManifest', 'resolveAlbums', 'resolveSiteContent', 'siteConfig', 'slot', 'texts',
+    ]);
   });
 
   // What docs/slots.md promises about each export. Forks rely on it: change these
@@ -31,5 +36,36 @@ describe('public API for custom/', () => {
       const [card] = api.albumsToCards([{ slug: 'sport', title: 'Sport', description: '', coverName: 'c.webp' }], undefined);
       expect(card.coverUrl).toBeNull();
     });
+  });
+
+  it('maps manifest entries to public photo URLs', () => {
+    expect(api.photosFromManifest([{ name: 'lake.webp', width: 4, height: 3 }], 'travel', 'https://photos.example.com'))
+      .toEqual([{
+        name: 'lake.webp', width: 4, height: 3,
+        gridUrl: 'https://photos.example.com/travel/lake.webp',
+        fullUrl: 'https://photos.example.com/travel/lake.webp',
+      }]);
+    expect(api.photosFromManifest([{ name: 'lake.webp', width: 4, height: 3 }], 'travel', undefined)).toEqual([]);
+  });
+
+  it('exposes the same runtime and build helpers used by the pages', () => {
+    const albums = [{ slug: 'travel', title: 'Travel', description: '', coverName: '' }];
+    expect(api.resolveAlbums({ ok: false, error: 'NOT_FOUND' }, albums)[0].coverName).toBeNull();
+    expect(api.resolveSiteContent({ ok: false, error: 'NETWORK' }, api.siteConfig).name).toBe(api.siteConfig.name);
+    expect(api.texts.about.heading).toBeTruthy();
+    expect(api.siteConfig.name).toBeTruthy();
+    expect(api.on('public-api-test', () => {})).toEqual(expect.any(Function));
+  });
+
+  it('fetches validated runtime data through the public function', async () => {
+    const site = { name: 'Runtime', bio: '', hero: null, social: {} };
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify(site), { status: 200 })));
+
+    await expect(api.fetchSite()).resolves.toEqual({ ok: true, data: site });
+    expect(fetch).toHaveBeenCalledWith('/api/data/site');
+  });
+
+  it('resolves a slot lazily when the facade is called', async () => {
+    await expect(api.slot('landing')).resolves.toHaveProperty('mount');
   });
 });

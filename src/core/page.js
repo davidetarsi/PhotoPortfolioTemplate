@@ -39,6 +39,7 @@ export function createPageLifecycle({ setup, bus = defaultBus, target = globalTh
     };
 
     const owner = {
+      get destroyed() { return destroyed; },
       track(handleOrPromise) {
         if (handleOrPromise && typeof handleOrPromise.then === 'function') {
           return Promise.resolve(handleOrPromise).then(
