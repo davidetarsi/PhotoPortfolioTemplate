@@ -202,6 +202,9 @@ Non fanno parte di questo lavoro; ognuno sarà un piano a sé, costruito sopra g
 | Transizioni | View Transitions CSS tra home e album | progressivo: dove non supportate, navigazione normale |
 | Test nel browser | Playwright + axe su home, album, about | completa i test jsdom |
 | Meta di home e about | `run_worker_first` su `/` e `/about` e riuso di F4 | valutare il costo: ogni visita alla home passerebbe dal Worker |
+| Canonical stabile | variabile `SITE_URL` opzionale, con ripiego su `url.origin` | emerso dalla revisione di F4: oggi su `workers.dev` e su staging ogni copia si dichiara canonica |
+| Primo byte delle pagine album | avviare insieme `ASSETS.fetch` e le due letture R2 | emerso dalla revisione di F4: oggi le letture partono dopo l'asset |
+| Header ereditati dall'asset | togliere `cf-cache-status` dalla risposta riscritta | emerso dalla revisione di F4: innocuo, ma fuorviante nel debug |
 
 ## 6. Domande aperte
 
