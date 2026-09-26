@@ -145,6 +145,12 @@ An update that renames a slot, changes a contract method, changes a field of a s
 
 The current slot contracts, handle ownership, page events, custom CSS ordering and explicit override errors are documented in [the extension guide](slots.md). `custom.example/` is the runnable reference; copy it to `custom/` in a disposable checkout before trying it.
 
+### F3 (2026-09-26): routes and reserved slugs
+
+- `/contatti` no longer redirects to `/about`. Old links to `/contatti` now reach the album page and answer "album not found", unless you have an album with that slug.
+- The dashboard refuses new albums named `album` or `index`, as it already did for `about`, `admin`, `api` and `assets`. Albums that already have one of these slugs are not touched: they stay in the list and in the dashboard, and on the public site the template page answers at that address.
+- The Worker no longer refuses reserved slugs when albums are saved or photos are uploaded. The dashboard is where new names are checked.
+
 ## If it goes wrong
 
 Nothing here is destructive as long as you have not pushed. A fast-forward only moved a

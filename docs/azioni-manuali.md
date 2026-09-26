@@ -452,6 +452,7 @@ decidere che non ti importano.
   `.github/FUNDING.yml` è stato rimosso e va ricreato.
 - **URL pubblico `/about`** (21 settembre 2026). `/contatti` resta un redirect 301
   per i collegamenti esistenti; navigazione, testi e test usano `/about`.
+- **`/contatti` rimosso** (26 settembre 2026, F3). Il redirect 301 verso `/about` non c'è più: `/contatti` è un indirizzo di album come gli altri.
 
 ---
 

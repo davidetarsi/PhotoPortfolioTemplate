@@ -1,7 +1,7 @@
-import { basename, resolve } from 'node:path';
+import { resolve } from 'node:path';
 import { existsSync } from 'node:fs';
 
-const PUBLIC_PAGES = new Set(['index.html', 'album.html', 'about.html']);
+const TEMPLATE_PUBLIC_PAGES = ['index.html', 'album.html', 'about.html'];
 
 export function customThemeRollupInput(themeFile) {
   return existsSync(themeFile) ? { theme: themeFile } : {};
@@ -12,8 +12,12 @@ function appendThemeLink(html, href) {
   return html.replace(/<\/head>/i, `    ${tag}\n  </head>`);
 }
 
-/** Vite theme entry plus public HTML linking, tied to the `theme` CSS input. */
-export function createCustomThemePlugins({ root = process.cwd(), themeFile = resolve(root, 'custom/theme.css') } = {}) {
+/** Vite theme entry plus public HTML linking, tied to the `theme` CSS input. publicPages: extra repo-relative HTML files (custom pages) that get the theme. */
+export function createCustomThemePlugins({ root = process.cwd(), themeFile = resolve(root, 'custom/theme.css'), publicPages = [] } = {}) {
+  // Public pages get the theme; /admin never does. Paths are compared absolute.
+  const publicHtml = new Set([...TEMPLATE_PUBLIC_PAGES, ...publicPages].map(page => resolve(root, page)));
+  const isPublic = filename => publicHtml.has(resolve(filename));
+
   return [
     {
       name: 'optional-custom-theme-link',
@@ -21,7 +25,7 @@ export function createCustomThemePlugins({ root = process.cwd(), themeFile = res
       transformIndexHtml: {
         order: 'pre',
         handler(html, context) {
-          if (!existsSync(themeFile) || !PUBLIC_PAGES.has(basename(context.filename))) return html;
+          if (!existsSync(themeFile) || !isPublic(context.filename)) return html;
           if (html.includes('data-custom-theme')) return html;
           return appendThemeLink(html, '/custom/theme.css');
         },
@@ -33,7 +37,7 @@ export function createCustomThemePlugins({ root = process.cwd(), themeFile = res
       transformIndexHtml: {
         order: 'post',
         handler(html, context) {
-          if (!existsSync(themeFile) || !PUBLIC_PAGES.has(basename(context.filename))) return html;
+          if (!existsSync(themeFile) || !isPublic(context.filename)) return html;
           const linkPattern = /<link\b(?=[^>]*\bhref=(['"])[^'"]*\/assets\/theme-[^'"]+\.css\1)[^>]*>/i;
           const existing = html.match(linkPattern)?.[0];
           const link = (existing ?? '<link rel="stylesheet" href="/assets/theme.css">')

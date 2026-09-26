@@ -2,11 +2,14 @@ import { resolve } from 'path'
 import { defineConfig } from 'vite'
 import { configDefaults } from 'vitest/config'
 import { readFileSync, existsSync } from 'fs'
+import { pathToFileURL } from 'url'
 import { siteConfig } from './config/site.config.js'
 import { injectSiteMeta } from './src/utils/injectSiteMeta.js'
 import { buildHeaders } from './src/utils/buildHeaders.js'
-import { devRouteFallback } from './src/utils/devRouteFallback.js'
+import { createDevRouteFallback } from './src/utils/devRouteFallback.js'
 import { createCustomThemePlugins, customThemeRollupInput } from './src/utils/customTheme.js'
+import { customPageInputs, validateCustomPages } from './src/utils/customPages.js'
+import { customPagesPlugin } from './src/utils/customPagesPlugin.js'
 import { isExpectedBuildWarning } from './src/utils/buildWarnings.js'
 
 // Letto una volta: serve sia al meta og:image sia alla CSP, e leggerlo due
@@ -16,11 +19,20 @@ const wranglerConfig = existsSync('wrangler.json')
   : null
 const r2PublicUrl = wranglerConfig?.vars?.R2_PUBLIC_URL ?? ''
 
+// Pagine aggiuntive del fork, facoltative: il template non spedisce mai custom/pages.config.js.
+// Un errore di configurazione ferma subito build, dev e test, con il nome del file.
+const customPagesFile = resolve(__dirname, 'custom/pages.config.js')
+const customPages = existsSync(customPagesFile)
+  ? validateCustomPages((await import(pathToFileURL(customPagesFile).href)).default, {
+      fileExists: path => existsSync(resolve(__dirname, path)),
+    })
+  : []
+
 const devRouteFallbackPlugin = () => ({
   name: 'dev-route-fallback',
   apply: 'serve',
   configureServer(server) {
-    server.middlewares.use(devRouteFallback)
+    server.middlewares.use(createDevRouteFallback({ customPages }))
   },
 })
 
@@ -56,7 +68,13 @@ const headersPlugin = () => ({
 })
 
 export default defineConfig({
-  plugins: [devRouteFallbackPlugin(), siteMetaPlugin(), ...createCustomThemePlugins({ root: __dirname }), headersPlugin()],
+  plugins: [
+    devRouteFallbackPlugin(),
+    siteMetaPlugin(),
+    ...createCustomThemePlugins({ root: __dirname, publicPages: customPages.map(page => page.html) }),
+    customPagesPlugin(customPages),
+    headersPlugin(),
+  ],
   test: {
     environment: 'jsdom',
     exclude: [...configDefaults.exclude, '**/.worktrees/**'],
@@ -75,6 +93,7 @@ export default defineConfig({
         about: resolve(__dirname, 'about.html'),
         admin: resolve(__dirname, 'admin.html'),
         ...customThemeRollupInput(resolve(__dirname, 'custom/theme.css')),
+        ...customPageInputs(customPages, path => resolve(__dirname, path)),
       },
     },
   },

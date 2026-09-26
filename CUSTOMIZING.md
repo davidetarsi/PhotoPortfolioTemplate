@@ -77,7 +77,7 @@ Changing fonts requires **three coordinated changes** — skipping one causes si
 --font-heading: 'Playfair Display', serif;
 ```
 
-2. **In all four HTML files** (`index.html`, `album.html`, `contatti.html`, `admin.html`): replace the Google Fonts `<link>` tag.
+2. **In all four HTML files** (`index.html`, `album.html`, `about.html`, `admin.html`), and in your custom pages (`custom/pages/*.html`): replace the Google Fonts `<link>` tag.
    Forgetting `admin.html` is the easiest mistake: the site changes fonts and the dashboard lags behind.
 
 ```html
@@ -142,6 +142,8 @@ cp -r custom.example custom
 ```
 
 The template never contains `custom/`, so `git merge upstream/main` never conflicts there. Commit it in your fork. The parts you can replace, their contracts, the public API your code may import and the errors you can meet are in [`docs/slots.md`](docs/slots.md).
+
+To add pages of your own — a single page or a collection with one page per entry — see [`docs/pages.md`](docs/pages.md).
 
 ---
 

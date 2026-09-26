@@ -24,5 +24,14 @@ export function injectSiteMeta(html, siteConfig, r2PublicUrl) {
     key in values ? escapeHtml(values[key]) : match,
   );
 
-  return replaced.replace(/[ \t]*<meta[^>]*content=""[^>]*>\n?/g, '');
+  return stripEmptyMeta(replaced);
+}
+
+/**
+ * Removes meta tags whose content ended up empty, with their indentation and newline.
+ * @param {string} html - HTML after placeholder replacement.
+ * @returns {string} HTML without empty meta tags.
+ */
+export function stripEmptyMeta(html) {
+  return html.replace(/[ \t]*<meta[^>]*content=""[^>]*>\n?/g, '');
 }

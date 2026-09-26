@@ -70,12 +70,12 @@ describe('PUT /api/admin/site', () => {
 });
 
 describe('PUT /api/admin/albums', () => {
-  it('salva albums.json valido; 400 su slug riservato', async () => {
+  it('salva albums.json valido, anche con uno slug riservato scritto a mano', async () => {
     const env = makeEnv();
     expect((await call(env, 'PUT', '/api/admin/albums', ALBUMS)).status).toBe(200);
     expect(JSON.parse(env.BUCKET.store.get('_data/albums.json').text)).toEqual(ALBUMS);
-    const bad = { albums: [{ slug: 'admin', title: 'X', description: '', coverName: null }] };
-    expect((await call(env, 'PUT', '/api/admin/albums', bad)).status).toBe(400);
+    const reserved = { albums: [{ slug: 'admin', title: 'X', description: '', coverName: null }] };
+    expect((await call(env, 'PUT', '/api/admin/albums', reserved)).status).toBe(200);
   });
 });
 
@@ -88,10 +88,10 @@ describe('PUT /api/admin/albums/:slug/manifest', () => {
     expect((await call(env, 'PUT', '/api/admin/albums/sport/manifest', [{ name: 'a.jpg', width: 1, height: 1 }])).status).toBe(400);
     expect((await call(env, 'PUT', '/api/admin/albums/NO SLUG/manifest', manifest)).status).toBe(404);
   });
-  it('404 su slug riservato (es. "admin") anche se passa SLUG_RE', async () => {
+  it('salva il manifest anche per un album con slug riservato', async () => {
     const env = makeEnv();
     const manifest = [{ name: 'a.webp', width: 10, height: 20 }];
-    expect((await call(env, 'PUT', '/api/admin/albums/admin/manifest', manifest)).status).toBe(404);
+    expect((await call(env, 'PUT', '/api/admin/albums/admin/manifest', manifest)).status).toBe(200);
   });
 });
 
@@ -138,9 +138,9 @@ describe('PUT /api/admin/albums/:slug/photos/:name', () => {
     expect(await res.json()).toEqual({ error: 'STORAGE_ERROR' });
   });
 
-  it('400 su slug riservato (es. "admin") anche se passa SLUG_RE', async () => {
+  it('carica una foto anche in un album con slug riservato', async () => {
     const env = makeEnv();
-    expect((await put(env, '/api/admin/albums/admin/photos/a.webp', new Uint8Array([1]))).status).toBe(400);
+    expect((await put(env, '/api/admin/albums/admin/photos/a.webp', new Uint8Array([1]))).status).toBe(200);
   });
 });
 
@@ -186,9 +186,10 @@ describe('DELETE /api/admin/albums/:slug', () => {
     expect((await call(makeEnv(), 'DELETE', '/api/admin/albums/fantasma')).status).toBe(200);
   });
 
-  it('404 su slug riservato (es. "admin") anche se passa SLUG_RE — nessuna scrittura tentata', async () => {
-    const env = makeEnv();
-    expect((await call(env, 'DELETE', '/api/admin/albums/admin')).status).toBe(404);
+  it('elimina anche un album con slug riservato', async () => {
+    const env = makeEnv({ 'admin/a.webp': 'BIN' });
+    expect((await call(env, 'DELETE', '/api/admin/albums/admin')).status).toBe(200);
+    expect(env.BUCKET.store.has('admin/a.webp')).toBe(false);
   });
 
   it('DELETE album: errore R2 durante list → 500 con JSON pulito', async () => {

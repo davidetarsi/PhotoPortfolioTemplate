@@ -21,6 +21,7 @@ cp -r custom.example custom
 - `theme.css` is an optional public-page theme; it is processed by Vite and stays after template and lazy slot styles.
 - `setup.js` shows a page-event subscription with an unsubscribe cleanup.
 - `slots.js` keeps a static landing import (which itself imports the public API) and a lazy photo-grid override with its own CSS.
+- `pages.config.js` declares two example pages: `/archive` (single) and `/projects/:slug` (a collection built from `content/projects.json`). See `docs/pages.md`.
 - Commit `custom/` in your fork. Never commit it to the template itself.
 
 For the complete slot, lifecycle, public API, CSS and error contracts, start with [`../docs/slots.md`](../docs/slots.md).

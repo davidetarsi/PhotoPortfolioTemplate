@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  SLUG_RE, RESERVED_SLUGS, PHOTO_NAME_RE, MAX_PHOTO_BYTES, slugifyTitle,
+  SLUG_RE, RESERVED_SLUGS, TEMPLATE_ROUTES, PHOTO_NAME_RE, MAX_PHOTO_BYTES, slugifyTitle,
   validateSiteShape, validateAlbumsShape, validateManifestShape, validateConfigShape,
 } from './content-rules.js';
 
@@ -14,8 +14,9 @@ describe('regex e costanti', () => {
     expect(SLUG_RE.test('')).toBe(false);
   });
 
-  it('RESERVED_SLUGS contiene le rotte del sito', () => {
-    for (const s of ['admin', 'api', 'assets', 'about']) expect(RESERVED_SLUGS).toContain(s);
+  it('RESERVED_SLUGS deriva dai primi segmenti di TEMPLATE_ROUTES', () => {
+    expect(RESERVED_SLUGS).toEqual(['about', 'admin', 'album', 'api', 'assets', 'index']);
+    expect(TEMPLATE_ROUTES.pages).toEqual({ '/about': '/about.html', '/admin': '/admin.html' });
   });
 
   it('PHOTO_NAME_RE accetta nomi legacy con maiuscole e rifiuta path traversal', () => {
@@ -60,8 +61,10 @@ describe('validateAlbumsShape', () => {
     expect(validateAlbumsShape({ albums: [album] }).ok).toBe(true);
     expect(validateAlbumsShape({ albums: [{ ...album, coverName: 'a.webp' }] }).ok).toBe(true);
   });
-  it('rifiuta slug riservati, duplicati, title vuoto, coverName invalido', () => {
-    expect(validateAlbumsShape({ albums: [{ ...album, slug: 'admin' }] }).ok).toBe(false);
+  it('accetta uno slug riservato: sul sito vince la rotta del template, la lista resta valida', () => {
+    expect(validateAlbumsShape({ albums: [{ ...album, slug: 'admin' }, { ...album, slug: 'index' }] }).ok).toBe(true);
+  });
+  it('rifiuta duplicati, title vuoto, coverName invalido', () => {
     expect(validateAlbumsShape({ albums: [album, album] }).ok).toBe(false);
     expect(validateAlbumsShape({ albums: [{ ...album, title: '' }] }).ok).toBe(false);
     expect(validateAlbumsShape({ albums: [{ ...album, coverName: 'a.jpg' }] }).ok).toBe(false);

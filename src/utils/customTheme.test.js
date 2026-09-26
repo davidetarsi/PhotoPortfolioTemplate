@@ -103,4 +103,33 @@ describe('custom theme Vite integration', () => {
 
     expect(Object.keys(bundle).sort()).toEqual(['assets/main-c.js', 'assets/theme-b.css']);
   });
+
+  it('links the theme on custom pages passed as publicPages', async () => {
+    const root = fixtureRoot();
+    mkdirSync(join(root, 'custom/pages'), { recursive: true });
+    writeFileSync(join(root, 'custom/theme.css'), '.theme { color: red; }');
+    writeFileSync(join(root, 'custom/pages/archive.html'), '<!doctype html><html><head></head><body><script type="module" src="/src/main.js"></script></body></html>');
+    const themeFile = join(root, 'custom/theme.css');
+
+    await build({
+      configFile: false,
+      root,
+      logLevel: 'silent',
+      plugins: createCustomThemePlugins({ root, themeFile, publicPages: ['custom/pages/archive.html'] }),
+      build: {
+        outDir: join(root, 'dist'),
+        rollupOptions: {
+          input: {
+            index: join(root, 'index.html'),
+            admin: join(root, 'admin.html'),
+            archive: join(root, 'custom/pages/archive.html'),
+            ...customThemeRollupInput(themeFile),
+          },
+        },
+      },
+    });
+
+    expect(readFileSync(join(root, 'dist/custom/pages/archive.html'), 'utf8')).toContain('data-custom-theme');
+    expect(readFileSync(join(root, 'dist/admin.html'), 'utf8')).not.toContain('data-custom-theme');
+  });
 });

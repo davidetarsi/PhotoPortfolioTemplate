@@ -1,0 +1,2 @@
+/* Public entry for the template's base styles: custom pages import it instead of src/styles/. */
+@import '../styles/main.css';
