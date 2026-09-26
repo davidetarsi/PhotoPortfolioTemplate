@@ -163,6 +163,10 @@ Contact messages now go to a private bucket, `<project_name>-messages`, with no 
 1. With Terraform: `terraform -chdir=infra plan` must show only the new bucket (two with staging), then apply, `terraform -chdir=infra output -json > infra/outputs.json` and `npm run infra:sync`. By hand: create the bucket without public access and add `{ "binding": "MESSAGES_BUCKET", "bucket_name": "<project_name>-messages" }` to `r2_buckets` in `wrangler.json`.
 2. Commit `wrangler.json` and deploy. Without the binding, the contact form answers `500 STORAGE_UNAVAILABLE` on purpose instead of writing to the public bucket.
 
+### Domain attached by the deploy (2026-09-26)
+
+After `terraform -chdir=infra apply` (no resource changes, one new output), `terraform -chdir=infra output -json > infra/outputs.json` and `npm run infra:sync`, `wrangler.json` gains `routes` with your domain as a custom domain and, without staging, `"workers_dev": false` and `"preview_urls": false`. If you already attached the domain by hand, the deploy keeps it. Your site then stops answering on its `workers.dev` address.
+
 ## If it goes wrong
 
 Nothing here is destructive as long as you have not pushed. A fast-forward only moved a

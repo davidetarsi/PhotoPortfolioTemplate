@@ -157,6 +157,6 @@ Rilievo aggiunto durante le correzioni:
 
 - **U7 — Media: nessuna guida spiegava come collegare il dominio del sito al Worker.** Terraform crea Access su `prod_hostname`, ma non collega quel dominio al Worker; il README ora lo fa al passo 4 (Workers & Pages → Settings → Domains & Routes). Possibile miglioramento futuro: generare `routes` con `custom_domain: true` in `wrangler.json` da `infra:sync`.
 
-S2 corretto sul branch `feat/s2-private-messages` (piano `docs/maintainers/superpowers/plans/2026-09-26-s2-private-messages-bucket.md`). S5 e S6 corretti sul branch `feat/s5-s6-hardening` (piano `docs/maintainers/superpowers/plans/2026-09-26-s5-s6-hardening.md`; limite di frequenza documentato come regola della dashboard). Restano aperti: S4 (`workers_dev`/`preview_urls` a `false` con dominio proprio).
+S2 corretto sul branch `feat/s2-private-messages` (piano `docs/maintainers/superpowers/plans/2026-09-26-s2-private-messages-bucket.md`). S5 e S6 corretti sul branch `feat/s5-s6-hardening` (piano `docs/maintainers/superpowers/plans/2026-09-26-s5-s6-hardening.md`; limite di frequenza documentato come regola della dashboard). S4 e U7 corretti sul branch `feat/s4-u7-domain` (piano `docs/maintainers/superpowers/plans/2026-09-26-s4-u7-domain-from-wrangler.md`), da verificare su un account Cloudflare reale prima del merge: dominio collegato dal deploy, `workers.dev` spento, staging non toccato, Workers Builds autorizzato a creare il custom domain.
 
 Verifica finale: `npm test` 73 file, 581 test passati; build riuscita, 0 avvisi; link dei documenti: 0 rotti.
