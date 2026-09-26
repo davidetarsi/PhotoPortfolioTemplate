@@ -3,6 +3,8 @@ import { texts } from '../../config/texts.config.js';
 import { formatText } from '../utils/formatText.js';
 import { createAlbum } from './album-creation.js';
 
+vi.mock('virtual:custom-pages', () => ({ CUSTOM_PAGE_SLUGS: ['archive'] }));
+
 function makeCtx(albums = []) {
   return {
     albums,
@@ -54,6 +56,13 @@ describe('createAlbum', () => {
     const ctx = makeCtx();
     expect(await createAlbum('Album', ctx)).toEqual({ ok: false, error: formatText(texts.admin.albums.titleReserved, { slug: 'album' }) });
     expect(await createAlbum('Index', ctx)).toEqual({ ok: false, error: formatText(texts.admin.albums.titleReserved, { slug: 'index' }) });
+    expect(ctx.api.putAlbums).not.toHaveBeenCalled();
+  });
+
+  it('slug preso da una pagina di custom/pages.config.js → ok:false con messaggio dedicato', async () => {
+    const ctx = makeCtx();
+    const result = await createAlbum('Archive', ctx);
+    expect(result).toEqual({ ok: false, error: formatText(texts.admin.albums.titleReserved, { slug: 'archive' }) });
     expect(ctx.api.putAlbums).not.toHaveBeenCalled();
   });
 });
