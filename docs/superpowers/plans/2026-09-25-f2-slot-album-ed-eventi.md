@@ -10,6 +10,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-09-25-punti-di-aggancio-design.md`
 **Depends on:** F1 (`docs/superpowers/plans/2026-09-25-f1-slot-landing.md`).
+**Status (2026-09-26):** written before F1 shipped. The F1 final review found three points below that this plan must honour (the three new Global Constraints) and two open decisions to settle before execution: whether statically importing every default on every page is acceptable (`default-slots.js` would pull Landing, Hero, AlbumCard, PhotoGrid and Lightbox, with their CSS, into all three pages), and whether to move Task 6 (`src/api`) first — a custom landing needs `albumsToCards`, `photosFromManifest` and `fetchManifest` before it needs events. Re-verify the plan against the code before executing.
 
 ## Global Constraints
 
@@ -20,6 +21,9 @@
 - `custom/setup.js` runs at most once per page load, before any slot is mounted.
 - The dashboard (`admin.html`) does not load `custom/theme.css` and does not use slots: it is template territory.
 - `src/api/index.js` exports are pinned by a test; removing or renaming one is a breaking change noted in `docs/upgrading.md`.
+- **Every page test pins `custom-slots.js` to the template defaults** — `vi.mock('../core/custom-slots.js', async () => { const defaults = await import('../core/default-slots.js'); return { slot: async name => defaults[name] }; })`, as `index.test.js` does since F1. In a fork, a page test that resolves the real slots would mount the fork's components under jsdom and fail the deploy, which runs `npm test`.
+- **Nav and footer never wait for other slots to load.** Mount the chrome independently of the landing, grid and lightbox, so a slow or failing custom chunk never leaves a page without its frame; the failure still surfaces in the console.
+- **`custom/theme.css` loads last by construction**, and the order is verified in the built `dist/*.html`, not in dev. In a production build the order of stylesheets follows the bundler's chunks, not import order: F1 alone changed the order of the home page's stylesheets.
 
 ## File Map
 
@@ -350,7 +354,9 @@ git commit -m "feat(slots): nav, footer, photoGrid and lightbox slots"
 
 ```js
 // Loads custom/theme.css after the template CSS when a fork provides it.
-// Imported right after main.css so its rules win on equal specificity.
+// NOTE (F1 final review): import order does NOT decide the order in production — the bundler's
+// chunks do. Redesign this step so the theme is emitted last by construction, and verify the
+// order of <link rel=stylesheet> in the built dist/*.html.
 import.meta.glob('/custom/theme.css', { eager: true });
 ```
 
@@ -388,7 +394,7 @@ with:
 
 `renderSkeletons(gridEl, 12)` stays where it is: the skeleton is template-owned and appears before any fetch.
 
-- [ ] **Step 3: Run the full suite** — `npm test`. Existing page tests mock `Nav.js`, `Footer.js`, `PhotoGrid.js`, `Lightbox.js` by path; the adapters import the same modules, so the mocks still apply. Fix only fixtures or mocks that the refactor legitimately changed; do not weaken assertions.
+- [ ] **Step 3: Run the full suite** — `npm test`. Existing page tests mock `Nav.js`, `Footer.js`, `PhotoGrid.js`, `Lightbox.js` by path; the adapters import the same modules, so the mocks still apply — **but only without `custom/`**: every page test must also pin `custom-slots.js` to the defaults (Global Constraints). Fix only fixtures or mocks that the refactor legitimately changed; do not weaken assertions.
 
 - [ ] **Step 4: Manual check** — `npm run dev`: home, one album (open and close a photo), about. Same look, no console errors.
 

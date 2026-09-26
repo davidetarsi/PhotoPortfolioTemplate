@@ -1,7 +1,7 @@
 # Punti di aggancio (`custom/`) — Design e roadmap
 
 **Data**: 2026-09-25
-**Stato**: rivista il 2026-09-25 (ordine delle fasi, percorsi riservati, rischi); F4 in esecuzione
+**Stato**: F4 unita in `main` il 2026-09-26; F1 in revisione finale. Cartella del fork: `custom/` (§6)
 **Verificato su**: `main` @ `a757c45` (merge PR #19, 2026-09-24) · **Ricontrollato su** `6b0d6db`
 (2026-09-25): i tre commit successivi toccano solo `contact-routes`, nessun file dei piani
 **Origine**: il sito personale (davidetarsi.com) vuole una landing completamente diversa — una carta
@@ -81,7 +81,8 @@ Due forme di contratto, perché i componenti di oggi sono di due tipi:
 | `create` | `create(items, ctx) → { open(i, triggerEl), close(), destroy() }` | `lightbox` |
 
 Il registro rifiuta con un errore esplicito uno slot sconosciuto o un'implementazione che non rispetta
-il tipo, **al build e in dev**, non in produzione davanti a un visitatore.
+il tipo, **in dev e in `npm test`** — che il deploy esegue prima della build — non in produzione davanti a
+un visitatore. `vite build` da sola non esegue il registro: la garanzia passa dai test.
 
 ### 2.3 Eventi di pagina
 
@@ -205,6 +206,9 @@ Non fanno parte di questo lavoro; ognuno sarà un piano a sé, costruito sopra g
 | Canonical stabile | variabile `SITE_URL` opzionale, con ripiego su `url.origin` | emerso dalla revisione di F4: oggi su `workers.dev` e su staging ogni copia si dichiara canonica |
 | Primo byte delle pagine album | avviare insieme `ASSETS.fetch` e le due letture R2 | emerso dalla revisione di F4: oggi le letture partono dopo l'asset |
 | Header ereditati dall'asset | togliere `cf-cache-status` dalla risposta riscritta | emerso dalla revisione di F4: innocuo, ma fuorviante nel debug |
+| CSP estendibile da `custom/` | un modo dichiarato per aggiungere origini (font, immagini, script) alla CSP generata | emerso dalla revisione di F1: oggi un fork non può usare font propri né immagini esterne senza toccare file del template |
+| URL delle copertine in `ctx` | un campo con le card già risolte (`albumsToCards`) nel `ctx` della landing | emerso dalla revisione di F1: aggiungerlo dopo non rompe nulla, toglierlo sì; valutare insieme a `src/api` in F2 |
+| Setup dei test per `custom/` | un `custom/test-setup.js` facoltativo, aggiunto ai `setupFiles` di Vitest | emerso dalla revisione di F1: permetterebbe ai fork di simulare API del browser che jsdom non ha |
 
 ## 6. Decisioni prese dopo la revisione
 
