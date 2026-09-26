@@ -46,6 +46,8 @@
 
 ### Task 1: The slot resolver
 
+> Added after review: a loader that throws or rejects is re-thrown as `custom/slots.js: slot "<name>" failed to load: <message>`, with the original error as `cause`, and a tenth test covers it. The code below is the version originally requested.
+
 **Files:**
 - Create: `src/core/contracts.js`, `src/core/slots.js`, `src/core/slots.test.js`
 
@@ -705,6 +707,7 @@ They appear in the browser console, and in a fork they make `npm test` fail — 
 - `custom/slots.js: unknown slot "<name>". Known slots: …` — a key of `custom/slots.js` is not a slot.
 - `custom/slots.js: slot "<name>" must be a loader, e.g. () => import('./my-component.js').` — the value is not a function.
 - `custom/slots.js: slot "<name>" must export default { mount(…) }.` — the loaded module does not implement the contract.
+- `custom/slots.js: slot "<name>" failed to load: …` — the loader threw or the module could not be imported: a wrong path, or an error inside your component. The original error follows the colon.
 
 ## Stability
 
