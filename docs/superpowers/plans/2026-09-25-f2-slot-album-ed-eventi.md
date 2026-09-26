@@ -10,7 +10,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-09-25-punti-di-aggancio-design.md`
 **Depends on:** F1 (`docs/superpowers/plans/2026-09-25-f1-slot-landing.md`).
-**Status (2026-09-26):** written before F1 shipped. The F1 final review found three points below that this plan must honour (the three new Global Constraints) and two open decisions to settle before execution: whether statically importing every default on every page is acceptable (`default-slots.js` would pull Landing, Hero, AlbumCard, PhotoGrid and Lightbox, with their CSS, into all three pages), and whether to move Task 6 (`src/api`) first — a custom landing needs `albumsToCards`, `photosFromManifest` and `fetchManifest` before it needs events. Re-verify the plan against the code before executing.
+**Status (2026-09-26):** written before F1 shipped. The F1 final review found three points below that this plan must honour (the three new Global Constraints). Decided by the user on 2026-09-26: **(1) static defaults on every page — accepted.** Measured on the production build: +1.5 KB gzip on the home page, +1.8 on the album page, +3.9 on the about page (from 5.8 to 9.7); no component stylesheet has a selector outside a class, so loading them all changes no page's appearance. **(2) `src/api` ships earlier and minimal, in F2a** (`docs/superpowers/plans/2026-09-26-f2a-api-pubblica-minima.md`), with only `albumsToCards`. Re-verify the plan against the code before executing.
 
 ## Global Constraints
 
@@ -408,6 +408,8 @@ git commit -m "feat(slots): pages mount chrome and album parts through slots and
 ---
 
 ### Task 6: Public API for `custom/`
+
+> After F2a, `src/api/index.js` and its pinned test already exist, exporting `albumsToCards`. This task **adds** the other exports and extends the pinned list; it never removes or renames `albumsToCards`.
 
 **Files:** Create `src/api/index.js`, `src/api/index.test.js`
 
