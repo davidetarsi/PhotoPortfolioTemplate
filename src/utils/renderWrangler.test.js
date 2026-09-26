@@ -124,4 +124,35 @@ describe('renderWrangler', () => {
     const vecchio = { ...EXAMPLE, r2_buckets: [{ binding: 'BUCKET', bucket_name: 'x' }] };
     expect(() => renderWrangler(vecchio, OUTPUTS_PROD_ONLY)).toThrow(/MESSAGES_BUCKET/);
   });
+
+  it('collega il dominio proprio al Worker e spegne workers.dev, senza staging', () => {
+    const r = renderWrangler(EXAMPLE, { ...OUTPUTS_PROD_ONLY, prod_hostname: 'mario.com' });
+    expect(r.routes).toEqual([{ pattern: 'mario.com', custom_domain: true }]);
+    expect(r.workers_dev).toBe(false);
+    expect(r.preview_urls).toBe(false);
+  });
+
+  it('con lo staging collega il dominio ma lascia workers.dev, dove vive l anteprima', () => {
+    const r = renderWrangler(EXAMPLE, { ...OUTPUTS_WITH_STAGING, prod_hostname: 'mario.com' });
+    expect(r.routes).toEqual([{ pattern: 'mario.com', custom_domain: true }]);
+    expect(r).not.toHaveProperty('workers_dev');
+    expect(r).not.toHaveProperty('preview_urls');
+  });
+
+  it('su un indirizzo workers.dev, o senza prod_hostname, non tocca routes né workers.dev', () => {
+    for (const outputs of [{ ...OUTPUTS_PROD_ONLY, prod_hostname: 'mario.acct.workers.dev' }, OUTPUTS_PROD_ONLY]) {
+      const r = renderWrangler(EXAMPLE, outputs);
+      expect(r).not.toHaveProperty('routes');
+      expect(r).not.toHaveProperty('workers_dev');
+      expect(r).not.toHaveProperty('preview_urls');
+    }
+  });
+
+  it('ricalcola routes e workers_dev a ogni sync, senza tenere valori vecchi', () => {
+    const stale = { ...EXAMPLE, routes: [{ pattern: 'old.com', custom_domain: true }], workers_dev: false, preview_urls: false };
+    const r = renderWrangler(stale, OUTPUTS_PROD_ONLY);
+    expect(r).not.toHaveProperty('routes');
+    expect(r).not.toHaveProperty('workers_dev');
+    expect(r).not.toHaveProperty('preview_urls');
+  });
 });

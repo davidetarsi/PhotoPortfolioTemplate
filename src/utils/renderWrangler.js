@@ -68,5 +68,20 @@ export function renderWrangler(example, outputs) {
     if (Object.keys(out.env).length === 0) delete out.env;
   }
 
+  // Your own domain: the deploy attaches it to the Worker (custom domain), and without
+  // staging the duplicate workers.dev address and preview URLs are turned off. With
+  // staging they stay: the staging version preview is served on a workers.dev preview URL.
+  delete out.routes;
+  delete out.workers_dev;
+  delete out.preview_urls;
+  const host = outputs.prod_hostname;
+  if (host && !host.endsWith('.workers.dev')) {
+    out.routes = [{ pattern: host, custom_domain: true }];
+    if (!out.env?.staging) {
+      out.workers_dev = false;
+      out.preview_urls = false;
+    }
+  }
+
   return out;
 }
