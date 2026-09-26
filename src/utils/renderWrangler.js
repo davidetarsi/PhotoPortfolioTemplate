@@ -1,6 +1,7 @@
 const REQUIRED_PRODUCTION_KEYS = [
   'project_name',
   'bucket_prod',
+  'messages_bucket_prod',
   'r2_public_url_prod',
   'access_aud_prod',
   'access_team_domain',
@@ -10,6 +11,7 @@ const STAGING_KEYS = [
   'bucket_staging',
   'r2_public_url_staging',
   'access_aud_staging',
+  'messages_bucket_staging',
 ];
 
 /**
@@ -34,7 +36,13 @@ export function renderWrangler(example, outputs) {
   const out = structuredClone(example);
 
   out.name = outputs.project_name;
-  out.r2_buckets[0].bucket_name = outputs.bucket_prod;
+  const photos = out.r2_buckets?.find(b => b.binding === 'BUCKET');
+  const messages = out.r2_buckets?.find(b => b.binding === 'MESSAGES_BUCKET');
+  if (!photos || !messages) {
+    throw new Error('wrangler.example.json: r2_buckets must declare both BUCKET and MESSAGES_BUCKET.');
+  }
+  photos.bucket_name = outputs.bucket_prod;
+  messages.bucket_name = outputs.messages_bucket_prod;
   out.vars.R2_PUBLIC_URL = outputs.r2_public_url_prod;
   out.vars.ACCESS_AUD = outputs.access_aud_prod;
   out.vars.ACCESS_TEAM_DOMAIN = outputs.access_team_domain;
@@ -44,10 +52,10 @@ export function renderWrangler(example, outputs) {
     out.env = out.env ?? {};
     out.env.staging = {
       name: `${outputs.project_name}-staging`,
-      r2_buckets: [{
-        binding: out.r2_buckets[0].binding,
-        bucket_name: outputs.bucket_staging,
-      }],
+      r2_buckets: [
+        { binding: 'BUCKET', bucket_name: outputs.bucket_staging },
+        { binding: 'MESSAGES_BUCKET', bucket_name: outputs.messages_bucket_staging },
+      ],
       vars: {
         ACCESS_TEAM_DOMAIN: outputs.access_team_domain,
         ACCESS_AUD: outputs.access_aud_staging,
