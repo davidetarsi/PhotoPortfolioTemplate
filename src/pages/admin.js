@@ -16,6 +16,7 @@ import { makeProcessDeps } from '../admin/encoder.js';
 import { showPreview } from '../admin/preview.js';
 import { resolveAdminAlbums } from '../admin/bootstrap.js';
 import { html } from '../shared/html.js';
+import { normalizeLinks } from '../shared/site-links.js';
 
 validateSiteConfig(siteConfig);
 const root = document.getElementById('admin-root');
@@ -31,7 +32,7 @@ const adminAlbums = resolveAdminAlbums(albumsRes);
 const ctx = {
   site: siteRes.ok
     ? siteRes.data
-    : { name: siteConfig.name, bio: siteConfig.bio ?? '', hero: null, social: {} },
+    : { name: siteConfig.name, bio: siteConfig.bio ?? '', hero: null, social: {}, links: normalizeLinks(siteConfig) },
   albums: adminAlbums.albums,
   r2PublicUrl,
   api: adminApi,

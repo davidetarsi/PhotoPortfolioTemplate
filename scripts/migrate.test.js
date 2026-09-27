@@ -40,16 +40,21 @@ describe('albumsToRuntime', () => {
 });
 
 describe('siteToRuntime', () => {
-  it('costruisce site.json con hero referenziale e social puliti', () => {
+  it('builds site.json with a referential hero and the seed links', () => {
     const cfg = {
       name: 'Davide', bio: 'Bio',
       heroImage: { album: 'sport', name: 'hero.webp' },
-      social: { instagram: 'https://instagram.com/x', vuoto: undefined },
+      links: [{ url: 'https://instagram.com/x' }, { url: 'mailto:a@b.c', label: 'Scrivimi' }],
     };
     expect(siteToRuntime(cfg)).toEqual({
       name: 'Davide', bio: 'Bio',
       hero: { album: 'sport', name: 'hero.webp' },
-      social: { instagram: 'https://instagram.com/x' },
+      links: [{ url: 'https://instagram.com/x' }, { url: 'mailto:a@b.c', label: 'Scrivimi' }],
     });
+  });
+
+  it('converts an old social object into links, skipping empty values', () => {
+    const cfg = { name: 'Davide', social: { instagram: 'https://instagram.com/x', vuoto: undefined } };
+    expect(siteToRuntime(cfg).links).toEqual([{ url: 'https://instagram.com/x' }]);
   });
 });

@@ -7,6 +7,7 @@ import { fileURLToPath } from 'url';
 import { siteConfig } from '../config/site.config.js';
 import { albums } from '../config/albums.config.js';
 import { decideMigration } from '../src/utils/decideMigration.js';
+import { normalizeLinks } from '../src/shared/site-links.js';
 
 /**
  * Transforms album config to runtime format for R2 storage.
@@ -30,20 +31,16 @@ export function albumsToRuntime(legacyAlbums) {
 
 /**
  * Transforms site config to runtime format for R2 storage.
- * Filters social links to keep only string values.
+ * Links come from `links`, or are converted from an old `social` object.
  * @param {Object} cfg - Site configuration object.
- * @returns {Object} Runtime site structure with name, bio, hero, and social.
+ * @returns {Object} Runtime site structure with name, bio, hero, and links.
  */
 export function siteToRuntime(cfg) {
-  const social = {};
-  for (const [k, v] of Object.entries(cfg.social ?? {})) {
-    if (typeof v === 'string') social[k] = v;
-  }
   return {
     name: cfg.name,
     bio: cfg.bio ?? '',
     hero: cfg.heroImage ?? null,
-    social,
+    links: normalizeLinks(cfg),
   };
 }
 
