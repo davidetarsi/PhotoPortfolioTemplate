@@ -73,7 +73,7 @@ La bozza non può stare nel bucket pubblico: tutto ciò che vi si trova è leggi
 }
 ```
 
-- `links`: lista ordinata, al massimo 12 voci. `url` obbligatorio, `https:` o `mailto:`; `label` facoltativa. Sostituisce `social`. In lettura, un `site.json` con il vecchio `social: {instagram: url}` e senza `links` viene convertito in `links` (solo lettura; il primo salvataggio scrive il formato nuovo).
+- `links`: lista ordinata, al massimo 12 voci. `url` obbligatorio, `https:` o `mailto:`; `label` facoltativa, al massimo 40 caratteri. Sostituisce `social`. In lettura, un `site.json` con il vecchio `social: {instagram: url}` e senza `links` viene convertito in `links` (solo lettura; il primo salvataggio scrive il formato nuovo).
 - `texts`: sovrascritture dei testi delle pagine, solo per le chiavi dell'elenco `EDITABLE_TEXT_KEYS` in `src/shared/content-rules.js`; stringhe, al massimo 500 caratteri. Una chiave assente usa il valore di `config/texts.config.js`.
 - `albums.json` e `manifest.json` non cambiano formato.
 
@@ -103,7 +103,7 @@ Il sito unisce i testi al caricamento: `mergeTexts(texts, site.texts)` restituis
 - **Foto nuove**: caricate in `staging/<slug>/<name>.webp` e aggiunte al manifest della bozza. Il nome si assegna contro il manifest della bozza **e** quello pubblicato, così non collide mai con una foto esistente.
 - **Eliminazioni** (foto o album): tolte dalla bozza; i file pubblicati vengono cancellati solo alla pubblicazione, così il sito pubblicato non mostra mai foto mancanti.
 - Una foto ancora in `staging/` (mai pubblicata) che viene eliminata si cancella subito: nessuno la vede.
-- **Annulla modifiche**: cancella `draft/` e `staging/` dopo una conferma nella pagina (non `confirm()`).
+- **Annulla modifiche**: cancella `draft/` e `staging/` dopo una conferma nella pagina (non `confirm()`). Una volta che la pubblicazione ha iniziato a sovrascrivere il sito, cioè esiste `draft/cleanup.json`, l'annullamento è rifiutato con `409 PUBLISH_IN_PROGRESS`: si completa con "Pubblica".
 
 ### Pubblicazione
 
@@ -124,7 +124,7 @@ Concorrenza: un solo amministratore; con due schede aperte vince l'ultimo salvat
 
 ### Stato delle modifiche
 
-`GET /api/admin/draft/status` confronta bozza e pubblicato e restituisce l'elenco delle differenze (`site`, `album-added`, `album-removed`, `album-changed`, `photos-added`, `photos-removed`, con slug e numero). La dashboard ne mostra il conteggio ("3 modifiche") e, al tocco, l'elenco.
+`GET /api/admin/draft/status` confronta bozza e pubblicato e restituisce l'elenco delle differenze (`site`, `album-added`, `album-removed`, `album-changed`, `albums-reordered`, `photos-added`, `photos-removed`, `photos-reordered`, con slug e numero). Il confronto non dipende dall'ordine dei campi. La dashboard ne mostra il conteggio ("3 modifiche") e, al tocco, l'elenco. Il campo `publishing` dice se una pubblicazione è iniziata e non è finita: la dashboard propone di riprenderla, e accanto mostra gli eventuali problemi che la bloccano (dopo un `409` sull'annullamento, l'unica uscita è completare la pubblicazione).
 
 ### Route del Worker
 
