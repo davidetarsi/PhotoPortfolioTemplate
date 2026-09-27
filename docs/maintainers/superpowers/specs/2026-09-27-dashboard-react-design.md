@@ -248,6 +248,20 @@ Ogni piano lascia il template funzionante, con i test verdi, e aggiorna README.m
   - **Per il piano 3:** una foto copiata da un passo di pubblicazione esce subito da `staging/`. Se la pubblicazione si ferma, l'anteprima deve cercare quella foto anche all'indirizzo pubblico.
   - **Regola per il piano 4:** un album nuovo scrive subito un manifest vuoto nella bozza. Altrimenti, se riusa lo slug di un album eliminato nella stessa bozza, erediterebbe le foto di quello pubblicato.
 
+## Da portare nel piano 4 (dalle revisioni del piano 3)
+
+- **Protocollo dell'anteprima, lato dashboard:**
+  - su `preview:ready` controllare `event.origin === location.origin` e `event.source === iframe.contentWindow`;
+  - a ogni ready rimandare i testi non salvati e il campo evidenziato. Il ready può arrivare più di una volta: le pagine del template di solito ne mandano due, al `load` e a `page:ready`;
+  - sapere in quale pagina sta ogni campo (`texts.about.*` in `/about`, il resto in `/`) e impostare da sé l'indirizzo dell'iframe;
+  - ricaricare (`preview:reload`) solo dopo salvataggi che non sono testo, con un'attesa, perché il testo è già dal vivo;
+  - `preview:focus` con `field: null` quando si esce dal campo.
+- **Un solo ready sulle pagine del template:** `createPageLifecycle` segna che la pagina è partita, e il ponte annuncia al `load` solo se nessun ciclo di vita è partito.
+- **Nessun iframe per la dashboard:** regola `frame-ancestors 'none'` anche per `/admin/` e `/admin/*`, se la dashboard aggiunge sotto-percorsi.
+- **Form contatti in anteprima:** non invia; la dashboard può spiegarlo con una breve nota.
+- **Codice ripetuto:** la validazione del nome foto è ripetuta tra la route delle foto in anteprima e quella delle foto in attesa. Unirle quando si tolgono le vecchie route di scrittura.
+- **Pagine d'esempio:** `custom.example/pages/chrome.js` monta nav e footer con i testi di `config/`, non con quelli uniti. Va corretto nel giro di documentazione.
+
 ## Fuori da questa specifica
 
 - Il sito pubblico in React.
