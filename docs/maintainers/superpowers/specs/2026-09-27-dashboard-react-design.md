@@ -67,7 +67,7 @@ La bozza non può stare nel bucket pubblico: tutto ciò che vi si trova è leggi
     { "url": "https://github.com/davidetarsi", "label": "Codice" }
   ],
   "texts": {
-    "landing.heroSubtitle": "Fotografia di paesaggio, di notte e in viaggio.",
+    "landing.albumsSectionHeading": "Portfolio",
     "about.heading": "Scrivimi"
   }
 }
@@ -83,7 +83,7 @@ La bozza non può stare nel bucket pubblico: tutto ciò che vi si trova è leggi
 
 | Chiave | Dove compare |
 |---|---|
-| `landing.heroSubtitle` | sottotitolo della home |
+| `landing.albumsSectionHeading` | titolo della sezione album della home |
 | `about.heading` | titolo della pagina contatti |
 | `about.body` | testo della pagina contatti |
 | `about.form.successMessage` | messaggio dopo l'invio del form |
@@ -150,7 +150,7 @@ Le route di scrittura diretta di oggi (`/api/admin/site`, `/albums`, manifest, f
 - Quelle route sono dietro Access: aprire `?preview=1` senza essere entrati nella dashboard non mostra nulla di privato (la pagina dice che l'anteprima non è disponibile).
 - Nella modalità anteprima i link interni del sito conservano `?preview=1`, così si naviga nell'anteprima del sito intero.
 - **Aggiornamento mentre scrivi**: la dashboard manda all'iframe `postMessage({ type: 'preview:field', field, value })` a ogni tasto; il sito aggiorna subito il testo dell'elemento con `data-field` uguale. Dopo il salvataggio della bozza manda `{ type: 'preview:reload' }` e il sito rilegge i dati. Il sito accetta messaggi solo se `event.origin === location.origin` e `event.source === window.parent`.
-- **Segni dei campi**: i componenti del template marcano i testi modificabili con `data-field` (`site.name`, `site.bio`, `site.links`, `texts.landing.heroSubtitle`, …). L'API pubblica per `custom/` esporta le stesse chiavi, così uno slot custom può marcarli; se non lo fa, l'anteprima mostra la pagina senza evidenziare nulla.
+- **Segni dei campi**: i componenti del template marcano i testi modificabili con `data-field` (`site.name`, `site.bio`, `site.links`, `texts.landing.albumsSectionHeading`, …). L'API pubblica per `custom/` esporta le stesse chiavi, così uno slot custom può marcarli; se non lo fa, l'anteprima mostra la pagina senza evidenziare nulla.
 - **Evidenziazione e scorrimento**: messaggio `{ type: 'preview:focus', field }`: il sito scorre fino all'elemento e lo evidenzia (contorno nel colore d'accento; niente animazione con `prefers-reduced-motion`).
 
 ### Sicurezza
@@ -229,6 +229,16 @@ Ogni piano lascia il template funzionante, con i test verdi, e aggiorna README.m
      - il test di guardia su `innerHTML` controlla anche i file `.jsx` e segnala `dangerouslySetInnerHTML`;
      - un esempio di test `.test.jsx` in `custom.example/`;
      - Testing Library, con l'ambiente `act` impostato esplicitamente.
+
+## Scelte fatte scrivendo il piano 2
+
+- **Sottotitolo della home:** sotto il nome la home mostra la **bio**. `landing.heroSubtitle` compare solo quando la bio è vuota, quindi modificarlo non si vedrebbe quasi mai. Tra i testi modificabili al suo posto c'è `landing.albumsSectionHeading`, il titolo della sezione album. Il "sottotitolo" dei mockup è la bio, già modificabile.
+- **Icone dei link:** arrivano nel piano 4, insieme alla dashboard che le mostra. Nel piano 2 il footer mostra i link come testo, come oggi: l'etichetta o il nome del tipo ("Instagram", "Email", "Website").
+- **Dove si vedono i link:** nel footer, che è presente su tutte le pagine, compresa quella dei contatti. Nessun elenco in più sulla pagina contatti.
+- **Vecchio `social`:** il validatore lo accetta ancora, perché la dashboard attuale lo scrive fino al piano 4. In lettura diventa `links`. La dashboard attuale conserva `links` e `texts` quando salva.
+- **Testi per gli slot:** `ctx.texts` resta il testo di `config/` e serve per lo scheletro disegnato subito. I testi uniti arrivano in `ctx.data.texts`; nav e footer ricevono già quelli uniti.
+- **Bozza "a file":** ogni file della bozza è facoltativo. Un file assente vuol dire "uguale al pubblicato", quindi la dashboard non deve scrivere la bozza completa alla prima modifica.
+- **Pulizia alla pubblicazione:** si cancellano solo le foto che erano nel manifest pubblicato e non sono più in quello della bozza, più tutti i file degli album eliminati. I file mai elencati in un manifest non si toccano. L'elenco di cosa cancellare viene scritto in `draft/cleanup.json` prima di sovrascrivere i manifest, così una pubblicazione interrotta sa ancora cosa cancellare. Una voce dell'elenco che la bozza vuole di nuovo non viene cancellata.
 
 ## Fuori da questa specifica
 
