@@ -56,3 +56,16 @@ describe('data in preview mode', () => {
     expect((await data.fetchAlbums()).error).toBe('NETWORK');
   });
 });
+
+describe('the dashboard is never in preview', () => {
+  it('/admin?preview=1 still reads the published data', async () => {
+    vi.resetModules();
+    window.history.replaceState(null, '', '/admin?preview=1');
+    fetch.mockClear(); // the preview page imported in beforeEach already asked for the draft
+    fetch.mockImplementation(async () => jsonRes({ name: 'Published', bio: '', hero: null }));
+    data = await import('./data.js');
+    await data.fetchSite();
+    expect(fetch).toHaveBeenCalledWith('/api/data/site');
+    expect(fetch.mock.calls.some(([url]) => url.startsWith('/api/admin/'))).toBe(false);
+  });
+});

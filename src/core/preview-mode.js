@@ -12,11 +12,21 @@ import { on as onEvent } from './events.js';
 export const PREVIEW_PARAM = 'preview';
 
 /**
- * @param {string} [search] - A location.search string.
+ * The dashboard's own pages: never in preview. Its saves go to the published site, so it
+ * must always work on the published data, whatever its address says.
+ * @param {string} pathname
+ * @returns {boolean}
+ */
+export function isAdminPath(pathname) {
+  return /^\/admin(\/|\.html$|$)/.test(pathname);
+}
+
+/**
+ * @param {{search?: string, pathname?: string}} [location] - Defaults to the page's location.
  * @returns {boolean} True when the page is a preview.
  */
-export function isPreview(search = globalThis.location?.search ?? '') {
-  return new URLSearchParams(search).get(PREVIEW_PARAM) === '1';
+export function isPreview({ search = '', pathname = '/' } = globalThis.location ?? {}) {
+  return new URLSearchParams(search).get(PREVIEW_PARAM) === '1' && !isAdminPath(pathname);
 }
 
 const fieldsNamed = (doc, field) =>
@@ -36,7 +46,9 @@ export function startPreviewBridge({ win = window, doc = document, draft, on = o
   const reduceMotion = () => win.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
   const onMessage = event => {
-    if (event.origin !== win.location.origin || event.source !== win.parent) return;
+    // Only the page that embeds this one, on the same origin. A page opened on its own has
+    // itself as parent: nothing to listen to then.
+    if (win.parent === win || event.origin !== win.location.origin || event.source !== win.parent) return;
     const message = event.data ?? {};
     if (message.type === 'preview:field' && typeof message.field === 'string' && typeof message.value === 'string') {
       // Only elements that hold plain text: a form or a list marked for focus is left alone.
@@ -47,7 +59,7 @@ export function startPreviewBridge({ win = window, doc = document, draft, on = o
       if (focused) focused.style.outline = '';
       focused = fieldsNamed(doc, message.field)[0] ?? null;
       if (focused) {
-        focused.style.outline = '2px solid currentColor';
+        focused.style.outline = '2px solid var(--color-accent, currentColor)';
         focused.style.outlineOffset = '4px';
         focused.scrollIntoView?.({ block: 'center', behavior: reduceMotion() ? 'auto' : 'smooth' });
       }
@@ -56,12 +68,17 @@ export function startPreviewBridge({ win = window, doc = document, draft, on = o
     }
   };
 
-  // Links to other pages of the site stay in the preview.
+  // Links to other pages of the site stay in the preview; a link to the dashboard opens it
+  // in the whole window, not inside the preview frame.
   const onClick = event => {
     const link = event.target?.closest?.('a[href]');
     if (!link || link.target === '_blank') return;
     const url = new URL(link.getAttribute('href'), win.location.href);
-    if (url.origin !== win.location.origin || url.pathname.startsWith('/admin') || url.pathname.startsWith('/api/')) return;
+    if (url.origin !== win.location.origin || url.pathname.startsWith('/api/')) return;
+    if (isAdminPath(url.pathname)) {
+      if (win.parent !== win) link.target = '_top';
+      return;
+    }
     if (url.searchParams.get(PREVIEW_PARAM) === '1') return;
     url.searchParams.set(PREVIEW_PARAM, '1');
     link.setAttribute('href', url.pathname + url.search + url.hash);
@@ -69,6 +86,7 @@ export function startPreviewBridge({ win = window, doc = document, draft, on = o
 
   win.addEventListener('message', onMessage);
   doc.addEventListener('click', onClick, true);
+  doc.addEventListener('auxclick', onClick, true); // middle click: a new tab, still in preview
   const stopReady = on('page:ready', ({ page } = {}) => {
     if (win.parent !== win) win.parent.postMessage({ type: 'preview:ready', page }, win.location.origin);
   });
@@ -88,6 +106,7 @@ export function startPreviewBridge({ win = window, doc = document, draft, on = o
   return () => {
     win.removeEventListener('message', onMessage);
     doc.removeEventListener('click', onClick, true);
+    doc.removeEventListener('auxclick', onClick, true);
     if (typeof stopReady === 'function') stopReady();
   };
 }
