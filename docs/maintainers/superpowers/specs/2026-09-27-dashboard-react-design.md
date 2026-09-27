@@ -225,6 +225,10 @@ Ogni piano lascia il template funzionante, con i test verdi, e aggiorna README.m
 4. **Dashboard in React.**
    - Sessione sull'architettura React, poi le schermate, il tema dal sito e la barra di pubblicazione.
    - Rimozione della dashboard attuale e delle route di scrittura diretta.
+   - Rimandati dalla revisione finale del piano 1:
+     - il test di guardia su `innerHTML` controlla anche i file `.jsx` e segnala `dangerouslySetInnerHTML`;
+     - un esempio di test `.test.jsx` in `custom.example/`;
+     - Testing Library, con l'ambiente `act` impostato esplicitamente.
 
 ## Fuori da questa specifica
 
