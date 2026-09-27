@@ -21,12 +21,14 @@ Crea su GitHub un repository **privato** vuoto, es. `portfolio-prova`. Poi, sul 
 git clone -b feat/simplify-l-english https://github.com/davidetarsi/PhotoPortfolioTemplate.git portfolio-prova
 cd portfolio-prova
 git checkout -b main
-git remote set-url origin git@github.com:<tuo-utente>/portfolio-prova.git
+git remote set-url origin https://github.com/<tuo-utente>/portfolio-prova.git
 npm install
 npm test          # atteso: tutto verde
 ```
 
 - [ ] `npm test` verde.
+
+L'indirizzo HTTPS non richiede una chiave SSH: al primo push Git chiede di accedere a GitHub (con `gh auth login` o Git Credential Manager; come password non vale quella dell'account, serve un token).
 
 ## 2. `npm run setup` (fase D)
 
