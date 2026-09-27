@@ -44,6 +44,9 @@ export const texts = {
     email: 'Email',
     website: 'Sito',
   },
+  preview: {
+    unavailable: 'Anteprima non disponibile: entra nella dashboard, poi riapri l\'anteprima.',
+  },
   nav: {
     homeLabel: 'Portfolio',
     aboutLabel: 'Contatti',

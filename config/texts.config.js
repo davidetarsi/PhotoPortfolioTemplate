@@ -46,6 +46,9 @@ export const texts = {
     email: 'Email',
     website: 'Website',
   },
+  preview: {
+    unavailable: 'Preview unavailable: sign in to the dashboard, then open the preview again.',
+  },
   nav: {
     homeLabel: 'Portfolio',
     aboutLabel: 'About',
