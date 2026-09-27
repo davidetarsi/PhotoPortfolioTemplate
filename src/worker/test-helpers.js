@@ -23,7 +23,12 @@ export function makeFakeBucket(initial = {}) {
     async get(key) {
       const rec = store.get(key);
       if (!rec) return null;
-      return { text: async () => rec.text, json: async () => JSON.parse(rec.text) };
+      return {
+        text: async () => rec.text,
+        json: async () => JSON.parse(rec.text),
+        body: new Response(rec.text).body,
+        httpMetadata: { contentType: rec.contentType },
+      };
     },
     async put(key, value, opts = {}) {
       store.set(key, { text: await toText(value), contentType: opts.httpMetadata?.contentType });
