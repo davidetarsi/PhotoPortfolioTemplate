@@ -23,6 +23,8 @@ Valutate e non consigliate per ora: foto servite dal Worker invece che da un buc
 
 Procedura passo passo: [prova-cloudflare.md](prova-cloudflare.md).
 
+**Verificato il 2026-09-27** su un account reale, seguendo la checklist: D e S4+U7 funzionano. Emerse e corrette durante la prova: remote HTTPS nella checklist, accesso dell'app GitHub di Cloudflare, `unset CLOUDFLARE_API_TOKEN` prima di `wrangler login`, nome del Worker uguale al `name` di `wrangler.json`, `'wasm-unsafe-eval'` nella CSP perché Safari possa comprimere le foto (da riprovare su Safari dopo il deploy).
+
 - **D** (branch `feat/simplify-d-setup`): `npm run setup` su un account di prova crea l'infrastruttura e scrive `wrangler.json`; dopo il primo deploy `npm run setup:secrets` imposta `TURNSTILE_SECRET` (verificare che `wrangler versions secret put` legga il valore dalla pipe).
 - **S4+U7** (branch `feat/s4-u7-domain`), prima del merge: il deploy collega il dominio da `wrangler.json`; `workers.dev` si spegne senza staging; lo staging non viene toccato; Workers Builds ha i permessi per creare il custom domain.
 - **Dominio obbligatorio per `/admin`**: confermare che Access non protegge `/admin` da solo su `*.workers.dev`.
