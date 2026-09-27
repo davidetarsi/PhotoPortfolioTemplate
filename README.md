@@ -7,7 +7,7 @@
 No database. No server to maintain. Nothing to pay every month.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Node](https://img.shields.io/badge/Node-20%2B-brightgreen.svg)](https://nodejs.org)
+[![Node](https://img.shields.io/badge/Node-22.12%2B-brightgreen.svg)](https://nodejs.org)
 [![Runs on](https://img.shields.io/badge/runs%20on-Cloudflare%20Workers-f38020.svg)](https://workers.cloudflare.com/)
 [![Monthly cost](https://img.shields.io/badge/monthly%20cost-%E2%82%AC0-success.svg)](#-what-you-need)
 
@@ -59,9 +59,11 @@ It's meant for **photographers who can code**, or for anyone setting up a site f
 - **Pages** — home with the albums, album page with grid and lightbox, an About page with a working contact form.
 - **`/admin` dashboard** — upload photos (compressed in the browser before they're sent), reorder by dragging or by date, pick the cover, create and delete albums, edit name, bio and social links.
 - **Protected access** through Cloudflare Access — you sign in with a code sent by email, and no password lives in the code.
+- **Contact messages kept private** — they go to a private R2 bucket, never to the public photo bucket, and Turnstile keeps spam out.
+- **Your own pages and components** — add an archive or one page per project, or replace the landing, the navigation or the photo grid, from `custom/`, without editing template files.
 - **Three ready-made looks** for the album cards, switched with a single line.
-- **Everything customizable from the config files** — colors, fonts, spacing and copy, the dashboard's copy included.
-- **Infrastructure described in Terraform**, or created by hand following the runbook.
+- **Everything customizable from the config files** — colors, fonts, spacing and copy, the dashboard's copy included. The interface ships in English, with an Italian preset.
+- **Infrastructure described in Terraform**, created with a single `npm run setup`, or by hand following the runbook.
 - **Security headers generated automatically**, matched to your own domain without you writing them.
 
 ## 📸 Screenshots
@@ -159,7 +161,7 @@ Every push to `main` deploys the site.
 
 ### 4. Attach your domain to the Worker
 
-With Terraform and `npm run infra:sync`, there is nothing to do: `wrangler.json` already names your domain, and the first deploy attaches it to the Worker and turns off the duplicate `workers.dev` address (it stays on if you enabled staging). Check it under Workers & Pages → your Worker → **Settings → Domains & Routes**. By hand, add it there with **Add → Custom domain**, using the hostname you chose for Access. Until the domain is attached, the dashboard cannot sign you in.
+With Terraform and `npm run setup`, there is nothing to do: `wrangler.json` already names your domain, and the first deploy attaches it to the Worker and turns off the duplicate `workers.dev` address (it stays on if you enabled staging). Check it under Workers & Pages → your Worker → **Settings → Domains & Routes**. By hand, add it there with **Add → Custom domain**, using the hostname you chose for Access. Until the domain is attached, the dashboard cannot sign you in.
 
 ### 5. Set the secrets
 
@@ -211,7 +213,6 @@ An optional staging environment exists, but it is not turnkey for a first instal
 | Set `keep_managed_domain = false` before the photo domain works | Verify the custom domain first, then turn `r2.dev` off |
 | Update an installation that already has staging without `enable_staging = true` | Set it before the first `terraform plan`, or Terraform proposes destroying staging |
 
-
 ## 🖼️ Using the site once it's live
 
 The `/admin` dashboard is where you shape the site while it's running:
@@ -219,6 +220,7 @@ The `/admin` dashboard is where you shape the site while it's running:
 - **Site section** — edit name, bio, hero, social links
 - **Albums section** — add albums, edit their title and description
 - **Album view** — upload photos, reorder them, delete them
+- **Messages section** — read and delete what visitors send from the contact form
 
 The files in `config/` are only the initial seed — after the first save from `/admin`, R2 is the source of truth. Changes made from the dashboard are live immediately, with no deploy.
 
@@ -248,7 +250,7 @@ src/core/        ← slot registry and page lifecycle: the parts a fork can repl
 src/admin/       ← the /admin dashboard
 custom.example/  ← example of custom/, where a fork replaces parts of the site
 infra/           ← Terraform configuration (optional)
-scripts/         ← tools: migrate, upload, compress
+scripts/         ← tools: setup, setup:secrets, migrate, upload, compress
 docs/            ← guides: runbook, staging, upgrading, slots, pages (maintainer notes in docs/maintainers/)
 public/          ← static assets (favicon). `_headers` doesn't live here: it's generated into dist/
 ```
@@ -259,11 +261,13 @@ public/          ← static assets (favicon). `_headers` doesn't live here: it's
 |---|---|
 | **Hosting** | Cloudflare Workers (static assets + API for `/admin`) |
 | **Photo storage** | Cloudflare R2 (public bucket via r2.dev or a custom domain) |
+| **Contact messages** | Cloudflare R2, a private bucket read only by the Worker |
 | **Admin authentication** | Cloudflare Access (Zero Trust) with JWT |
 | **Bundler** | Vite 8.x, multi-page — entry points in `vite.config.js` |
 | **Security headers** | generated from `wrangler.json` at build time |
 | **OpenGraph meta tags** | injected at build time from `site.config.js` |
 | **Framework** | vanilla JS/HTML/CSS — no runtime framework |
+| **Setup** | `npm run setup` (Terraform) and `npm run setup:secrets` |
 | **Photo compression** | `npm run compress -- --input <path>` — for HEIC, TIFF and bulk uploads (Sharp, WebP 1900px q85) |
 | **Direct photo upload** | `npm run upload -- --album <slug> --input <optimized-directory>` — uploads a prepared directory and its `manifest.json` directly to R2; requires the optional `.env` credentials and is not the normal dashboard workflow. |
 

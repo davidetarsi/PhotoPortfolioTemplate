@@ -7,7 +7,7 @@
 Niente database. Nessun server da mantenere. Zero euro al mese.
 
 [![Licenza: MIT](https://img.shields.io/badge/Licenza-MIT-blue.svg)](LICENSE)
-[![Node](https://img.shields.io/badge/Node-20%2B-brightgreen.svg)](https://nodejs.org)
+[![Node](https://img.shields.io/badge/Node-22.12%2B-brightgreen.svg)](https://nodejs.org)
 [![Gira su](https://img.shields.io/badge/gira%20su-Cloudflare%20Workers-f38020.svg)](https://workers.cloudflare.com/)
 [![Costo mensile](https://img.shields.io/badge/costo%20mensile-%E2%82%AC0-success.svg)](#-cosa-serve)
 
@@ -61,9 +61,11 @@ Questo template sta nel mezzo. Il sito è statico e velocissimo, ma le foto vivo
 - **Pagine** — home con gli album, pagina album con griglia e lightbox, pagina About con un form di contatto funzionante.
 - **Dashboard `/admin`** — carica foto (compresse nel browser prima dell'invio), riordina per trascinamento o per data, scegli la copertina, crea ed elimina album, modifica nome, bio e social.
 - **Accesso protetto** da Cloudflare Access — si entra con un codice via email, e nessuna password vive nel codice.
+- **Messaggi di contatto privati** — finiscono in un bucket R2 privato, mai in quello pubblico delle foto, e Turnstile tiene fuori lo spam.
+- **Pagine e componenti tuoi** — aggiungi un archivio o una pagina per progetto, oppure sostituisci la landing, la navigazione o la griglia delle foto, da `custom/`, senza modificare i file del template.
 - **Tre aspetti già pronti** per le card degli album, si cambiano con una riga.
-- **Tutto personalizzabile dai file di configurazione** — colori, font, spaziature e testi, compresi quelli della dashboard.
-- **Infrastruttura descritta in Terraform**, oppure creabile a mano seguendo il runbook.
+- **Tutto personalizzabile dai file di configurazione** — colori, font, spaziature e testi, compresi quelli della dashboard. L'interfaccia è in inglese, con un preset italiano.
+- **Infrastruttura descritta in Terraform**, creata con un solo `npm run setup`, oppure a mano seguendo il runbook.
 - **Intestazioni di sicurezza generate automaticamente**, allineate al tuo dominio senza che tu le scriva.
 
 ## 📸 Screenshot
@@ -161,7 +163,7 @@ Ogni push su `main` pubblica il sito.
 
 ### 4. Collega il tuo dominio al Worker
 
-Con Terraform e `npm run infra:sync` non c'è niente da fare: `wrangler.json` contiene già il tuo dominio, e il primo deploy lo collega al Worker e spegne l'indirizzo doppione `workers.dev` (resta acceso se hai attivato lo staging). Controllalo in Workers & Pages → il tuo Worker → **Settings → Domains & Routes**. A mano, aggiungilo lì con **Add → Custom domain**, usando l'hostname scelto per Access. Finché il dominio non è collegato, la dashboard non riesce a farti entrare.
+Con Terraform e `npm run setup` non c'è niente da fare: `wrangler.json` contiene già il tuo dominio, e il primo deploy lo collega al Worker e spegne l'indirizzo doppione `workers.dev` (resta acceso se hai attivato lo staging). Controllalo in Workers & Pages → il tuo Worker → **Settings → Domains & Routes**. A mano, aggiungilo lì con **Add → Custom domain**, usando l'hostname scelto per Access. Finché il dominio non è collegato, la dashboard non riesce a farti entrare.
 
 ### 5. Imposta i segreti
 
@@ -213,7 +215,6 @@ Esiste un ambiente di staging facoltativo, ma non è pronto all'uso per una prim
 | Mettere `keep_managed_domain = false` prima che il dominio foto funzioni | Verifica prima il dominio, poi spegni `r2.dev` |
 | Aggiornare un'installazione che ha già lo staging senza `enable_staging = true` | Impostalo prima del primo `terraform plan`, altrimenti Terraform propone di distruggere lo staging |
 
-
 ## 🖼️ Come si usa il sito una volta online
 
 La dashboard `/admin` è il posto dove dai forma al sito mentre è in funzione:
@@ -221,6 +222,7 @@ La dashboard `/admin` è il posto dove dai forma al sito mentre è in funzione:
 - **Sezione Sito** — modifica nome, bio, hero, link social
 - **Sezione Album** — aggiungi album, modificane titolo e descrizione
 - **Vista album** — carica foto, riordinale, eliminale
+- **Sezione Messaggi** — leggi ed elimina ciò che i visitatori mandano dal form di contatto
 
 I file in `config/` sono solo il seed iniziale — dopo il primo salvataggio da `/admin`, la verità è R2. Le modifiche fatte dalla dashboard sono online subito, senza deploy.
 
@@ -250,7 +252,7 @@ src/core/        ← registro degli slot e ciclo di vita delle pagine: le parti 
 src/admin/       ← la dashboard /admin
 custom.example/  ← esempio di custom/, dove un fork sostituisce parti del sito
 infra/           ← configurazione Terraform (facoltativa)
-scripts/         ← strumenti: migrate, upload, compress
+scripts/         ← strumenti: setup, setup:secrets, migrate, upload, compress
 docs/            ← guide: runbook, staging, aggiornamenti, slot, pagine (note del maintainer in docs/maintainers/)
 public/          ← asset statici (favicon). `_headers` non sta qui: si genera in dist/
 ```
@@ -261,11 +263,13 @@ public/          ← asset statici (favicon). `_headers` non sta qui: si genera 
 |---|---|
 | **Hosting** | Cloudflare Workers (asset statici + API per `/admin`) |
 | **Storage foto** | Cloudflare R2 (bucket pubblico via r2.dev o dominio custom) |
+| **Messaggi di contatto** | Cloudflare R2, un bucket privato letto solo dal Worker |
 | **Autenticazione admin** | Cloudflare Access (Zero Trust) con JWT |
 | **Bundler** | Vite 8.x multipagina — entry point in `vite.config.js` |
 | **Intestazioni di sicurezza** | generate da `wrangler.json` a build time |
 | **Meta tag OpenGraph** | iniettati a build time da `site.config.js` |
 | **Framework** | vanilla JS/HTML/CSS — nessun framework a runtime |
+| **Installazione** | `npm run setup` (Terraform) e `npm run setup:secrets` |
 | **Compressione foto** | `npm run compress -- --input <percorso>` — per HEIC, TIFF e caricamenti massivi (Sharp, WebP 1900px q85) |
 | **Upload foto diretto** | `npm run upload -- --album <slug> --input <optimized-directory>` — carica direttamente su R2 una directory preparata e il suo `manifest.json`; richiede le credenziali facoltative in `.env` e non è il normale flusso della dashboard. |
 
