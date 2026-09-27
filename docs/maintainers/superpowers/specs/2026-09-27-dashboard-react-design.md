@@ -107,7 +107,7 @@ Il sito unisce i testi al caricamento: `mergeTexts(texts, site.texts)` restituis
 
 ### Pubblicazione
 
-`POST /api/admin/publish` lavora **a passi**: ogni chiamata esegue al massimo 25 operazioni sui bucket e risponde `{ done, remaining }`; la dashboard richiama finché `done` e mostra l'avanzamento. Così nessuna singola richiesta supera i limiti del Worker.
+`POST /api/admin/publish` lavora **a passi**: ogni chiamata copia al massimo 25 foto e risponde `{ done, remaining }`; l'ultima scrive manifest, elenco e sito, pulisce e chiude; la dashboard richiama finché `done` e mostra l'avanzamento. Così nessuna singola richiesta supera i limiti del Worker.
 
 Ordine, ripetibile senza danni se si interrompe:
 
@@ -239,6 +239,14 @@ Ogni piano lascia il template funzionante, con i test verdi, e aggiorna README.m
 - **Testi per gli slot:** `ctx.texts` resta il testo di `config/` e serve per lo scheletro disegnato subito. I testi uniti arrivano in `ctx.data.texts`; nav e footer ricevono già quelli uniti.
 - **Bozza "a file":** ogni file della bozza è facoltativo. Un file assente vuol dire "uguale al pubblicato", quindi la dashboard non deve scrivere la bozza completa alla prima modifica.
 - **Pulizia alla pubblicazione:** si cancellano solo le foto che erano nel manifest pubblicato e non sono più in quello della bozza, più tutti i file degli album eliminati. I file mai elencati in un manifest non si toccano. L'elenco di cosa cancellare viene scritto in `draft/cleanup.json` prima di sovrascrivere i manifest, così una pubblicazione interrotta sa ancora cosa cancellare. Una voce dell'elenco che la bozza vuole di nuovo non viene cancellata.
+
+- **Dopo la revisione del Task 5 del piano 2:**
+  - **Vince la foto in attesa.** Una foto in `staging/` viene copiata anche se nel bucket pubblico c'è già un file con lo stesso nome, per esempio un avanzo di una pubblicazione interrotta. Appena copiata, esce da `staging/`.
+  - **Foto copiate annotate.** Le foto copiate si annotano in `draft/copied.json`. Quelle che la bozza nel frattempo ha tolto si cancellano alla pubblicazione. "Annulla modifiche" cancella quelle che nessun manifest pubblicato nomina, così niente di non pubblicato resta raggiungibile.
+  - **Chiusura mirata.** La chiusura cancella solo i file della bozza che esistevano all'inizio dell'ultimo passo.
+  - **Regola per il piano 4:** mentre la pubblicazione è in corso, la dashboard non salva la bozza e non carica foto.
+  - **Per il piano 3:** una foto copiata da un passo di pubblicazione esce subito da `staging/`. Se la pubblicazione si ferma, l'anteprima deve cercare quella foto anche all'indirizzo pubblico.
+  - **Regola per il piano 4:** un album nuovo scrive subito un manifest vuoto nella bozza. Altrimenti, se riusa lo slug di un album eliminato nella stessa bozza, erediterebbe le foto di quello pubblicato.
 
 ## Fuori da questa specifica
 
