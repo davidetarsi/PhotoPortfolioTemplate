@@ -5,6 +5,7 @@
  */
 import { jsonResponse } from './http.js';
 import { verifyAccessJwt } from './access-jwt.js';
+import { handleDraftRequest } from './draft-routes.js';
 import {
   SLUG_RE, PHOTO_NAME_RE, MAX_PHOTO_BYTES,
   validateSiteShape, validateAlbumsShape, validateManifestShape,
@@ -47,6 +48,9 @@ export async function handleAdminRequest(request, env, deps = {}) {
 
   const { pathname } = new URL(request.url);
   const { method } = request;
+
+  const draft = await handleDraftRequest(request, env, pathname);
+  if (draft) return draft;
 
   if (pathname === '/api/admin/site') {
     if (method !== 'PUT') return jsonResponse({ error: 'METHOD_NOT_ALLOWED' }, 405);
