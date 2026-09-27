@@ -75,6 +75,8 @@ Dashboard Cloudflare → **Workers & Pages → Create → Import a repository** 
 - Build output directory: `dist`
 - Production branch: `main`
 
+Il repository può restare privato. Se non compare nell'elenco, l'app GitHub di Cloudflare ha accesso solo ad alcuni repository: GitHub → Settings → Applications → **Cloudflare Workers and Pages** → Configure → Repository access → aggiungi `portfolio-prova` e salva, poi ricarica la pagina di Cloudflare.
+
 - [ ] Il primo deploy termina senza errori. **Se fallisce sul custom domain** (permessi), annota il messaggio: è proprio una delle cose da verificare.
 - [ ] Worker → **Settings → Domains & Routes**: c'è `prova-portfolio.tuodominio.it` come custom domain, **senza averlo aggiunto a mano** (U7).
 - [ ] Nella stessa pagina, l'indirizzo `workers.dev` è disattivato (S4).
