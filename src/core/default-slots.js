@@ -18,7 +18,7 @@ export const nav = {
 
 export const footer = {
   mount(container, { site, texts }) {
-    return mountWithCleanup(container, () => renderFooter(container, texts, site.social));
+    return mountWithCleanup(container, () => renderFooter(container, texts, site.links));
   },
 };
 

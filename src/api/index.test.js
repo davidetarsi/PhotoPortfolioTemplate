@@ -8,7 +8,7 @@ describe('public API for custom/', () => {
     // Pinned on purpose: removing or renaming an export breaks forks and must be a
     // deliberate change, announced in docs/upgrading.md. Adding one is safe.
     expect(Object.keys(api).sort()).toEqual([
-      'albumsToCards', 'fetchAlbums', 'fetchConfig', 'fetchManifest', 'fetchSite', 'on',
+      'albumsToCards', 'fetchAlbums', 'fetchConfig', 'fetchManifest', 'fetchSite', 'linkKind', 'linkLabel', 'on',
       'photosFromManifest', 'resolveAlbums', 'resolveSiteContent', 'siteConfig', 'slot', 'slugFromPath', 'texts',
     ]);
   });

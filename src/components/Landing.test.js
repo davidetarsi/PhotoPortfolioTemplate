@@ -34,6 +34,15 @@ describe('default landing slot', () => {
     expect(container.querySelectorAll('.album-card__skeleton')).toHaveLength(0);
   });
 
+  it('replaces the section heading with the edited text when the data brings one', async () => {
+    const { landing } = await import('./Landing.js');
+    const pageTexts = { ...texts, landing: { albumsSectionHeading: 'Portfolio' } };
+    await landing.mount(container, {
+      texts, data: Promise.resolve({ site, albums: [], albumsError: null, r2PublicUrl: 'https://pub-test.r2.dev', texts: pageTexts }),
+    });
+    expect(container.querySelector('#albums-heading').textContent).toBe('Portfolio');
+  });
+
   it('renders one card per album', async () => {
     const { landing } = await import('./Landing.js');
     const albums = [{ slug: 'sport', title: 'Sport', description: '', coverName: null }];

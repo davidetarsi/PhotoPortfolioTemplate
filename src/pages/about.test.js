@@ -43,6 +43,19 @@ describe('about page lifecycle', () => {
     expect(mocks.owner.ready).toHaveBeenCalledWith({ site: expect.objectContaining({ name: 'Runtime' }) });
   });
 
+  it('shows the heading and text edited from the dashboard', async () => {
+    mocks.fetchSite.mockResolvedValue({ ok: true, data: {
+      name: 'Runtime', bio: '', hero: null, texts: { 'about.heading': 'Scrivimi', 'about.body': 'Per lavori su commissione.' },
+    } });
+    await import('./about.js');
+
+    expect(document.querySelector('#about-heading').textContent).toBe('Scrivimi');
+    expect(document.querySelector('#about-body').textContent).toBe('Per lavori su commissione.');
+    expect(mocks.mountChrome).toHaveBeenCalledWith(expect.objectContaining({
+      texts: expect.objectContaining({ about: expect.objectContaining({ heading: 'Scrivimi' }) }),
+    }));
+  });
+
   it('skips contact form setup when the page is disposed before site data resolves', async () => {
     let resolveSite;
     mocks.fetchSite.mockReturnValue(new Promise(resolve => { resolveSite = resolve; }));

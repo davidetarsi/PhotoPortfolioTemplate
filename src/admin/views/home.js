@@ -15,6 +15,8 @@ import { html } from '../../shared/html.js';
  */
 export function buildPendingSite({ name, bio, instagram }, currentSite) {
   return {
+    // Keeps fields this form does not edit (links, page texts) instead of dropping them.
+    ...currentSite,
     name: name.trim(),
     bio,
     hero: currentSite.hero,
@@ -72,7 +74,7 @@ export function renderAdminHome(container, ctx) {
   // --- site form ---
   q('[name="site-name"]').value = site.name;
   q('[name="site-bio"]').value = site.bio;
-  q('[name="site-instagram"]').value = site.social.instagram ?? '';
+  q('[name="site-instagram"]').value = site.social?.instagram ?? '';
   if (heroSrc) q('.admin-hero__thumb').setAttribute('src', heroSrc);
 
   q('.admin-save-site').addEventListener('click', () => run(async () => {

@@ -16,7 +16,7 @@ describe('template default slot adapters', () => {
   });
 
   it('passes nav and footer contexts to the existing renderers and clears on destroy', () => {
-    const site = { name: 'Test Site', social: { instagram: 'https://example.com' } };
+    const site = { name: 'Test Site', links: [{ url: 'https://example.com' }] };
     const navContainer = document.createElement('div');
     const footerContainer = document.createElement('div');
     const nav = defaults.nav.mount(navContainer, { site, texts });

@@ -227,7 +227,7 @@ Limits to know:
 | `name` | Photographer name | `'Mario Rossi Photography'` |
 | `bio` | Hero text and meta description | `'Wedding photographer in Milan.'` |
 | `heroImage` | Hero photo — referential (album + filename, not URL) | `{ album: 'weddings', name: 'hero.webp' }` |
-| `social` | Social links | `{ instagram: 'https://instagram.com/...' }` |
+| `links` | Links shown in the footer: social profiles, website, email | `[{ url: 'https://instagram.com/...' }, { url: 'mailto:me@example.com', label: 'Write to me' }]` |
 
 ### `albums.config.js` (albums seed)
 

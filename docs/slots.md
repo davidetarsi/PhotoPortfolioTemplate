@@ -54,9 +54,10 @@ The page lifecycle owns each returned handle and calls `destroy()` once on a non
 ### `landing`
 
 - `container` — the `#landing` element of `index.html`. It has `display: contents`, so it adds no box of its own.
-- `ctx.texts` — the UI texts from `config/texts.config.js`.
-- `ctx.data` — a **promise** of `{ site, albums, albumsError, r2PublicUrl }`. It never rejects: a failed load arrives as `albums === null` with `albumsError` set.
-  - `site` — `{ name, bio, heroUrl, social }`, read from R2 with the build values as fallback. `heroUrl` is a full URL or `null`; `social` maps network names to URLs.
+- `ctx.texts` — the UI texts from `config/texts.config.js`, for the skeleton drawn before the data arrives.
+- `ctx.data` — a **promise** of `{ site, albums, albumsError, r2PublicUrl, texts }`. It never rejects: a failed load arrives as `albums === null` with `albumsError` set.
+  - `site` — `{ name, bio, heroUrl, links, texts }`, read from R2 with the build values as fallback. `heroUrl` is a full URL or `null`. `links` is an ordered array of `{ url, label? }` (`https://` or `mailto:` addresses); `linkLabel(link, texts)` from the public API gives the text to show. `site.texts` holds the page texts edited from the dashboard, by dotted key.
+  - `texts` — the UI texts with the dashboard's edits applied: use these once the data has arrived.
   - `albums` — an array of `{ slug, title, description, coverName }`, or `null` when the albums could not be loaded. `coverName` is the cover's file name or `null`; it is not a URL.
   - `albumsError` — the error code when `albums` is `null` (for example `'NETWORK'`), otherwise `null`.
   - `r2PublicUrl` — the public URL of the photo bucket.
@@ -67,7 +68,7 @@ To show covers, turn `albums` into cards with `albumsToCards` from the public AP
 
 ### `nav` and `footer`
 
-Both receive `{ site, texts }`. `site` is the resolved site content above; `texts` is the UI copy from `config/texts.config.js`. Each returns an optional `{ destroy() }` handle.
+Both receive `{ site, texts }`. `site` is the resolved site content above; `texts` is the UI copy from `config/texts.config.js` with the dashboard's edits applied. Each returns an optional `{ destroy() }` handle.
 
 ### `photoGrid`
 

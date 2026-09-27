@@ -3,12 +3,13 @@
  */
 import { photoUrl } from '../providers/r2.js';
 import { resolveHeroUrl } from '../utils/resolveHeroUrl.js';
+import { normalizeLinks } from '../shared/site-links.js';
 
 /**
  * Resolves site content from runtime fetch or fallback to build config.
  * @param {{ok: boolean, data?: object, error?: string}} siteRes - Result of fetchSite().
  * @param {object} buildConfig - Site configuration from config/site.config.js.
- * @returns {object} Site content with name, bio, social, and heroUrl.
+ * @returns {object} Site content with name, bio, links, texts (page text overrides) and heroUrl.
  */
 export function resolveSiteContent(siteRes, buildConfig) {
   if (siteRes.ok) {
@@ -16,7 +17,8 @@ export function resolveSiteContent(siteRes, buildConfig) {
     return {
       name: s.name,
       bio: s.bio,
-      social: s.social,
+      links: normalizeLinks(s),
+      texts: s.texts ?? {},
       heroUrl: s.hero ? photoUrl(buildConfig.r2PublicUrl, s.hero.album, s.hero.name) : null,
     };
   }
@@ -28,7 +30,8 @@ export function resolveSiteContent(siteRes, buildConfig) {
   return {
     name: buildConfig.name,
     bio: buildConfig.bio,
-    social: buildConfig.social ?? {},
+    links: normalizeLinks(buildConfig),
+    texts: {},
     heroUrl: resolveHeroUrl(buildConfig.heroImage, buildConfig.r2PublicUrl),
   };
 }

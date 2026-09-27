@@ -98,9 +98,15 @@ Two kinds of change deserve a second look, because tests pass either way:
 
 ### Slots and `custom/`
 
-An update that renames a slot, changes a contract method, changes a field of a slot's `ctx`, or removes, renames or changes what an export of `src/api/index.js` takes or returns is listed here. After merging, run `npm test` and `npm run build`. `npm test` catches a renamed slot or contract method in your `custom/slots.js`, but not a changed `ctx` field — check your components against `docs/slots.md`. A removed or renamed export of `src/api/index.js` fails `npm run build`; `npm test` catches it only where a test of yours calls it. No such change so far.
+An update that renames a slot, changes a contract method, changes a field of a slot's `ctx`, or removes, renames or changes what an export of `src/api/index.js` takes or returns is listed here. After merging, run `npm test` and `npm run build`. `npm test` catches a renamed slot or contract method in your `custom/slots.js`, but not a changed `ctx` field — check your components against `docs/slots.md`. A removed or renamed export of `src/api/index.js` fails `npm run build`; `npm test` catches it only where a test of yours calls it.
 
 The current slot contracts, handle ownership, page events, custom CSS ordering and explicit override errors are documented in [the extension guide](slots.md). `custom.example/` is the runnable reference; copy it to `custom/` in a disposable checkout before trying it.
+
+### Links and editable page texts (2026-09-27)
+
+- **Changed `ctx` field:** `site.social` (an object of network → URL) is now `site.links`, an ordered array of `{ url, label? }`. A component of yours that reads `site.social` must read `site.links`; `linkLabel(link, texts)` in the public API gives the text to show.
+- `config/site.config.js`: the seed field `social` becomes `links`. An old `social` object, in the seed or in the `site.json` already on R2, is still read and turned into links.
+- The landing's `ctx.data` now also carries `texts`, the UI copy with the texts edited from the dashboard applied; nav and footer receive those texts too.
 
 ### F3 (2026-09-26): routes and reserved slugs
 

@@ -181,7 +181,7 @@ npx wrangler versions secret put CONTACT_NOTIFY_URL    # facoltativo: una notifi
 
 Il sito e la dashboard partono da questi file: se vuoi, modificali prima, poi fai commit e push:
 
-- **`config/site.config.js`** — nome, bio, social, hero
+- **`config/site.config.js`** — nome, bio, link (profili social, sito, email), hero
 - **`config/albums.config.js`** — album di esempio, mostrati in home finché non crei il primo album dalla dashboard
 - **`config/texts.config.js`** *(facoltativo)* — testi dell'interfaccia
 - **`config/admin.config.js`** *(facoltativo)* — stile della dashboard

@@ -7,6 +7,7 @@
 export { albumsToCards } from '../pages/home-logic.js';
 export { fetchSite, fetchAlbums, fetchManifest, fetchConfig } from '../providers/data.js';
 export { photosFromManifest } from '../providers/r2.js';
+export { linkKind, linkLabel } from '../shared/site-links.js';
 export { resolveSiteContent, resolveAlbums } from '../pages/home-logic.js';
 export { on } from '../core/events.js';
 export { slugFromPath } from '../utils/slugFromPath.js';

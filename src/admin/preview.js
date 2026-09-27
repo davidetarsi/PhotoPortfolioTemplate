@@ -14,6 +14,7 @@ import { albumsToCards } from '../pages/home-logic.js';
 import { resolveAlbumPage } from '../pages/album-logic.js';
 import { photosFromManifest } from '../providers/r2.js';
 import { html } from '../shared/html.js';
+import { normalizeLinks } from '../shared/site-links.js';
 
 let _keyboardBound = false;
 // Incremented on every view change: an in-flight manifest fetch that resolves
@@ -117,7 +118,7 @@ function renderLandingView(container, data, textsArg, deps) {
     });
     cardsEl.appendChild(cardEl);
   });
-  renderFooter(content.querySelector('.admin-preview__footer'), textsArg, social);
+  renderFooter(content.querySelector('.admin-preview__footer'), textsArg, normalizeLinks({ social }));
 }
 
 async function renderAlbumView(container, slug, data, textsArg, deps) {
@@ -134,7 +135,7 @@ async function renderAlbumView(container, slug, data, textsArg, deps) {
     <div class="admin-preview__footer"></div>
   `;
   content.querySelector('.admin-preview__back').addEventListener('click', () => renderLandingView(container, data, textsArg, deps));
-  renderFooter(content.querySelector('.admin-preview__footer'), textsArg, social);
+  renderFooter(content.querySelector('.admin-preview__footer'), textsArg, normalizeLinks({ social }));
 
   const gridEl = content.querySelector('.admin-preview__photo-grid');
   renderSkeletons(gridEl, 12);

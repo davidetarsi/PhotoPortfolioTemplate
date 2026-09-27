@@ -43,6 +43,13 @@ describe('buildPendingSite', () => {
     expect(result.hero).toEqual({ album: 'sport', name: 'a.webp' });
   });
 
+  it('keeps links and page texts, which this form does not edit', () => {
+    const site = { ...currentSite, links: [{ url: 'https://github.com/x' }], texts: { 'about.heading': 'Scrivimi' } };
+    const result = buildPendingSite({ name: 'X', bio: '', instagram: '' }, site);
+    expect(result.links).toEqual([{ url: 'https://github.com/x' }]);
+    expect(result.texts).toEqual({ 'about.heading': 'Scrivimi' });
+  });
+
   it('social preserva le altre chiavi oltre instagram', () => {
     const result = buildPendingSite({ name: 'X', bio: '', instagram: 'https://new' }, currentSite);
     expect(result.social).toEqual({ instagram: 'https://new', twitter: 'https://x' });
@@ -57,6 +64,11 @@ describe('renderAdminHome', () => {
     renderAdminHome(container, makeCtx());
     expect(container.querySelector('[name="site-name"]').value).toBe('Davide');
     expect(container.querySelectorAll('.admin-album-row')).toHaveLength(2);
+  });
+
+  it('opens a site saved with links and no social', () => {
+    renderAdminHome(container, makeCtx({ site: { name: 'Davide', bio: '', hero: null, links: [{ url: 'https://github.com/x' }] } }));
+    expect(container.querySelector('[name="site-instagram"]').value).toBe('');
   });
 
   it('labels the hero picker with the configured copy', () => {

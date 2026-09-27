@@ -2,6 +2,7 @@ import '../styles/main.css';
 import { siteConfig } from '../../config/site.config.js';
 import { albums as buildAlbums } from '../../config/albums.config.js';
 import { texts } from '../../config/texts.config.js';
+import { mergeTexts } from '../shared/merge-texts.js';
 import { validateSiteConfig } from '../utils/validateConfig.js';
 import { fetchSite, fetchAlbums, fetchConfig } from '../providers/data.js';
 import { resolveSiteContent, resolveAlbums } from './home-logic.js';
@@ -19,7 +20,7 @@ const data = (async () => {
   const r2PublicUrl = configRes.ok ? configRes.data.r2PublicUrl : siteConfig.r2PublicUrl;
   const site = resolveSiteContent(siteRes, { ...siteConfig, r2PublicUrl });
   const albums = resolveAlbums(albumsRes, buildAlbums);
-  return { site, albums, albumsError: albums === null ? albumsRes.error : null, r2PublicUrl };
+  return { site, albums, albumsError: albums === null ? albumsRes.error : null, r2PublicUrl, texts: mergeTexts(texts, site.texts) };
 })();
 
 const landingMount = owner.track(slot('landing').then(landing => {
@@ -27,9 +28,9 @@ const landingMount = owner.track(slot('landing').then(landing => {
   return landing.mount(document.getElementById('landing'), { texts, data });
 }));
 
-const chromeMount = owner.track(data.then(({ site }) => {
+const chromeMount = owner.track(data.then(({ site, texts: pageTexts }) => {
   if (owner.destroyed) return;
-  return mountChrome({ site, texts, owner });
+  return mountChrome({ site, texts: pageTexts, owner });
 }));
 
 await Promise.all([landingMount, chromeMount]);

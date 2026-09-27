@@ -2,6 +2,7 @@ import '../styles/main.css';
 import { siteConfig } from '../../config/site.config.js';
 import { albums as buildAlbums } from '../../config/albums.config.js';
 import { texts } from '../../config/texts.config.js';
+import { mergeTexts } from '../shared/merge-texts.js';
 import { validateSiteConfig } from '../utils/validateConfig.js';
 import { fetchSite, fetchAlbums, fetchManifest, fetchConfig } from '../providers/data.js';
 import { photosFromManifest } from '../providers/r2.js';
@@ -34,7 +35,7 @@ const albumsPromise = fetchAlbums();
 const manifestPromise = fetchManifest(slug);
 const chromeMount = owner.track(sitePromise.then(({ site }) => {
   if (owner.destroyed) return;
-  return mountChrome({ site, texts, owner });
+  return mountChrome({ site, texts: mergeTexts(texts, site.texts), owner });
 }));
 
 function showMessage(text, withHomeLink = false) {
