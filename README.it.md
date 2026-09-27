@@ -155,6 +155,7 @@ Il deploy di Cloudflare legge questo file dal repository. Contiene identificativ
 
 Dashboard Cloudflare → **Workers & Pages → Create → Import a repository** ([runbook §6](docs/runbook-cloudflare.md#6-git-integration--connect-repository)):
 
+- Project name: esattamente il `name` di `wrangler.json` (con Terraform, il tuo `project_name`). Cloudflare propone il nome del repository: cambialo se è diverso, o `npm run setup:secrets` non troverà il Worker.
 - Build command: `npm test && npm run build`
 - Build output directory: `dist`
 - Production branch: `main`

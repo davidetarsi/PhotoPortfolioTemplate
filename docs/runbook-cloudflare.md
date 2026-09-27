@@ -242,7 +242,7 @@ and logs why, so the form shows its error message until the secret is set. The
 ## 6. Git integration — Connect repository
 
 Connect the repository to Cloudflare's Git integration and set `main` as the production
-branch. Use `npm test && npm run build` as the build command and `dist` as the output
+branch. Name the Worker exactly as the `name` in `wrangler.json` (Cloudflare suggests the repository name). Use `npm test && npm run build` as the build command and `dist` as the output
 directory. The production Worker deploys on pushes to `main`. For a second deployment,
 see the [staging guide](staging.md).
 

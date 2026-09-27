@@ -71,6 +71,7 @@ git push -u origin main
 
 Dashboard Cloudflare → **Workers & Pages → Create → Import a repository** → `portfolio-prova`:
 
+- Project name: `portfolio-prova-2609` (il `name` di `wrangler.json`; Cloudflare propone `portfolio-prova`, il nome del repository)
 - Build command: `npm test && npm run build`
 - Build output directory: `dist`
 - Production branch: `main`
