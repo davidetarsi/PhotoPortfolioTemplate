@@ -23,7 +23,7 @@ beforeEach(async () => {
 });
 
 const makeEnv = (initial = {}, messages = {}) => ({
-  ...ENV_VARS, ASSETS: makeFakeAssets(), BUCKET: makeFakeBucket(initial), MESSAGES_BUCKET: makeFakeBucket(messages),
+  ...ENV_VARS, ASSETS: makeFakeAssets(), BUCKET: makeFakeBucket(initial), PRIVATE_BUCKET: makeFakeBucket(messages),
 });
 const call = (env, method, path, body, headers = {}) =>
   handleAdminRequest(new Request(`https://x.dev${path}`, {
@@ -250,18 +250,18 @@ describe('messaggi', () => {
     const env = makeEnv({}, { '_messages/2026-01-01T00-00-00-000Z-aaa.json': M1 });
     const res = await call(env, 'DELETE', '/api/admin/messages/2026-01-01T00-00-00-000Z-aaa');
     expect(res.status).toBe(200);
-    expect(env.MESSAGES_BUCKET.store.size).toBe(0);
+    expect(env.PRIVATE_BUCKET.store.size).toBe(0);
   });
 
   it('un id con una barra non puo uscire da _messages/', async () => {
     const env = makeEnv({}, { 'altro/x.json': SITE });
     const res = await call(env, 'DELETE', '/api/admin/messages/..%2Faltro%2Fx.json');
     expect(res.status).toBe(400);
-    expect(env.MESSAGES_BUCKET.store.has('altro/x.json')).toBe(true);
+    expect(env.PRIVATE_BUCKET.store.has('altro/x.json')).toBe(true);
   });
 
   it('senza bucket privato risponde 500, senza leggere quello pubblico', async () => {
-    const env = { ...makeEnv({ '_messages/2026-01-01T00-00-00-000Z-aaa.json': M1 }), MESSAGES_BUCKET: undefined };
+    const env = { ...makeEnv({ '_messages/2026-01-01T00-00-00-000Z-aaa.json': M1 }), PRIVATE_BUCKET: undefined };
     const res = await call(env, 'GET', '/api/admin/messages');
     expect(res.status).toBe(500);
     expect(await res.json()).toEqual({ error: 'STORAGE_UNAVAILABLE' });

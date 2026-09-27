@@ -115,9 +115,9 @@ The current slot contracts, handle ownership, page events, custom CSS ordering a
 
 ### Private message bucket (2026-09-26)
 
-Contact messages now go to a private bucket, `<project_name>-messages`, with no public URL. Before updating, read the messages you want to keep in the dashboard: after the update the dashboard reads only the new bucket, and the old ones stay in the photo bucket under `_messages/`, where you can delete them from the R2 dashboard. Then:
+Contact messages (and, later, the dashboard draft) now go to a private bucket, `<project_name>-private`, with no public URL. Before updating, read the messages you want to keep in the dashboard: after the update the dashboard reads only the new bucket, and the old ones stay in the photo bucket under `_messages/`, where you can delete them from the R2 dashboard. Then:
 
-1. With Terraform: `terraform -chdir=infra plan` must show only the new bucket (two with staging), then apply, `terraform -chdir=infra output -json > infra/outputs.json` and `npm run infra:sync`. By hand: create the bucket without public access and add `{ "binding": "MESSAGES_BUCKET", "bucket_name": "<project_name>-messages" }` to `r2_buckets` in `wrangler.json`.
+1. With Terraform: `terraform -chdir=infra plan` must show only the new bucket (two with staging), then apply, `terraform -chdir=infra output -json > infra/outputs.json` and `npm run infra:sync`. By hand: create the bucket without public access and add `{ "binding": "PRIVATE_BUCKET", "bucket_name": "<project_name>-private" }` to `r2_buckets` in `wrangler.json`.
 2. Commit `wrangler.json` and deploy. Without the binding, the contact form answers `500 STORAGE_UNAVAILABLE` on purpose instead of writing to the public bucket.
 
 ### Domain attached by the deploy (2026-09-26)

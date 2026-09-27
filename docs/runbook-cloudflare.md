@@ -166,7 +166,7 @@ See [the staging guide](staging.md) for the optional environment and its two-ste
 2. Name: `{project_name}` (e.g. `mario-portfolio`)
 3. Replica region: no (optional, only for geographic redundancy)
 4. Create
-5. Create a second bucket named `{project_name}-messages` (e.g. `mario-portfolio-messages`) for contact messages. **Do not enable public access on it**: only the Worker reads it, through the `MESSAGES_BUCKET` binding.
+5. Create a second bucket named `{project_name}-private` (e.g. `mario-portfolio-private`) for contact messages, the dashboard draft and photos waiting to be published. **Do not enable public access on it**: only the Worker reads it, through the `PRIVATE_BUCKET` binding.
 
 ### R2 managed domains (r2.dev)
 
@@ -448,7 +448,7 @@ Visitors see nothing: the widget is configured `interaction-only`, so it only ap
 
 ## Manual path flow summary
 
-1. Create the production R2 bucket and its r2.dev managed domain from the dashboard, plus the private `{project_name}-messages` bucket without public access.
+1. Create the production R2 bucket and its r2.dev managed domain from the dashboard, plus the private `{project_name}-private` bucket without public access.
 2. Create the production Access application (`/admin` + `/api/admin/*`) with Allow policy for your email.
 3. Copy team domain + AUD from the dashboard.
 4. (Optional) Create the Turnstile widget and set `TURNSTILE_SECRET` for production.

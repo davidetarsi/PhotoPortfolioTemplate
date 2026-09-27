@@ -88,14 +88,14 @@ export async function handleContactRequest(request, env, deps = {}) {
   // Call now() exactly once: calling it twice produces different timestamps
   // for the key and the message content. Tests with frozen time would never catch this.
   // Messages are personal data: only the private bucket, never the public photo bucket.
-  if (!env.MESSAGES_BUCKET) {
-    console.error('contact: MESSAGES_BUCKET binding is missing; refusing submissions.');
+  if (!env.PRIVATE_BUCKET) {
+    console.error('contact: PRIVATE_BUCKET binding is missing; refusing submissions.');
     return jsonResponse({ error: 'STORAGE_UNAVAILABLE' }, 500);
   }
   const ts = now();
   const messaggio = buildMessage(data, ts);
   try {
-    await env.MESSAGES_BUCKET.put(messageKey(ts, rand()), JSON.stringify(messaggio), {
+    await env.PRIVATE_BUCKET.put(messageKey(ts, rand()), JSON.stringify(messaggio), {
       httpMetadata: { contentType: 'application/json' },
     });
   } catch {

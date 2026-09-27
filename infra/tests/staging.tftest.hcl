@@ -55,12 +55,12 @@ run "staging_disabled_by_default" {
   }
 
   assert {
-    condition     = output.messages_bucket_prod == "test-portfolio-messages" && output.messages_bucket_staging == ""
+    condition     = output.private_bucket_prod == "test-portfolio-private" && output.private_bucket_staging == ""
     error_message = "Production must have a private message bucket; staging must have none by default."
   }
 
   assert {
-    condition     = length(cloudflare_r2_bucket.messages_staging) == 0
+    condition     = length(cloudflare_r2_bucket.private_staging) == 0
     error_message = "The staging message bucket must not exist by default."
   }
 
@@ -103,7 +103,7 @@ run "staging_enabled_explicitly" {
   }
 
   assert {
-    condition     = output.messages_bucket_staging == "test-portfolio-messages-staging"
+    condition     = output.private_bucket_staging == "test-portfolio-private-staging"
     error_message = "Enabled staging must have its own private message bucket."
   }
 }

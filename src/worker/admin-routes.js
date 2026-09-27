@@ -144,20 +144,20 @@ export async function handleAdminRequest(request, env, deps = {}) {
 
   const isMessageRoute = pathname === '/api/admin/messages' || pathname.startsWith('/api/admin/messages/');
   // Messages live only in the private bucket: never read the public photo bucket for them.
-  if (isMessageRoute && !env.MESSAGES_BUCKET) return jsonResponse({ error: 'STORAGE_UNAVAILABLE' }, 500);
+  if (isMessageRoute && !env.PRIVATE_BUCKET) return jsonResponse({ error: 'STORAGE_UNAVAILABLE' }, 500);
 
   if (pathname === '/api/admin/messages' && request.method === 'GET') {
     // list() returns at most 1000 keys per page: follow the cursor to the end.
     const objects = [];
     let cursor;
     do {
-      const page = await env.MESSAGES_BUCKET.list({ prefix: MESSAGES_PREFIX, cursor });
+      const page = await env.PRIVATE_BUCKET.list({ prefix: MESSAGES_PREFIX, cursor });
       objects.push(...page.objects);
       cursor = page.truncated ? page.cursor : undefined;
     } while (cursor);
     const messages = [];
     for (const { key } of objects) {
-      const obj = await env.MESSAGES_BUCKET.get(key);
+      const obj = await env.PRIVATE_BUCKET.get(key);
       if (!obj) continue;
       messages.push({ id: key.slice(MESSAGES_PREFIX.length, -'.json'.length), ...(await obj.json()) });
     }
@@ -172,7 +172,7 @@ export async function handleAdminRequest(request, env, deps = {}) {
     // The ID becomes part of an R2 key. Without this regex check, an ID containing
     // slashes or dots could escape _messages/ and delete arbitrary objects.
     if (!MESSAGE_ID_RE.test(id)) return jsonResponse({ error: 'INVALID_ID' }, 400);
-    await env.MESSAGES_BUCKET.delete(`${MESSAGES_PREFIX}${id}.json`);
+    await env.PRIVATE_BUCKET.delete(`${MESSAGES_PREFIX}${id}.json`);
     return jsonResponse({ ok: true });
   }
 

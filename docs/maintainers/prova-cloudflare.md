@@ -56,9 +56,9 @@ npm run setup
 ```
 
 - [ ] **Prima prova dei prerequisiti:** se lanci `npm run setup` in una shell *senza* token, si ferma subito con un messaggio che dice cosa manca (poi riprova con il token).
-- [ ] Il piano mostrato da `terraform apply` contiene **solo creazioni**: due bucket (`portfolio-prova-2609` e `portfolio-prova-2609-messages`), il dominio `r2.dev` del **solo** bucket delle foto, l'applicazione e la policy di Access, il widget Turnstile. Rispondi `yes`.
+- [ ] Il piano mostrato da `terraform apply` contiene **solo creazioni**: due bucket (`portfolio-prova-2609` e `portfolio-prova-2609-private`), il dominio `r2.dev` del **solo** bucket delle foto, l'applicazione e la policy di Access, il widget Turnstile. Rispondi `yes`.
 - [ ] Alla fine stampa "wrangler.json is ready" con i tre passi successivi.
-- [ ] `wrangler.json` contiene: due `r2_buckets` (`BUCKET` e `MESSAGES_BUCKET`), `"routes": [{ "pattern": "prova-portfolio.tuodominio.it", "custom_domain": true }]`, `"workers_dev": false`, `"preview_urls": false`, e **nessun** secret (`grep -i secret wrangler.json` non stampa niente).
+- [ ] `wrangler.json` contiene: due `r2_buckets` (`BUCKET` e `PRIVATE_BUCKET`), `"routes": [{ "pattern": "prova-portfolio.tuodominio.it", "custom_domain": true }]`, `"workers_dev": false`, `"preview_urls": false`, e **nessun** secret (`grep -i secret wrangler.json` non stampa niente).
 - [ ] `infra/outputs.json` non esiste o non contiene `turnstile_secret`.
 
 ## 3. Commit e deploy (S4+U7)
@@ -100,8 +100,8 @@ npm run setup:secrets
 ## 5. Contatti e messaggi (D, S2)
 
 - [ ] Pagina **About** → invia un messaggio di prova: risposta di successo.
-- [ ] R2 → bucket `portfolio-prova-2609-messages`: c'è un oggetto in `_messages/`. Nel bucket delle foto `portfolio-prova-2609` **non** c'è `_messages/`.
-- [ ] Il bucket `-messages` **non** ha un dominio pubblico (Settings → Public access: disabilitato).
+- [ ] R2 → bucket `portfolio-prova-2609-private`: c'è un oggetto in `_messages/`. Nel bucket delle foto `portfolio-prova-2609` **non** c'è `_messages/`.
+- [ ] Il bucket `-private` **non** ha un dominio pubblico (Settings → Public access: disabilitato).
 
 ## 6. Dashboard (fase A)
 

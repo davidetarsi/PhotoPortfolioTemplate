@@ -8,7 +8,7 @@
   },
   "r2_buckets": [
     { "binding": "BUCKET", "bucket_name": "il-tuo-bucket" },
-    { "binding": "MESSAGES_BUCKET", "bucket_name": "il-tuo-bucket-messages" }
+    { "binding": "PRIVATE_BUCKET", "bucket_name": "il-tuo-bucket-private" }
   ],
   "vars": {
     "ACCESS_TEAM_DOMAIN": "il-tuo-team.cloudflareaccess.com",
