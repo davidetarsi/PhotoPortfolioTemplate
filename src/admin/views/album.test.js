@@ -355,6 +355,18 @@ describe('renderAdminAlbum', () => {
     expect(container.querySelectorAll('.admin-photo-row')).toHaveLength(1);
   });
 
+  it('dropzone and cover buttons use the configured copy', async () => {
+    const ctx = makeCtx();
+    renderAdminAlbum(container, ctx);
+    await flush();
+    const label = container.querySelector('.admin-dropzone__label');
+    expect(label.textContent).toContain(texts.admin.album.dropzoneLabel);
+    expect(container.querySelector('.admin-dropzone__browse').textContent).toBe(texts.admin.album.dropzoneBrowse);
+    const covers = [...container.querySelectorAll('.admin-photo__cover')];
+    expect(covers.length).toBeGreaterThan(0);
+    for (const button of covers) expect(button.textContent).toBe(texts.admin.album.cover);
+  });
+
   it('la dropzone mostra i vincoli di formato e dimensione', async () => {
     const ctx = makeCtx();
     renderAdminAlbum(container, ctx);

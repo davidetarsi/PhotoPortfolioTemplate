@@ -59,6 +59,11 @@ describe('renderAdminHome', () => {
     expect(container.querySelectorAll('.admin-album-row')).toHaveLength(2);
   });
 
+  it('labels the hero picker with the configured copy', () => {
+    renderAdminHome(container, makeCtx());
+    expect(container.querySelector('.admin-hero > span').textContent).toBe(texts.admin.site.heroLabel);
+  });
+
   it('include la top bar senza back-link', async () => {
     const ctx = makeCtx();
     renderAdminHome(container, ctx);

@@ -50,7 +50,7 @@ export function renderAdminAlbum(container, ctx) {
       <div class="admin-photo-grid"></div>
       <div class="admin-dropzone">
         <label class="admin-dropzone__label">
-          Trascina qui le foto o <span class="admin-dropzone__browse">scegli i file da caricare</span>
+          ${texts.admin.album.dropzoneLabel} <span class="admin-dropzone__browse">${texts.admin.album.dropzoneBrowse}</span>
           <input class="admin-dropzone__input" type="file" multiple accept="image/jpeg,image/png,image/webp">
         </label>
         <p class="admin-dropzone__constraints">${texts.admin.album.dropzoneConstraints}</p>
@@ -129,7 +129,7 @@ export function renderAdminAlbum(container, ctx) {
     cell.innerHTML = html`
       <img class="admin-photo__img" alt="" loading="lazy">
       <div class="admin-photo__actions">
-        <button class="admin-photo__cover${isCover ? ' admin-photo__cover--selected' : ''}" title="${texts.admin.album.coverAsButton}">Cover</button>
+        <button class="admin-photo__cover${isCover ? ' admin-photo__cover--selected' : ''}" title="${texts.admin.album.coverAsButton}">${texts.admin.album.cover}</button>
         <button class="admin-photo__delete" title="${texts.admin.album.deletePhoto}">✕</button>
       </div>
     `;
@@ -148,7 +148,7 @@ export function renderAdminAlbum(container, ctx) {
       <span class="admin-photo-row__name"></span>
       <span class="admin-photo-row__date"></span>
       <div class="admin-photo-row__actions">
-        <button class="admin-photo-row__cover${isCover ? ' admin-photo-row__cover--selected' : ''}" title="${texts.admin.album.coverAsButton}">Cover</button>
+        <button class="admin-photo-row__cover${isCover ? ' admin-photo-row__cover--selected' : ''}" title="${texts.admin.album.coverAsButton}">${texts.admin.album.cover}</button>
         <button class="admin-photo-row__delete" title="${texts.admin.album.deletePhoto}">✕</button>
       </div>
     `;

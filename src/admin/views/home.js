@@ -40,7 +40,7 @@ export function renderAdminHome(container, ctx) {
       <label>${texts.admin.site.bioLabel} <textarea name="site-bio" rows="2"></textarea></label>
       <label>${texts.admin.site.instagramLabel} <input name="site-instagram" type="url" placeholder="https://instagram.com/…"></label>
       <div class="admin-hero">
-        <span>HeroImage:</span>
+        <span>${texts.admin.site.heroLabel}</span>
         ${heroSrc ? html`<img class="admin-hero__thumb" alt="">` : html`<em>${texts.admin.site.heroNone}</em>`}
         <select name="hero-album"><option value="">${texts.admin.site.heroChooseAlbum}</option></select>
         <div class="admin-hero__picker"></div>
