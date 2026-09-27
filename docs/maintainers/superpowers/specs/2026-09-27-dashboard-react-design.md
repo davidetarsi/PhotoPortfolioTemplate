@@ -189,7 +189,38 @@ Le route di scrittura diretta di oggi (`/api/admin/site`, `/albums`, manifest, f
 - La logica che non dipende dall'interfaccia resta com'è e viene riusata: `api.js` (esteso con le route della bozza), `pipeline.js`, `encoder.js`, `upload-manager.js`, `exif.js`, `naming.js`.
 - Test con Vitest e Testing Library.
 
-Si decidono **all'inizio del piano 4**, con una breve sessione dedicata perché servono anche per imparare React: struttura delle cartelle, gestione dello stato (Context e reducer, oppure una libreria per i dati del server come TanStack Query), navigazione tra schede (hash come oggi o una libreria di routing), componenti accessibili per foglio e dialoghi (a mano o libreria "headless").
+Decise nella sessione di architettura del 2026-09-28:
+
+| Tema | Scelta | Perché |
+|---|---|---|
+| Stato | **TanStack Query** per i dati del server (bozza, stato della pubblicazione, messaggi): letture con `useQuery`, salvataggi con `useMutation`. `useState` per lo stato dell'interfaccia (foglio aperto, campo evidenziato, testo mentre si scrive). Niente store globale. | Il salvataggio automatico e il "rileggi dopo aver pubblicato" sono il suo mestiere: cache, nuovi tentativi, salvataggi che si sovrappongono. |
+| Cartelle | **Per funzionalità**, in `src/dashboard/`: `main.jsx`, `App.jsx`, `api/`, `features/<schermata>/`, `ui/`, `lib/`, `styles/`. Una funzionalità usa `ui/`, `lib/` e `api/`, mai un'altra funzionalità. `ui/` non conosce le funzionalità, `lib/` non conosce React. I test stanno accanto ai componenti. | Una schermata sta tutta in una cartella. |
+| Navigazione | **React Router** in modalità `#` (`/admin#/album/notte`): rotte `/`, `/album/:slug`, `/site`, `/messages` dentro una cornice comune (schede, barra di pubblicazione). Foglio e anteprima del sito intero sono stato dell'interfaccia, non rotte. | Il Worker, Access e `frame-ancestors 'none'` su `/admin` restano come sono; tasto indietro e indirizzi copiati funzionano. |
+| Foglio e dialoghi | `<dialog>` del browser con `showModal()`, con due componenti nostri in `ui/`: `Sheet` e `ConfirmDialog`. | Fuoco, Esc, sfondo e accessibilità dal browser; nessuna libreria che inietti `<style>`, vietato dalla CSP (Radix lo fa). |
+| Trascinamento | `sortable.js` di oggi, riusato in un hook `useSortable`. `dnd-kit` solo se sul telefono non basta. | Già scritto e testato. |
+
+Dipendenze nuove: `@tanstack/react-query`, `react-router`; per i test `@testing-library/react`, `@testing-library/user-event`, `@testing-library/dom`.
+
+**Il piano 4 si divide in quattro piani**, ognuno con i test verdi. Il branch non viene pubblicato finché non sono finiti tutti e quattro, quindi la dashboard nuova sostituisce subito `admin.html`, anche se parziale:
+
+- **4.1 Fondamenta:**
+  - dipendenze, avvio, cornice con schede e navigazione, token `--admin-*` (base B) ed estrazione dal tema del sito;
+  - `Sheet` e `ConfirmDialog`, client delle route e hook di TanStack Query;
+  - barra di pubblicazione: conteggio, Pubblica a passi, riprendi, annulla, blocco dei salvataggi durante la pubblicazione;
+  - test di guardia sui file `.jsx`.
+- **4.2 Album:**
+  - la galleria: creare un album (con manifest vuoto nella bozza), riordinare, eliminare;
+  - l'album aperto: griglia, copertina, riordino, eliminazione, caricamento nelle foto in attesa con la compressione di oggi, titolo e sottotitolo.
+- **4.3 Sito e anteprima:**
+  - identità, testi e link con le icone;
+  - il foglio con l'anteprima (telefono), l'anteprima affiancata (computer) e l'anteprima del sito intero;
+  - il protocollo con il ponte, come in "Da portare nel piano 4".
+- **4.4 Messaggi e pulizia:**
+  - la schermata Messaggi;
+  - togliere la dashboard vecchia e le route di scrittura diretta;
+  - documentazione (README, CUSTOMIZING, runbook, esempio `custom.example`);
+  - le rifiniture di "Da portare nel piano 4";
+  - le prove nel browser su telefono e computer.
 
 ## Errori
 
