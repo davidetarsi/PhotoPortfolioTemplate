@@ -77,6 +77,30 @@ Receives `{ photos, texts, onPhotoClick }`. `photos` contains manifest entries e
 
 `create(photos, { onClose })` returns an instance with `open(index, triggerElement)`, `close()` and `destroy()`. Call `onClose(index)` once each time an open lightbox closes, including when `destroy()` closes it, and never for an instance that is already closed; the template emits `photo:close` from that callback.
 
+## Writing a slot in React
+
+React is part of the template build: a slot in `custom/` can be a `.jsx` file. Create a root in `mount` and unmount it in `destroy`:
+
+```jsx
+import { flushSync } from 'react-dom';
+import { createRoot } from 'react-dom/client';
+
+function Landing({ name }) {
+  return <main className="page-main"><h1>{name}</h1></main>;
+}
+
+export default {
+  async mount(container, ctx) {
+    const { site } = await ctx.data;
+    const root = createRoot(container);
+    flushSync(() => root.render(<Landing name={site.name} />));
+    return { destroy() { root.unmount(); } };
+  },
+};
+```
+
+`flushSync` makes the markup land in the DOM before `mount` resolves, so `page:ready` means the landing is on screen. JSX escapes text by itself; keep `dangerouslySetInnerHTML` out of slots. React is optional: a slot in plain JavaScript keeps working exactly as before. `src/core/react-slot.test.jsx` is a working example of testing one.
+
 ## The public API: `src/api/index.js`
 
 Code in `custom/` imports from the template only through `src/api/index.js`. Import it with a path from the project root: it works at any depth inside `custom/`, in `npm test` and in the build.
@@ -148,7 +172,7 @@ The policy cannot be extended from `custom/` in this version.
 In a fork that has `custom/`, `npm test` loads every slot you declare and checks that it exposes its contract method. It runs in jsdom, not in a browser, and the deploy runs `npm test` before building, so:
 
 - Code at the top level of your modules must not need browser-only APIs that jsdom lacks (`matchMedia`, `IntersectionObserver`, `ResizeObserver`, canvas, …). Use them inside `mount`, or import the library that needs them dynamically from `mount`.
-- The check does not call `mount`. Test your own component in files under `custom/` named `*.test.js`: `npm test` runs them too.
+- The check does not call `mount`. Test your own component in files under `custom/` named `*.test.js` or `*.test.jsx`: `npm test` runs them too.
 
 ## Errors you can meet
 

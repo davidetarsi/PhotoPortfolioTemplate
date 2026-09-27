@@ -17,7 +17,8 @@ cp -r custom.example custom
 - A slot implementation gets everything it needs as arguments: the element to render into and a context object. See `docs/slots.md`.
 - From the template, import only `src/api/index.js`, as `/src/api/index.js`: every other file in `src/` is internal and may change in any template update.
 - Your code runs under the site's Content Security Policy in production, and under jsdom in `npm test`, which the deploy runs: read "What your code runs under" in `docs/slots.md` before writing a landing.
-- `landing/example-landing.test.js` shows how to test your own component: `npm test` runs every `*.test.js` under `custom/`. Replace it with tests for your landing.
+- `landing/example-landing.test.js` shows how to test your own component: `npm test` runs every `*.test.js` and `*.test.jsx` under `custom/`. Replace it with tests for your landing.
+- Slots can be written in React (`.jsx`): see "Writing a slot in React" in `docs/slots.md`.
 - `theme.css` is an optional public-page theme; it is processed by Vite and stays after template and lazy slot styles.
 - `setup.js` shows a page-event subscription with an unsubscribe cleanup.
 - `slots.js` keeps a static landing import (which itself imports the public API) and a lazy photo-grid override with its own CSS.

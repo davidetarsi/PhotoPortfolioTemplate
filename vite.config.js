@@ -1,5 +1,6 @@
 import { resolve } from 'path'
 import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
 import { configDefaults } from 'vitest/config'
 import { readFileSync, existsSync } from 'fs'
 import { pathToFileURL } from 'url'
@@ -69,6 +70,7 @@ const headersPlugin = () => ({
 
 export default defineConfig({
   plugins: [
+    react(),
     devRouteFallbackPlugin(),
     siteMetaPlugin(),
     createFontsPlugin(googleFontsUrl),

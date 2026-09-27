@@ -269,7 +269,7 @@ public/          ← asset statici (favicon). `_headers` non sta qui: si genera 
 | **Bundler** | Vite 8.x multipagina — entry point in `vite.config.js` |
 | **Intestazioni di sicurezza** | generate da `wrangler.json` a build time |
 | **Meta tag OpenGraph** | iniettati a build time da `site.config.js` |
-| **Framework** | vanilla JS/HTML/CSS — nessun framework a runtime |
+| **Framework** | vanilla JS/HTML/CSS nel sito pubblico; React disponibile per i tuoi componenti in `custom/` |
 | **Installazione** | `npm run setup` (Terraform) e `npm run setup:secrets` |
 | **Compressione foto** | `npm run compress -- --input <percorso>` — per HEIC, TIFF e caricamenti massivi (Sharp, WebP 1900px q85) |
 | **Upload foto diretto** | `npm run upload -- --album <slug> --input <optimized-directory>` — carica direttamente su R2 una directory preparata e il suo `manifest.json`; richiede le credenziali facoltative in `.env` e non è il normale flusso della dashboard. |

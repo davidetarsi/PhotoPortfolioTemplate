@@ -267,7 +267,7 @@ public/          ← static assets (favicon). `_headers` doesn't live here: it's
 | **Bundler** | Vite 8.x, multi-page — entry points in `vite.config.js` |
 | **Security headers** | generated from `wrangler.json` at build time |
 | **OpenGraph meta tags** | injected at build time from `site.config.js` |
-| **Framework** | vanilla JS/HTML/CSS — no runtime framework |
+| **Framework** | vanilla JS/HTML/CSS on the public site; React available for your own components in `custom/` |
 | **Setup** | `npm run setup` (Terraform) and `npm run setup:secrets` |
 | **Photo compression** | `npm run compress -- --input <path>` — for HEIC, TIFF and bulk uploads (Sharp, WebP 1900px q85) |
 | **Direct photo upload** | `npm run upload -- --album <slug> --input <optimized-directory>` — uploads a prepared directory and its `manifest.json` directly to R2; requires the optional `.env` credentials and is not the normal dashboard workflow. |
