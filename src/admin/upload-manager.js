@@ -62,6 +62,7 @@ export async function runBatch({
           uploaded.push({ job, entry: { name: job.name, width, height, capturedAt, uploadedAt } });
           onProgress(job.name, 'done');
         } catch (error) {
+          console.error(`Upload of ${job.name} failed:`, error);
           failed.push({ name: job.name, file: job.file, error });
           onProgress(job.name, 'failed');
         }

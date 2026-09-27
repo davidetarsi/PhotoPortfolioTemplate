@@ -36,9 +36,12 @@ export function buildHeaders(config, options = {}) {
   const turnstile = config?.vars?.TURNSTILE_SITEKEY ? 'https://challenges.cloudflare.com' : '';
   const conTurnstile = direttiva => (turnstile ? `${direttiva} ${turnstile}` : direttiva);
 
+  // 'wasm-unsafe-eval': Safari cannot encode WebP in a canvas, so the dashboard compresses
+  // photos with a WebAssembly encoder, which CSP blocks without it. It allows compiling
+  // WebAssembly only, not eval() of JavaScript.
   const csp = [
     "default-src 'self'",
-    conTurnstile("script-src 'self'"),
+    conTurnstile("script-src 'self' 'wasm-unsafe-eval'"),
     "style-src 'self' https://fonts.googleapis.com",
     'font-src https://fonts.gstatic.com',
     `img-src 'self' data: ${lista}`,

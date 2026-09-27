@@ -33,6 +33,12 @@ describe('buildHeaders', () => {
     expect(h).toContain('Strict-Transport-Security');
   });
 
+  it('permette WebAssembly (encoder WebP di Safari) ma non eval', () => {
+    const csp = buildHeaders(CONFIG).split('\n').find(r => r.includes('Content-Security-Policy'));
+    expect(csp).toMatch(/script-src[^;]*'wasm-unsafe-eval'/);
+    expect(csp).not.toContain("'unsafe-eval'");
+  });
+
   it('con Turnstile configurato autorizza il suo script, la sua connessione e il suo iframe', () => {
     const h = buildHeaders({ ...CONFIG, vars: { ...CONFIG.vars, TURNSTILE_SITEKEY: '0x4AAA' } });
     const csp = h.split('\n').find(r => r.includes('Content-Security-Policy'));
