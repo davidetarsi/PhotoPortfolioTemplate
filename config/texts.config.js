@@ -42,6 +42,10 @@ export const texts = {
   footer: {
     copyright: `© ${new Date().getFullYear()}`,
   },
+  links: {
+    email: 'Email',
+    website: 'Website',
+  },
   nav: {
     homeLabel: 'Portfolio',
     aboutLabel: 'About',

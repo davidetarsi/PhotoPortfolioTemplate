@@ -40,6 +40,10 @@ export const texts = {
   footer: {
     copyright: `© ${new Date().getFullYear()}`,
   },
+  links: {
+    email: 'Email',
+    website: 'Sito',
+  },
   nav: {
     homeLabel: 'Portfolio',
     aboutLabel: 'Contatti',

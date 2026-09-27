@@ -52,6 +52,28 @@ describe('validateSiteShape', () => {
     expect(validateSiteShape({ ...ok, social: [] }).ok).toBe(false);
     expect(validateSiteShape(null).ok).toBe(false);
   });
+  it('accepts links and page texts; social becomes optional', () => {
+    const { social: _, ...noSocial } = ok;
+    expect(validateSiteShape(noSocial).ok).toBe(true);
+    expect(validateSiteShape({
+      ...noSocial,
+      links: [{ url: 'https://instagram.com/x' }, { url: 'mailto:a@b.c', label: 'Scrivimi' }],
+      texts: { 'about.heading': 'Scrivimi', 'landing.albumsSectionHeading': 'Album' },
+    }).ok).toBe(true);
+  });
+  it('rejects bad links', () => {
+    expect(validateSiteShape({ ...ok, links: {} }).ok).toBe(false);
+    expect(validateSiteShape({ ...ok, links: [{ url: 'http://insecure.example' }] }).ok).toBe(false);
+    expect(validateSiteShape({ ...ok, links: [{ url: 'javascript:alert(1)' }] }).ok).toBe(false);
+    expect(validateSiteShape({ ...ok, links: [{ url: 'https://x.y', label: 'x'.repeat(41) }] }).ok).toBe(false);
+    expect(validateSiteShape({ ...ok, links: Array.from({ length: 13 }, () => ({ url: 'https://x.y' })) }).ok).toBe(false);
+  });
+  it('rejects texts that are not editable or too long', () => {
+    expect(validateSiteShape({ ...ok, texts: { 'nav.homeLabel': 'Casa' } }).ok).toBe(false);
+    expect(validateSiteShape({ ...ok, texts: { 'about.body': 'x'.repeat(501) } }).ok).toBe(false);
+    expect(validateSiteShape({ ...ok, texts: { 'about.body': 3 } }).ok).toBe(false);
+    expect(validateSiteShape({ ...ok, texts: [] }).ok).toBe(false);
+  });
 });
 
 describe('validateAlbumsShape', () => {

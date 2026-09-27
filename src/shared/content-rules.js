@@ -36,6 +36,21 @@ export const PHOTO_NAME_RE = /^[A-Za-z0-9][A-Za-z0-9._-]*\.webp$/;
 export const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
 
 /**
+ * Texts of config/texts.config.js that the dashboard may override, saved in site.json
+ * under `texts` and merged by mergeTexts(). Adding a key here makes it editable.
+ */
+export const EDITABLE_TEXT_KEYS = Object.freeze([
+  'landing.albumsSectionHeading',
+  'about.heading',
+  'about.body',
+  'about.form.successMessage',
+]);
+export const MAX_TEXT_LENGTH = 500;
+export const MAX_LINKS = 12;
+export const MAX_LINK_LABEL = 40;
+const LINK_URL_RE = /^(https:\/\/[^\s]+|mailto:[^\s]+)$/;
+
+/**
  * Converts a title into a URL-safe slug.
  * @param {string} title - The title to slugify.
  * @returns {string} The slugified version: lowercase, hyphen-separated, no special chars.
@@ -56,7 +71,7 @@ const isObj = v => v !== null && typeof v === 'object' && !Array.isArray(v);
 const isPhotoName = v => typeof v === 'string' && PHOTO_NAME_RE.test(v);
 
 /**
- * Validates the structure of site metadata (name, bio, hero image, social links).
+ * Validates the structure of site metadata (name, bio, hero image, links, page texts).
  * @param {unknown} data - The site configuration object to validate.
  * @returns {{ok: true} | {ok: false, error: string}} Validation result.
  */
@@ -69,9 +84,34 @@ export function validateSiteShape(data) {
     if (typeof data.hero.album !== 'string' || !SLUG_RE.test(data.hero.album)) return fail('site.hero.album is invalid');
     if (!isPhotoName(data.hero.name)) return fail('site.hero.name is invalid');
   }
-  if (!isObj(data.social)) return fail('site.social must be an object');
-  for (const v of Object.values(data.social)) {
-    if (typeof v !== 'string') return fail('site.social: values must be strings');
+  // Legacy shape, still written by the current dashboard until plan 4 replaces it.
+  if (data.social !== undefined) {
+    if (!isObj(data.social)) return fail('site.social must be an object');
+    for (const v of Object.values(data.social)) {
+      if (typeof v !== 'string') return fail('site.social: values must be strings');
+    }
+  }
+  if (data.links !== undefined) {
+    if (!Array.isArray(data.links)) return fail('site.links must be an array');
+    if (data.links.length > MAX_LINKS) return fail(`site.links: at most ${MAX_LINKS} links`);
+    for (const link of data.links) {
+      if (!isObj(link)) return fail('site.links: each link must be an object');
+      if (typeof link.url !== 'string' || !LINK_URL_RE.test(link.url)) {
+        return fail(`site.links: "${link.url}" must start with https:// or mailto:`);
+      }
+      if (link.label !== undefined && (typeof link.label !== 'string' || link.label.length > MAX_LINK_LABEL)) {
+        return fail(`site.links: label must be a string of at most ${MAX_LINK_LABEL} characters`);
+      }
+    }
+  }
+  if (data.texts !== undefined) {
+    if (!isObj(data.texts)) return fail('site.texts must be an object');
+    for (const [key, value] of Object.entries(data.texts)) {
+      if (!EDITABLE_TEXT_KEYS.includes(key)) return fail(`site.texts: "${key}" cannot be edited from the dashboard`);
+      if (typeof value !== 'string' || value.length > MAX_TEXT_LENGTH) {
+        return fail(`site.texts: "${key}" must be a string of at most ${MAX_TEXT_LENGTH} characters`);
+      }
+    }
   }
   return OK;
 }
