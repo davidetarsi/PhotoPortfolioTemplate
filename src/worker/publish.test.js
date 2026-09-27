@@ -120,6 +120,73 @@ describe('publishStep', () => {
     expect(env.BUCKET.store.has('notte/a.webp')).toBe(true);
   });
 
+  it('a waiting photo wins over a public file with the same name', async () => {
+    // Left behind by an interrupted publication: notte/c.webp is public but in no manifest.
+    const env = makeEnv({
+      'draft/albums/notte/manifest.json': [photo('a.webp'), photo('b.webp'), photo('c.webp')],
+      'staging/notte/c.webp': 'NEW',
+    });
+    env.BUCKET.store.set('notte/c.webp', { text: 'OLD', contentType: 'image/webp' });
+    expect(await publishStep(env)).toEqual({ done: true, copied: 1, remaining: 0 });
+    expect(text(env.BUCKET, 'notte/c.webp')).toBe('NEW');
+  });
+
+  it('removes each waiting photo once copied, so a repeated step does not copy it again', async () => {
+    const env = makeEnv({
+      'draft/albums/notte/manifest.json': [photo('a.webp'), photo('c.webp'), photo('d.webp')],
+      'staging/notte/c.webp': 'C', 'staging/notte/d.webp': 'D',
+    });
+    expect(await publishStep(env, { photosPerStep: 1 })).toEqual({ done: false, copied: 1, remaining: 1 });
+    expect(env.PRIVATE_BUCKET.store.has('staging/notte/c.webp')).toBe(false);
+    expect(json(env.PRIVATE_BUCKET, 'draft/copied.json')).toEqual(['notte/c.webp']);
+    expect(await publishStep(env, { photosPerStep: 1 })).toEqual({ done: true, copied: 1, remaining: 0 });
+  });
+
+  it('deletes a photo copied by an earlier step that the draft has dropped since', async () => {
+    const env = makeEnv({
+      'draft/albums/notte/manifest.json': [photo('a.webp'), photo('b.webp'), photo('c.webp')],
+      'staging/notte/c.webp': 'C',
+    });
+    // An earlier step copied c and was interrupted; then c is taken out of the draft.
+    env.BUCKET.store.set('notte/c.webp', { text: 'C', contentType: 'image/webp' });
+    env.PRIVATE_BUCKET.store.delete('staging/notte/c.webp');
+    env.PRIVATE_BUCKET.store.set('draft/copied.json', { text: JSON.stringify(['notte/c.webp']) });
+    env.PRIVATE_BUCKET.store.set('draft/albums/notte/manifest.json', { text: JSON.stringify([photo('a.webp'), photo('b.webp')]) });
+
+    expect(await publishStep(env)).toEqual({ done: true, copied: 0, remaining: 0 });
+    expect(env.BUCKET.store.has('notte/c.webp')).toBe(false);
+    expect(env.BUCKET.store.has('notte/b.webp')).toBe(true);
+  });
+
+  it('keeps draft files saved while the last step was running', async () => {
+    const env = makeEnv({ 'draft/albums/notte/manifest.json': [photo('a.webp')] });
+    const realPut = env.BUCKET.put.bind(env.BUCKET);
+    let saved = false;
+    env.BUCKET.put = async (key, value, opts) => {
+      if (!saved) {
+        saved = true; // an autosave and an upload land during the publication
+        await env.PRIVATE_BUCKET.put('draft/albums/viaggio/manifest.json', '[]');
+        await env.PRIVATE_BUCKET.put('staging/notte/e.webp', 'E');
+      }
+      return realPut(key, value, opts);
+    };
+    expect(await publishStep(env)).toEqual({ done: true, copied: 0, remaining: 0 });
+    expect(env.PRIVATE_BUCKET.store.has('draft/albums/notte/manifest.json')).toBe(false);
+    expect(env.PRIVATE_BUCKET.store.has('draft/albums/viaggio/manifest.json')).toBe(true);
+    expect(env.PRIVATE_BUCKET.store.has('staging/notte/e.webp')).toBe(true);
+  });
+
+  it('a waiting photo removed after the check: reports it instead of failing', async () => {
+    const env = makeEnv({
+      'draft/albums/notte/manifest.json': [photo('a.webp'), photo('c.webp')],
+      'staging/notte/c.webp': 'C',
+    });
+    const realGet = env.PRIVATE_BUCKET.get.bind(env.PRIVATE_BUCKET);
+    env.PRIVATE_BUCKET.get = async key => (key === 'staging/notte/c.webp' ? null : realGet(key));
+    expect(await publishStep(env)).toEqual({ problems: [{ slug: 'notte', name: 'c.webp', reason: 'PHOTO_MISSING' }] });
+    expect(env.BUCKET.store.has('notte/c.webp')).toBe(false);
+  });
+
   it('a first installation: publishes an album and a site that did not exist', async () => {
     const env = { BUCKET: makeFakeBucket(), PRIVATE_BUCKET: makeFakeBucket({
       'draft/site.json': site,

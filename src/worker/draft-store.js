@@ -18,6 +18,9 @@ export const DRAFT = Object.freeze({
   manifest: slug => `draft/albums/${slug}/manifest.json`,
   // Written by a publication before it overwrites anything: what it still has to delete.
   cleanup: 'draft/cleanup.json',
+  // Public photos a publication has copied so far: "discard" removes the ones no published
+  // manifest names, so an interrupted publication leaves nothing public behind.
+  copied: 'draft/copied.json',
 });
 
 export const STAGING = Object.freeze({

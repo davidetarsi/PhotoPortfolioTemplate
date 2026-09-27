@@ -4,6 +4,9 @@
  * publication resumes with the next call and repeating a step does no harm. Order:
  * check → copy new photos → note what to delete → manifests → albums.json → site.json
  * → delete → close.
+ *
+ * The dashboard must not save the draft or upload photos while a publication runs:
+ * the close removes the draft files that existed when the last step started.
  */
 import { PUBLISHED, DRAFT, STAGING, listKeys, deletePrefix, readJson, writeJson, loadStates, hasDraft } from './draft-store.js';
 
@@ -62,8 +65,12 @@ function findDeletions(published, effective) {
 export async function publishStep(env, { photosPerStep = PHOTOS_PER_STEP } = {}) {
   if (!(await hasDraft(env))) return { done: true, copied: 0, remaining: 0 };
 
+  // What the draft holds now: the close removes exactly these, never files saved later.
+  const draftKeys = await listKeys(env.PRIVATE_BUCKET, DRAFT.prefix);
+  const stagedKeys = await listKeys(env.PRIVATE_BUCKET, STAGING.prefix);
+  const staged = new Set(stagedKeys);
+
   const { published, effective, draft } = await loadStates(env);
-  const staged = new Set(await listKeys(env.PRIVATE_BUCKET, STAGING.prefix));
   const publicKeys = new Set();
   for (const album of effective.albums) {
     for (const key of await listKeys(env.BUCKET, `${album.slug}/`)) publicKeys.add(key);
@@ -74,17 +81,25 @@ export async function publishStep(env, { photosPerStep = PHOTOS_PER_STEP } = {})
   const problems = findProblems(effective, (slug, name) => isPublic(slug, name) || isStaged(slug, name));
   if (problems.length > 0) return { problems };
 
-  // 1. New photos: from the private bucket to the public one, a batch per call.
+  // 1. New photos: a waiting photo always wins over a public file with the same name
+  //    (a leftover of an interrupted publication, or of an older photo). Each is removed
+  //    from the waiting area once copied, so a repeated step does not copy it again.
   const toCopy = [];
   for (const album of effective.albums) {
     for (const entry of effective.manifests.get(album.slug) ?? []) {
-      if (!isPublic(album.slug, entry.name)) toCopy.push({ slug: album.slug, name: entry.name });
+      if (isStaged(album.slug, entry.name)) toCopy.push({ slug: album.slug, name: entry.name });
     }
   }
   const batch = toCopy.slice(0, photosPerStep);
+  const copiedNote = (await readJson(env.PRIVATE_BUCKET, DRAFT.copied)) ?? [];
   for (const { slug, name } of batch) {
     const obj = await env.PRIVATE_BUCKET.get(STAGING.photo(slug, name));
+    // Removed since the listing (a discard, a deleted photo): let the next call re-check.
+    if (!obj) return { problems: [{ slug, name, reason: 'PHOTO_MISSING' }] };
     await env.BUCKET.put(PUBLISHED.photo(slug, name), obj.body, { httpMetadata: { contentType: 'image/webp' } });
+    copiedNote.push(PUBLISHED.photo(slug, name));
+    await writeJson(env.PRIVATE_BUCKET, DRAFT.copied, [...new Set(copiedNote)]);
+    await env.PRIVATE_BUCKET.delete(STAGING.photo(slug, name));
   }
   if (toCopy.length > batch.length) {
     return { done: false, copied: batch.length, remaining: toCopy.length - batch.length };
@@ -98,9 +113,11 @@ export async function publishStep(env, { photosPerStep = PHOTOS_PER_STEP } = {})
   const kept = new Set(effective.albums.map(album => `${album.slug}/`));
   const wanted = new Set(effective.albums.flatMap(album =>
     (effective.manifests.get(album.slug) ?? []).map(entry => PUBLISHED.photo(album.slug, entry.name))));
+  // Photos copied by an earlier step that the draft has dropped since: never published, remove.
+  const copiedBefore = (await readJson(env.PRIVATE_BUCKET, DRAFT.copied)) ?? [];
   const deletions = {
     prefixes: [...new Set([...earlier.prefixes, ...found.prefixes])].filter(prefix => !kept.has(prefix)),
-    keys: [...new Set([...earlier.keys, ...found.keys])].filter(key => !wanted.has(key)),
+    keys: [...new Set([...earlier.keys, ...found.keys, ...copiedBefore])].filter(key => !wanted.has(key)),
   };
   await writeJson(env.PRIVATE_BUCKET, DRAFT.cleanup, deletions);
 
@@ -118,8 +135,8 @@ export async function publishStep(env, { photosPerStep = PHOTOS_PER_STEP } = {})
   for (const prefix of deletions.prefixes) await deletePrefix(env.BUCKET, prefix);
   for (let i = 0; i < deletions.keys.length; i += 1000) await env.BUCKET.delete(deletions.keys.slice(i, i + 1000));
 
-  // 5. Close: the draft is now the site.
-  await deletePrefix(env.PRIVATE_BUCKET, DRAFT.prefix);
-  await deletePrefix(env.PRIVATE_BUCKET, STAGING.prefix);
+  // 5. Close: remove the draft files this step started from, and the notes it wrote.
+  const closing = [...new Set([...draftKeys, ...stagedKeys, DRAFT.cleanup, DRAFT.copied])];
+  for (let i = 0; i < closing.length; i += 1000) await env.PRIVATE_BUCKET.delete(closing.slice(i, i + 1000));
   return { done: true, copied: batch.length, remaining: 0 };
 }
