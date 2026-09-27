@@ -28,6 +28,8 @@ async function loadTurnstile() {
  */
 export function createContactForm(siteConfig, texts) {
   const form = document.createElement('form');
+  // For the dashboard's preview: focusing the success message scrolls to the form.
+  form.setAttribute('data-field', 'texts.about.form.successMessage');
   form.className = 'contact-form';
 
   const hasTurnstile = siteConfig.turnstileSitekey?.trim();

@@ -46,6 +46,17 @@ export const EDITABLE_TEXT_KEYS = Object.freeze([
   'about.form.successMessage',
 ]);
 export const MAX_TEXT_LENGTH = 500;
+
+/**
+ * Values of the `data-field` attribute that the dashboard's preview can update and focus:
+ * the site's name, bio and links, and every editable text as `texts.<key>`.
+ */
+export const PREVIEW_FIELDS = Object.freeze([
+  'site.name',
+  'site.bio',
+  'site.links',
+  ...EDITABLE_TEXT_KEYS.map(key => `texts.${key}`),
+]);
 export const MAX_LINKS = 12;
 export const MAX_LINK_LABEL = 40;
 const LINK_URL_RE = /^(https:\/\/[^\s]+|mailto:[^\s]+)$/;

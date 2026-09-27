@@ -10,7 +10,7 @@ import { html } from '../shared/html.js';
 export function renderNav(container, siteConfig, texts) {
   container.innerHTML = html`
     <nav class="site-nav">
-      <a href="/" class="site-nav__brand"></a>
+      <a href="/" class="site-nav__brand" data-field="site.name"></a>
       <div class="site-nav__links">
         <a href="/about"></a>
       </div>

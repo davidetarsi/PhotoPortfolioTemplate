@@ -13,8 +13,8 @@ export function renderHero(container, { name, bio, heroUrl }, texts) {
     <div class="hero__inner">
       ${imgHtml}
       <div class="hero__content">
-        <h1 class="hero__title"></h1>
-        <p class="hero__subtitle"></p>
+        <h1 class="hero__title" data-field="site.name"></h1>
+        <p class="hero__subtitle" data-field="site.bio"></p>
       </div>
     </div>
   `;

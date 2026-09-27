@@ -122,8 +122,11 @@ import { albumsToCards } from '/src/api/index.js';
 | `fetchConfig` | `fetchConfig()` | response envelope for runtime config |
 | `fetchManifest` | `fetchManifest(slug)` | response envelope for an album photo manifest |
 | `fetchSite` | `fetchSite()` | response envelope for site content |
+| `linkKind` | `linkKind(url)` | the kind of a link, from its address: `'instagram'`, `'github'`, … `'email'` for `mailto:`, otherwise `'website'` |
+| `linkLabel` | `linkLabel(link, texts)` | the text to show for a link: its own `label`, else the name of its kind |
 | `on` | `on(type, listener)` | idempotent unsubscribe function |
 | `photosFromManifest` | `photosFromManifest(entries, slug, r2PublicUrl)` | photo objects with `gridUrl`, `fullUrl`, dimensions and name |
+| `PREVIEW_FIELDS` | — | the `data-field` values the dashboard's preview can update and focus (see below) |
 | `resolveAlbums` | `resolveAlbums(response, fallback)` | normalized album list or `null` |
 | `resolveSiteContent` | `resolveSiteContent(response, fallback)` | normalized site content |
 | `siteConfig` | — | build-time site fallback config |
@@ -147,6 +150,22 @@ if (albums === null) {
 This is the complete list today. It grows as later versions of the template need it; an export is never removed, renamed or changed in what it takes or returns without a note in `docs/upgrading.md`.
 
 Do not resolve a slot at module top level. Declare its loader in `custom/slots.js` and request it from the page mount path. This keeps API imports cycle-safe when a component also imports the public API.
+
+## The dashboard's preview
+
+The dashboard shows the real site in an iframe, at the same address with `?preview=1`. In that mode `fetchSite`, `fetchAlbums` and `fetchManifest` read the **draft** instead of the published site, and `fetchConfig` gives an `r2PublicUrl` that also serves photos not published yet. Your components get the preview for free as long as they read data through the public API and build photo URLs from `r2PublicUrl`.
+
+While the owner types, the dashboard updates the text of every element whose `data-field` names that field, and it scrolls to and outlines the element of the field being edited. The values are in `PREVIEW_FIELDS`: `site.name`, `site.bio`, `site.links`, and `texts.<key>` for each text the dashboard edits (for example `texts.about.heading`). Mark your own elements the same way:
+
+```js
+const title = document.createElement('h1');
+title.dataset.field = 'site.name';
+title.textContent = site.name;
+```
+
+Only elements with no child elements have their text replaced; a container marked with a field (a list of links, a form) is only scrolled to and outlined. An element without a mark simply shows the saved draft when the preview reloads.
+
+Links inside the site keep `?preview=1`, so the owner can browse the whole site as it will be. The preview works only after signing in to the dashboard: opened elsewhere, the page says the preview is unavailable.
 
 ## Page setup and events
 

@@ -12,7 +12,7 @@ export function renderFooter(container, texts, links = []) {
   container.innerHTML = html`
     <footer class="site-footer">
       <span class="site-footer__copyright"></span>
-      ${links.length ? html`<nav class="site-footer__links"></nav>` : ''}
+      ${links.length ? html`<nav class="site-footer__links" data-field="site.links"></nav>` : ''}
     </footer>
   `;
   container.querySelector('.site-footer__copyright').textContent = texts.footer.copyright;

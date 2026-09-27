@@ -18,7 +18,7 @@ export const landing = {
       <section id="hero"></section>
       <main class="page-main">
         <div class="container">
-          <h2 id="albums-heading" class="section-heading"></h2>
+          <h2 id="albums-heading" class="section-heading" data-field="texts.landing.albumsSectionHeading"></h2>
           <div id="album-cards" class="album-cards"></div>
         </div>
       </main>
