@@ -170,7 +170,14 @@ export async function handleDraftRequest(request, env, pathname) {
     if (!SLUG_RE.test(slug) || !PHOTO_NAME_RE.test(name)) return jsonResponse({ error: 'Invalid name or slug' }, 400);
     const obj = (await env.PRIVATE_BUCKET.get(STAGING.photo(slug, name))) ?? (await env.BUCKET.get(PUBLISHED.photo(slug, name)));
     if (!obj) return jsonResponse({ error: 'NOT_FOUND' }, 404);
-    return new Response(obj.body, { headers: { 'Content-Type': 'image/webp', 'Cache-Control': 'private, no-store' } });
+    // The preview reloads after each save: the browser keeps the photo and asks whether it
+    // changed (names can be reused, so it is never cached without asking).
+    const headers = { 'Content-Type': 'image/webp', 'Cache-Control': 'private, no-cache', 'X-Content-Type-Options': 'nosniff' };
+    if (obj.httpEtag) {
+      headers.ETag = obj.httpEtag;
+      if (request.headers.get('If-None-Match') === obj.httpEtag) return new Response(null, { status: 304, headers });
+    }
+    return new Response(obj.body, { headers });
   }
 
   if (pathname === '/api/admin/publish') {

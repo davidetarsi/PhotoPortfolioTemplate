@@ -31,7 +31,11 @@ export async function serveAlbumPage(env, url, slug) {
   if (!asset.ok) return asset;
   // The dashboard's preview may show an album that is not published yet: serve the page
   // as it is, and let it read the draft.
-  if (url.searchParams.get('preview') === '1') return asset;
+  if (url.searchParams.get('preview') === '1') {
+    const headers = new Headers(asset.headers);
+    headers.set('X-Robots-Tag', 'noindex');
+    return new Response(asset.body, { status: asset.status, headers });
+  }
 
   const [albumsDoc, siteDoc] = await Promise.all([
     readJson(env.BUCKET, '_data/albums.json'),

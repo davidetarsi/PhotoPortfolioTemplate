@@ -43,6 +43,7 @@ describe('album pages', () => {
   it('preview: an album not published yet still gets the page, 200', async () => {
     const res = await run('/nuovo?preview=1', { '_data/albums.json': albums, '_site/site.json': site });
     expect(res.status).toBe(200);
+    expect(res.headers.get('X-Robots-Tag')).toBe('noindex');
     expect(await res.text()).toBe(albumHtml);
   });
 

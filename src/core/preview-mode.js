@@ -43,7 +43,16 @@ const fieldsNamed = (doc, field) =>
  */
 export function startPreviewBridge({ win = window, doc = document, draft, on = onEvent }) {
   let focused = null;
+  let announced = false;
+  const inFrame = win.parent !== win;
   const reduceMotion = () => win.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+
+  // Scroll the preview itself, never the dashboard around it (scrollIntoView would move both).
+  const scrollToElement = el => {
+    const rect = el.getBoundingClientRect();
+    const top = rect.top + (win.scrollY ?? 0) - Math.max(0, ((win.innerHeight ?? 0) - rect.height) / 2);
+    win.scrollTo?.({ top: Math.max(0, top), behavior: reduceMotion() ? 'auto' : 'smooth' });
+  };
 
   const onMessage = event => {
     // Only the page that embeds this one, on the same origin. A page opened on its own has
@@ -52,16 +61,23 @@ export function startPreviewBridge({ win = window, doc = document, draft, on = o
     const message = event.data ?? {};
     if (message.type === 'preview:field' && typeof message.field === 'string' && typeof message.value === 'string') {
       // Only elements that hold plain text: a form or a list marked for focus is left alone.
+      // An element with a fallback (the hero shows a default line when the bio is empty)
+      // shows it for an empty value, as the page itself does.
       for (const el of fieldsNamed(doc, message.field)) {
-        if (el.childElementCount === 0) el.textContent = message.value;
+        if (el.childElementCount > 0) continue;
+        el.textContent = !message.value.trim() && el.dataset.fallback ? el.dataset.fallback : message.value;
       }
-    } else if (message.type === 'preview:focus' && typeof message.field === 'string') {
-      if (focused) focused.style.outline = '';
-      focused = fieldsNamed(doc, message.field)[0] ?? null;
+    } else if (message.type === 'preview:focus' && (typeof message.field === 'string' || message.field === null)) {
+      // field: null removes the outline (the owner left the field).
+      if (focused) {
+        focused.style.outline = '';
+        focused.style.outlineOffset = '';
+      }
+      focused = message.field === null ? null : fieldsNamed(doc, message.field)[0] ?? null;
       if (focused) {
         focused.style.outline = '2px solid var(--color-accent, currentColor)';
         focused.style.outlineOffset = '4px';
-        focused.scrollIntoView?.({ block: 'center', behavior: reduceMotion() ? 'auto' : 'smooth' });
+        scrollToElement(focused);
       }
     } else if (message.type === 'preview:reload') {
       win.location.reload();
@@ -84,12 +100,36 @@ export function startPreviewBridge({ win = window, doc = document, draft, on = o
     link.setAttribute('href', url.pathname + url.search + url.hash);
   };
 
+  // In the preview the contact form never sends a real message.
+  const onSubmit = event => {
+    event.preventDefault();
+    event.stopPropagation();
+  };
+
+  // "Ready" tells the dashboard it can send the unsaved texts and the focus again. Template
+  // pages announce it with page:ready; a page of custom/ has no such event, so the load of
+  // the page stands in for it. It may therefore arrive more than once: each time is fine.
+  const announce = ({ page = null, restored = false } = {}) => {
+    announced = true;
+    if (inFrame) {
+      win.parent.postMessage({ type: 'preview:ready', page, restored, path: win.location.pathname }, win.location.origin);
+    }
+  };
+  const onLoad = () => {
+    Promise.resolve(draft()).then(() => { if (!announced) announce(); });
+  };
+  // Back from the back/forward cache the page would show an old draft: read it again.
+  const onPageShow = event => {
+    if (event.persisted) win.location.reload();
+  };
+
   win.addEventListener('message', onMessage);
+  win.addEventListener('load', onLoad);
+  win.addEventListener('pageshow', onPageShow);
   doc.addEventListener('click', onClick, true);
   doc.addEventListener('auxclick', onClick, true); // middle click: a new tab, still in preview
-  const stopReady = on('page:ready', ({ page } = {}) => {
-    if (win.parent !== win) win.parent.postMessage({ type: 'preview:ready', page }, win.location.origin);
-  });
+  doc.addEventListener('submit', onSubmit, true);
+  const stopReady = on('page:ready', detail => announce(detail ?? {}));
 
   // Without the dashboard's sign-in the draft cannot be read: say so instead of
   // showing the published site as if it were the preview.
@@ -105,8 +145,11 @@ export function startPreviewBridge({ win = window, doc = document, draft, on = o
 
   return () => {
     win.removeEventListener('message', onMessage);
+    win.removeEventListener('load', onLoad);
+    win.removeEventListener('pageshow', onPageShow);
     doc.removeEventListener('click', onClick, true);
     doc.removeEventListener('auxclick', onClick, true);
+    doc.removeEventListener('submit', onSubmit, true);
     if (typeof stopReady === 'function') stopReady();
   };
 }

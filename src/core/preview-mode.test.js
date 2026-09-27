@@ -11,13 +11,17 @@ function makeFrameWindow() {
   const parent = { postMessage: vi.fn() };
   const win = {
     parent,
-    location: { origin: ORIGIN, href: `${ORIGIN}/`, reload: vi.fn() },
+    location: { origin: ORIGIN, href: `${ORIGIN}/`, pathname: '/', reload: vi.fn() },
     matchMedia: () => ({ matches: false }),
+    scrollY: 0,
+    innerHeight: 600,
+    scrollTo: vi.fn(),
     addEventListener: (type, fn) => { listeners[type] = fn; },
     removeEventListener: type => { delete listeners[type]; },
   };
   const send = (data, { origin = ORIGIN, source = parent } = {}) => listeners.message?.({ data, origin, source });
-  return { win, parent, send };
+  const fire = (type, event = {}) => listeners[type]?.(event);
+  return { win, parent, send, fire };
 }
 
 describe('isPreview', () => {
@@ -83,13 +87,48 @@ describe('startPreviewBridge', () => {
 
   it('focus: outlines the first element of the field and moves the outline on the next focus', () => {
     const h1 = document.querySelector('h1');
-    h1.scrollIntoView = vi.fn();
     frame.send({ type: 'preview:focus', field: 'site.name' });
     expect(h1.style.outline).toContain('solid');
-    expect(h1.scrollIntoView).toHaveBeenCalled();
     frame.send({ type: 'preview:focus', field: 'texts.about.form.successMessage' });
     expect(h1.style.outline).toBe('');
     expect(document.querySelector('form').style.outline).toContain('solid');
+  });
+
+  it('focus scrolls the preview itself, never the dashboard around it', () => {
+    const h1 = document.querySelector('h1');
+    h1.scrollIntoView = vi.fn();
+    frame.send({ type: 'preview:focus', field: 'site.name' });
+    expect(frame.win.scrollTo).toHaveBeenCalledTimes(1);
+    expect(h1.scrollIntoView).not.toHaveBeenCalled();
+  });
+
+  it('focus with field null removes the outline', () => {
+    frame.send({ type: 'preview:focus', field: 'site.name' });
+    frame.send({ type: 'preview:focus', field: null });
+    expect(document.querySelector('h1').style.outline).toBe('');
+  });
+
+  it('an empty value shows the element\'s fallback, as the page does', () => {
+    document.querySelector('h1').dataset.fallback = 'Photography portfolio.';
+    frame.send({ type: 'preview:field', field: 'site.name', value: '  ' });
+    expect(document.querySelector('h1').textContent).toBe('Photography portfolio.');
+  });
+
+  it('the contact form never sends from the preview', () => {
+    const sent = vi.fn();
+    const form = document.querySelector('form');
+    form.addEventListener('submit', sent);
+    const event = new Event('submit', { bubbles: true, cancelable: true });
+    form.dispatchEvent(event);
+    expect(sent).not.toHaveBeenCalled();
+    expect(event.defaultPrevented).toBe(true);
+  });
+
+  it('back from the back/forward cache, the page reads the draft again', () => {
+    frame.fire('pageshow', { persisted: false });
+    expect(frame.win.location.reload).not.toHaveBeenCalled();
+    frame.fire('pageshow', { persisted: true });
+    expect(frame.win.location.reload).toHaveBeenCalledTimes(1);
   });
 
   it('reload: only when the parent asks', () => {
@@ -125,8 +164,42 @@ describe('page ready and availability', () => {
     const frame = makeFrameWindow();
     let listener;
     const stop = startPreviewBridge({ win: frame.win, doc: document, draft: async () => ({ ok: true }), on: (type, l) => { listener = l; return () => {}; } });
+    listener({ page: 'home', restored: true });
+    expect(frame.parent.postMessage).toHaveBeenCalledWith({ type: 'preview:ready', page: 'home', restored: true, path: '/' }, ORIGIN);
+    stop();
+  });
+
+  it('a page of custom/ (no page:ready) announces itself once loaded', async () => {
+    const frame = makeFrameWindow();
+    frame.win.location.pathname = '/archive';
+    const stop = startPreviewBridge({ win: frame.win, doc: document, draft: async () => ({ ok: true }), on: () => () => {} });
+    frame.fire('load');
+    await flush();
+    expect(frame.parent.postMessage).toHaveBeenCalledWith({ type: 'preview:ready', page: null, restored: false, path: '/archive' }, ORIGIN);
+    stop();
+  });
+
+  it('after page:ready, the load does not announce a second time', async () => {
+    const frame = makeFrameWindow();
+    let listener;
+    const stop = startPreviewBridge({ win: frame.win, doc: document, draft: async () => ({ ok: true }), on: (type, l) => { listener = l; return () => {}; } });
     listener({ page: 'home' });
-    expect(frame.parent.postMessage).toHaveBeenCalledWith({ type: 'preview:ready', page: 'home' }, ORIGIN);
+    frame.fire('load');
+    await flush();
+    expect(frame.parent.postMessage).toHaveBeenCalledTimes(1);
+    stop();
+  });
+
+  it('not in a frame: announces nothing', async () => {
+    const frame = makeFrameWindow();
+    frame.win.parent = frame.win;
+    frame.win.postMessage = vi.fn();
+    let listener;
+    const stop = startPreviewBridge({ win: frame.win, doc: document, draft: async () => ({ ok: true }), on: (type, l) => { listener = l; return () => {}; } });
+    listener({ page: 'home' });
+    frame.fire('load');
+    await flush();
+    expect(frame.win.postMessage).not.toHaveBeenCalled();
     stop();
   });
 

@@ -141,11 +141,22 @@ describe('draft routes', () => {
     const env = makeEnv({ 'notte/a.webp': 'PUBLIC-A', 'notte/b.webp': 'PUBLIC-B' }, { 'staging/notte/a.webp': 'STAGED-A' });
     const a = await call(env, 'GET', '/api/admin/preview/photo/notte/a.webp');
     expect(await a.text()).toBe('STAGED-A');
-    expect(a.headers.get('Cache-Control')).toBe('private, no-store');
+    expect(a.headers.get('Cache-Control')).toBe('private, no-cache');
+    expect(a.headers.get('X-Content-Type-Options')).toBe('nosniff');
     expect(await (await call(env, 'GET', '/api/admin/preview/photo/notte/b.webp')).text()).toBe('PUBLIC-B');
     expect((await call(env, 'GET', '/api/admin/preview/photo/notte/zzz.webp')).status).toBe(404);
     expect((await call(env, 'GET', '/api/admin/preview/photo/notte/..%2Fx.webp')).status).toBe(400);
     expect((await call(env, 'PUT', '/api/admin/preview/photo/notte/a.webp', 'x')).status).toBe(405);
+  });
+
+  it('preview photos: an unchanged photo is not sent again (ETag)', async () => {
+    const env = makeEnv({ 'notte/a.webp': 'PUBLIC-A' });
+    const realGet = env.BUCKET.get.bind(env.BUCKET);
+    env.BUCKET.get = async key => ({ ...(await realGet(key)), httpEtag: '"v1"' });
+    const first = await call(env, 'GET', '/api/admin/preview/photo/notte/a.webp');
+    expect(first.headers.get('ETag')).toBe('"v1"');
+    const again = await call(env, 'GET', '/api/admin/preview/photo/notte/a.webp', undefined, { 'If-None-Match': '"v1"' });
+    expect(again.status).toBe(304);
   });
 
   it('preview photos are closed without an Access token', async () => {

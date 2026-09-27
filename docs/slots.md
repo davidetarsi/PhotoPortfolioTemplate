@@ -165,7 +165,7 @@ title.textContent = site.name;
 
 Only elements with no child elements have their text replaced; a container marked with a field (a list of links, a form) is only scrolled to and outlined. An element without a mark simply shows the saved draft when the preview reloads.
 
-Links inside the site keep `?preview=1`, so the owner can browse the whole site as it will be. The preview works only after signing in to the dashboard: opened elsewhere, the page says the preview is unavailable.
+Links inside the site keep `?preview=1`, so the owner can browse the whole site as it will be; a link with `target="_blank"`, "open in new tab" from the context menu, or a navigation done in JavaScript leaves the preview. In the preview the contact form never sends a message. When a page is ready — `page:ready` on template pages, the page's `load` on pages of `custom/` — the preview tells the dashboard, which then sends the unsaved texts and the focus again; this may happen more than once. The preview works only after signing in to the dashboard: opened elsewhere, the page says the preview is unavailable.
 
 ## Page setup and events
 

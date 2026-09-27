@@ -22,5 +22,8 @@ export function renderHero(container, { name, bio, heroUrl }, texts) {
     container.querySelector('.hero__bg').setAttribute('src', heroUrl);
   }
   container.querySelector('.hero__title').textContent = name;
-  container.querySelector('.hero__subtitle').textContent = bio?.trim() ? bio : texts.landing.heroSubtitle;
+  const subtitle = container.querySelector('.hero__subtitle');
+  subtitle.textContent = bio?.trim() ? bio : texts.landing.heroSubtitle;
+  // The dashboard's preview shows the same line while the bio being typed is empty.
+  subtitle.dataset.fallback = texts.landing.heroSubtitle;
 }

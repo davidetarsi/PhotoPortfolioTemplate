@@ -46,6 +46,9 @@ export const EDITABLE_TEXT_KEYS = Object.freeze([
   'about.form.successMessage',
 ]);
 export const MAX_TEXT_LENGTH = 500;
+export const MAX_LINKS = 12;
+export const MAX_LINK_LABEL = 40;
+const LINK_URL_RE = /^(https:\/\/[^\s]+|mailto:[^\s]+)$/;
 
 /**
  * Values of the `data-field` attribute that the dashboard's preview can update and focus:
@@ -57,9 +60,6 @@ export const PREVIEW_FIELDS = Object.freeze([
   'site.links',
   ...EDITABLE_TEXT_KEYS.map(key => `texts.${key}`),
 ]);
-export const MAX_LINKS = 12;
-export const MAX_LINK_LABEL = 40;
-const LINK_URL_RE = /^(https:\/\/[^\s]+|mailto:[^\s]+)$/;
 
 /**
  * Converts a title into a URL-safe slug.
