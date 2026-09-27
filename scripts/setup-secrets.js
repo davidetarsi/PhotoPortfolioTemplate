@@ -17,7 +17,12 @@ const put = spawnSync('npx', ['wrangler', 'versions', 'secret', 'put', 'TURNSTIL
   input: secret.stdout.trim(),
   stdio: ['pipe', 'inherit', 'inherit'],
 });
-if (put.status !== 0) process.exit(put.status ?? 1);
+if (put.status !== 0) {
+  if (process.env.CLOUDFLARE_API_TOKEN) {
+    console.error('\nCLOUDFLARE_API_TOKEN is set, so Wrangler used it instead of your login. The Terraform token cannot edit Workers:\n  unset CLOUDFLARE_API_TOKEN && npx wrangler login && npm run setup:secrets');
+  }
+  process.exit(put.status ?? 1);
+}
 
 console.log(`
 TURNSTILE_SECRET is on a new Worker version: promote it from the Worker's Deployments tab, or push a commit.

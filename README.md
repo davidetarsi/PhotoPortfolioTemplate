@@ -165,7 +165,7 @@ With Terraform and `npm run setup`, there is nothing to do: `wrangler.json` alre
 
 ### 5. Set the secrets
 
-After the first deploy, and after `npx wrangler login`:
+After the first deploy, in a new terminal or after `unset CLOUDFLARE_API_TOKEN` (the Terraform token cannot edit Workers, and while it is set Wrangler uses it instead of your login), run `npx wrangler login`, then:
 
 ```bash
 npm run setup:secrets                                  # the Turnstile secret key, from Terraform to the Worker

@@ -85,7 +85,10 @@ Il repository può restare privato. Se non compare nell'elenco, l'app GitHub di 
 
 ## 4. `npm run setup:secrets` (fase D)
 
+Il token del passo 2 non ha i permessi sui Worker e, finché è esportato, Wrangler usa quello invece del tuo login: toglilo prima.
+
 ```bash
+unset CLOUDFLARE_API_TOKEN
 npx wrangler login
 npm run setup:secrets
 ```
@@ -109,6 +112,7 @@ npm run setup:secrets
 ## 7. Pulizia
 
 - [ ] Svuota i due bucket dalla dashboard R2 (foto e messaggi).
+- [ ] Riesporta il token (`read -rs CLOUDFLARE_API_TOKEN && export CLOUDFLARE_API_TOKEN`): `terraform destroy` ne ha bisogno.
 - [ ] Segui il [runbook, "Smoke cleanup"](../runbook-cloudflare.md#smoke-cleanup-and-the-r2dev-limitation) per `terraform destroy` (compreso il `terraform state rm` del dominio `r2.dev`).
 - [ ] Elimina il Worker `portfolio-prova-2609` dalla dashboard e il repository GitHub di prova.
 - [ ] `unset CLOUDFLARE_API_TOKEN` e revoca il token.
