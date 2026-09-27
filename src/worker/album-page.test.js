@@ -40,6 +40,12 @@ describe('album pages', () => {
     expect(res.headers.get('Cache-Control')).toBe('no-cache');
   });
 
+  it('preview: an album not published yet still gets the page, 200', async () => {
+    const res = await run('/nuovo?preview=1', { '_data/albums.json': albums, '_site/site.json': site });
+    expect(res.status).toBe(200);
+    expect(await res.text()).toBe(albumHtml);
+  });
+
   it('albums.json with the wrong shape → page unchanged, 200', async () => {
     const res = await run('/sport', { '_data/albums.json': '{"albums": "nope"}' });
     expect(res.status).toBe(200);

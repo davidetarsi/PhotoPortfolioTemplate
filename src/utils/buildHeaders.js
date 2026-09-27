@@ -48,7 +48,8 @@ export function buildHeaders(config, options = {}) {
     conTurnstile(`connect-src 'self' ${lista}`),
     "form-action 'self'",
     ...(turnstile ? [`frame-src ${turnstile}`] : []),
-    "frame-ancestors 'none'",
+    // 'self': the dashboard shows the site in an iframe for its preview; no other site can.
+    "frame-ancestors 'self'",
     "object-src 'none'",
     "base-uri 'self'",
     'upgrade-insecure-requests',
@@ -58,7 +59,7 @@ export function buildHeaders(config, options = {}) {
     '/*',
     `  Content-Security-Policy: ${csp}`,
     '  Strict-Transport-Security: max-age=31536000; includeSubDomains',
-    '  X-Frame-Options: DENY',
+    '  X-Frame-Options: SAMEORIGIN',
     '  X-XSS-Protection: 0',
     '  X-Content-Type-Options: nosniff',
     '  Referrer-Policy: strict-origin-when-cross-origin',

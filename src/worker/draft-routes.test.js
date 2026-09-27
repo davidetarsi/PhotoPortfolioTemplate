@@ -137,6 +137,22 @@ describe('draft routes', () => {
     expect((await call(makeEnv(), 'GET', '/api/admin/staging/notte/%E0%A4%A.webp')).status).toBe(400);
   });
 
+  it('preview photos: the waiting one first, then the published one, else 404', async () => {
+    const env = makeEnv({ 'notte/a.webp': 'PUBLIC-A', 'notte/b.webp': 'PUBLIC-B' }, { 'staging/notte/a.webp': 'STAGED-A' });
+    const a = await call(env, 'GET', '/api/admin/preview/photo/notte/a.webp');
+    expect(await a.text()).toBe('STAGED-A');
+    expect(a.headers.get('Cache-Control')).toBe('private, no-store');
+    expect(await (await call(env, 'GET', '/api/admin/preview/photo/notte/b.webp')).text()).toBe('PUBLIC-B');
+    expect((await call(env, 'GET', '/api/admin/preview/photo/notte/zzz.webp')).status).toBe(404);
+    expect((await call(env, 'GET', '/api/admin/preview/photo/notte/..%2Fx.webp')).status).toBe(400);
+    expect((await call(env, 'PUT', '/api/admin/preview/photo/notte/a.webp', 'x')).status).toBe(405);
+  });
+
+  it('preview photos are closed without an Access token', async () => {
+    const res = await handleAdminRequest(new Request('https://x.dev/api/admin/preview/photo/notte/a.webp'), makeEnv(), deps);
+    expect(res.status).toBe(401);
+  });
+
   it('publish: POST only; 409 with the problems when the draft cannot be published', async () => {
     const env = makeEnv({ '_data/albums.json': { albums: [ALBUM] } }, {
       'draft/albums/notte/manifest.json': [{ name: 'ghost.webp', width: 1, height: 1 }],

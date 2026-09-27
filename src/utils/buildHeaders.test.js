@@ -27,7 +27,8 @@ describe('buildHeaders', () => {
 
   it('mantiene le direttive di irrigidimento', () => {
     const h = buildHeaders(CONFIG);
-    expect(h).toContain("frame-ancestors 'none'");
+    expect(h).toContain("frame-ancestors 'self'");
+    expect(h).toContain('X-Frame-Options: SAMEORIGIN');
     expect(h).toContain("object-src 'none'");
     expect(h).toContain('X-Content-Type-Options: nosniff');
     expect(h).toContain('Strict-Transport-Security');

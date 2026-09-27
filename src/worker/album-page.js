@@ -29,6 +29,9 @@ async function readJson(bucket, key) {
 export async function serveAlbumPage(env, url, slug) {
   const asset = await env.ASSETS.fetch(new URL('/album.html', url));
   if (!asset.ok) return asset;
+  // The dashboard's preview may show an album that is not published yet: serve the page
+  // as it is, and let it read the draft.
+  if (url.searchParams.get('preview') === '1') return asset;
 
   const [albumsDoc, siteDoc] = await Promise.all([
     readJson(env.BUCKET, '_data/albums.json'),

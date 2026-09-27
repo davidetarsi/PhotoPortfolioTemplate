@@ -14,6 +14,7 @@ import { publishStep } from './publish.js';
 
 const MANIFEST_RE = /^\/api\/admin\/draft\/albums\/([^/]+)\/manifest$/;
 const STAGING_RE = /^\/api\/admin\/staging\/([^/]+)\/([^/]+)$/;
+const PREVIEW_PHOTO_RE = /^\/api\/admin\/preview\/photo\/([^/]+)\/([^/]+)$/;
 
 async function saveValidated(request, key, validate, env) {
   let data;
@@ -77,7 +78,8 @@ async function removeUnpublishedCopies(env) {
  */
 export async function handleDraftRequest(request, env, pathname) {
   const isDraftRoute = pathname === '/api/admin/draft' || pathname.startsWith('/api/admin/draft/')
-    || pathname.startsWith('/api/admin/staging/') || pathname === '/api/admin/publish';
+    || pathname.startsWith('/api/admin/staging/') || pathname === '/api/admin/publish'
+    || pathname.startsWith('/api/admin/preview/');
   if (!isDraftRoute) return null;
   // The draft lives only in the private bucket: never fall back to the public one.
   if (!env.PRIVATE_BUCKET) return jsonResponse({ error: 'STORAGE_UNAVAILABLE' }, 500);
@@ -155,6 +157,20 @@ export async function handleDraftRequest(request, env, pathname) {
     try { name = decodeURIComponent(staging[2]); } catch { return jsonResponse({ error: 'Invalid name or slug' }, 400); }
     if (!SLUG_RE.test(slug) || !PHOTO_NAME_RE.test(name)) return jsonResponse({ error: 'Invalid name or slug' }, 400);
     return handleStaging(request, env, slug, name);
+  }
+
+  // Photos of the site preview: the waiting photo when there is one, else the published one.
+  // Covers photos a stopped publication already moved out of the waiting area.
+  const previewPhoto = pathname.match(PREVIEW_PHOTO_RE);
+  if (previewPhoto) {
+    if (method !== 'GET') return jsonResponse({ error: 'METHOD_NOT_ALLOWED' }, 405);
+    const slug = previewPhoto[1];
+    let name;
+    try { name = decodeURIComponent(previewPhoto[2]); } catch { return jsonResponse({ error: 'Invalid name or slug' }, 400); }
+    if (!SLUG_RE.test(slug) || !PHOTO_NAME_RE.test(name)) return jsonResponse({ error: 'Invalid name or slug' }, 400);
+    const obj = (await env.PRIVATE_BUCKET.get(STAGING.photo(slug, name))) ?? (await env.BUCKET.get(PUBLISHED.photo(slug, name)));
+    if (!obj) return jsonResponse({ error: 'NOT_FOUND' }, 404);
+    return new Response(obj.body, { headers: { 'Content-Type': 'image/webp', 'Cache-Control': 'private, no-store' } });
   }
 
   if (pathname === '/api/admin/publish') {
