@@ -146,7 +146,7 @@ Le route di scrittura diretta di oggi (`/api/admin/site`, `/albums`, manifest, f
 
 ### Modalità anteprima del sito
 
-- Ogni pagina del sito accetta `?preview=1`. In questa modalità il livello dati (`src/providers/data.js`) legge da `/api/admin/draft/…` invece che da `/api/data/…`, e le foto in `staging/` si risolvono in `/api/admin/staging/<slug>/<name>` invece che nell'indirizzo pubblico R2.
+- Ogni pagina del sito accetta `?preview=1`. In questa modalità il livello dati (`src/providers/data.js`) legge da `/api/admin/draft/…` invece che da `/api/data/…`, e le foto si risolvono in `/api/admin/preview/photo/<slug>/<name>`: il Worker restituisce la foto in attesa se c'è, altrimenti quella pubblicata. La dashboard stessa (`/admin`) non entra mai in modalità anteprima, qualunque sia il suo indirizzo: legge i dati pubblicati e la bozza con le sue route, mai attraverso la modalità anteprima.
 - Quelle route sono dietro Access: aprire `?preview=1` senza essere entrati nella dashboard non mostra nulla di privato (la pagina dice che l'anteprima non è disponibile).
 - Nella modalità anteprima i link interni del sito conservano `?preview=1`, così si naviga nell'anteprima del sito intero.
 - **Aggiornamento mentre scrivi**: la dashboard manda all'iframe `postMessage({ type: 'preview:field', field, value })` a ogni tasto; il sito aggiorna subito il testo dell'elemento con `data-field` uguale. Dopo il salvataggio della bozza manda `{ type: 'preview:reload' }` e il sito rilegge i dati. Il sito accetta messaggi solo se `event.origin === location.origin` e `event.source === window.parent`.
