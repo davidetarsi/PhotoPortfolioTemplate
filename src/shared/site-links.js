@@ -71,13 +71,13 @@ export function linkLabel(link, texts) {
 
 /**
  * The site's links in the current shape. A site saved before links existed has
- * `social: { network: url }`: its non-empty addresses become links, in order.
+ * `social: { network: url }`: its https:// and mailto: addresses become links, in order.
  * @param {{links?: Array, social?: object}} site
  * @returns {Array<{url: string, label?: string}>}
  */
 export function normalizeLinks(site) {
   if (Array.isArray(site?.links)) return site.links;
   return Object.values(site?.social ?? {})
-    .filter(url => typeof url === 'string' && url.trim())
+    .filter(url => typeof url === 'string' && /^(https:\/\/|mailto:)/i.test(url.trim()))
     .map(url => ({ url: url.trim() }));
 }

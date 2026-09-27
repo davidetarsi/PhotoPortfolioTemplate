@@ -102,11 +102,11 @@ describe('draft routes', () => {
       'staging/notte/c.webp': 'C',
     });
     expect(await (await call(env, 'GET', '/api/admin/draft/status')).json())
-      .toEqual({ hasDraft: true, changes: [{ type: 'site' }] });
+      .toEqual({ hasDraft: true, publishing: false, changes: [{ type: 'site' }] });
 
     expect((await call(env, 'DELETE', '/api/admin/draft')).status).toBe(200);
     expect(env.PRIVATE_BUCKET.store.size).toBe(0);
-    expect(await (await call(env, 'GET', '/api/admin/draft/status')).json()).toEqual({ hasDraft: false, changes: [] });
+    expect(await (await call(env, 'GET', '/api/admin/draft/status')).json()).toEqual({ hasDraft: false, publishing: false, changes: [] });
   });
 
   it('DELETE /draft also removes photos an interrupted publication copied but never published', async () => {
@@ -118,6 +118,23 @@ describe('draft routes', () => {
     expect(env.BUCKET.store.has('notte/c.webp')).toBe(false);
     expect(env.BUCKET.store.has('notte/a.webp')).toBe(true);
     expect(env.PRIVATE_BUCKET.store.size).toBe(0);
+  });
+
+  it('status says when a publication started and did not finish', async () => {
+    const env = makeEnv({}, { 'draft/site.json': SITE, 'draft/copied.json': ['notte/c.webp'] });
+    expect((await (await call(env, 'GET', '/api/admin/draft/status')).json()).publishing).toBe(true);
+  });
+
+  it('DELETE /draft is refused once a publication has started overwriting the site', async () => {
+    const env = makeEnv({}, { 'draft/site.json': SITE, 'draft/cleanup.json': { prefixes: [], keys: [] } });
+    const res = await call(env, 'DELETE', '/api/admin/draft');
+    expect(res.status).toBe(409);
+    expect(await res.json()).toEqual({ error: 'PUBLISH_IN_PROGRESS' });
+    expect(env.PRIVATE_BUCKET.store.has('draft/site.json')).toBe(true);
+  });
+
+  it('staging: a malformed escape in the name is a 400, not a crash', async () => {
+    expect((await call(makeEnv(), 'GET', '/api/admin/staging/notte/%E0%A4%A.webp')).status).toBe(400);
   });
 
   it('publish: POST only; 409 with the problems when the draft cannot be published', async () => {

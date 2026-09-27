@@ -43,6 +43,14 @@ describe('diffDraft', () => {
       .toEqual([{ type: 'album-removed', slug: 'b' }]);
   });
 
+  it('the order of the keys of an object is not a change', () => {
+    const pub = state([album('notte')], { notte: [photo('a.webp')] });
+    const reordered = { links: [], hero: null, bio: '', name: 'Davide' };
+    const eff = state([{ coverName: null, description: '', title: 'notte', slug: 'notte' }],
+      { notte: [{ height: 3, width: 4, name: 'a.webp' }] }, reordered);
+    expect(diffDraft(pub, eff)).toEqual([]);
+  });
+
   it('a first installation: nothing published yet', () => {
     const pub = { site: null, albums: [], manifests: new Map() };
     const eff = state([album('notte')], { notte: [photo('a.webp')] });

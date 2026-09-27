@@ -38,6 +38,10 @@ describe('normalizeLinks', () => {
     expect(normalizeLinks({ social: { instagram: ' https://instagram.com/y ', flickr: '' } }))
       .toEqual([{ url: 'https://instagram.com/y' }]);
   });
+  it('drops old social addresses that are not https:// or mailto:', () => {
+    expect(normalizeLinks({ social: { a: 'javascript:alert(1)', b: 'http://x.y', c: 'https://ok.example' } }))
+      .toEqual([{ url: 'https://ok.example' }]);
+  });
   it('no links and no social: an empty list', () => {
     expect(normalizeLinks({})).toEqual([]);
     expect(normalizeLinks(undefined)).toEqual([]);

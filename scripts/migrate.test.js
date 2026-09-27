@@ -53,6 +53,10 @@ describe('siteToRuntime', () => {
     });
   });
 
+  it('writes no links field when there are none', () => {
+    expect(siteToRuntime({ name: 'Davide', links: [] })).not.toHaveProperty('links');
+  });
+
   it('converts an old social object into links, skipping empty values', () => {
     const cfg = { name: 'Davide', social: { instagram: 'https://instagram.com/x', vuoto: undefined } };
     expect(siteToRuntime(cfg).links).toEqual([{ url: 'https://instagram.com/x' }]);

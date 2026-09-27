@@ -99,6 +99,9 @@ export async function handleDraftRequest(request, env, pathname) {
       });
     }
     if (method === 'DELETE') {
+      // Past this note a publication has started overwriting the public site: discarding
+      // now would leave it half-published. Finish it with "Publish" instead.
+      if (await env.PRIVATE_BUCKET.get(DRAFT.cleanup)) return jsonResponse({ error: 'PUBLISH_IN_PROGRESS' }, 409);
       await removeUnpublishedCopies(env);
       await deletePrefix(env.PRIVATE_BUCKET, DRAFT.prefix);
       await deletePrefix(env.PRIVATE_BUCKET, STAGING.prefix);
@@ -120,7 +123,16 @@ export async function handleDraftRequest(request, env, pathname) {
   if (pathname === '/api/admin/draft/status') {
     if (method !== 'GET') return jsonResponse({ error: 'METHOD_NOT_ALLOWED' }, 405);
     const { published, effective } = await loadStates(env);
-    return jsonResponse({ hasDraft: await hasDraft(env), changes: diffDraft(published, effective) });
+    const [cleanup, copied] = await Promise.all([
+      env.PRIVATE_BUCKET.get(DRAFT.cleanup),
+      env.PRIVATE_BUCKET.get(DRAFT.copied),
+    ]);
+    return jsonResponse({
+      hasDraft: await hasDraft(env),
+      // A publication started and did not finish: the dashboard offers to resume it.
+      publishing: Boolean(cleanup || copied),
+      changes: diffDraft(published, effective),
+    });
   }
 
   const manifest = pathname.match(MANIFEST_RE);
@@ -139,7 +151,8 @@ export async function handleDraftRequest(request, env, pathname) {
   const staging = pathname.match(STAGING_RE);
   if (staging) {
     const slug = staging[1];
-    const name = decodeURIComponent(staging[2]);
+    let name;
+    try { name = decodeURIComponent(staging[2]); } catch { return jsonResponse({ error: 'Invalid name or slug' }, 400); }
     if (!SLUG_RE.test(slug) || !PHOTO_NAME_RE.test(name)) return jsonResponse({ error: 'Invalid name or slug' }, 400);
     return handleStaging(request, env, slug, name);
   }

@@ -36,11 +36,14 @@ export function albumsToRuntime(legacyAlbums) {
  * @returns {Object} Runtime site structure with name, bio, hero, and links.
  */
 export function siteToRuntime(cfg) {
+  const links = normalizeLinks(cfg);
+  // Only when there are some: an empty list would hide the current dashboard's
+  // Instagram field, which is saved in `social` until the new dashboard replaces it.
   return {
     name: cfg.name,
     bio: cfg.bio ?? '',
     hero: cfg.heroImage ?? null,
-    links: normalizeLinks(cfg),
+    ...(links.length > 0 ? { links } : {}),
   };
 }
 

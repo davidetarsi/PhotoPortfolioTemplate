@@ -187,6 +187,52 @@ describe('publishStep', () => {
     expect(env.BUCKET.store.has('notte/c.webp')).toBe(false);
   });
 
+  it('a new album without photos gets an empty manifest', async () => {
+    const env = makeEnv({ 'draft/albums.json': { albums: [album('notte'), album('sport'), album('vuoto')] } });
+    await publishStep(env);
+    expect(json(env.BUCKET, 'vuoto/manifest.json')).toEqual([]);
+    expect(json(env.BUCKET, 'notte/manifest.json').map(p => p.name)).toEqual(['a.webp', 'b.webp']);
+  });
+
+  it('resumes after stopping in the middle of a batch of copies', async () => {
+    const env = makeEnv({
+      'draft/albums/notte/manifest.json': [photo('a.webp'), photo('c.webp'), photo('d.webp')],
+      'staging/notte/c.webp': 'C', 'staging/notte/d.webp': 'D',
+    });
+    const realPut = env.BUCKET.put.bind(env.BUCKET);
+    let puts = 0;
+    env.BUCKET.put = async (key, value, opts) => {
+      if (++puts === 2) throw new Error('interrupted');
+      return realPut(key, value, opts);
+    };
+    await expect(publishStep(env)).rejects.toThrow('interrupted');
+    expect(json(env.BUCKET, 'notte/manifest.json').map(p => p.name)).toEqual(['a.webp', 'b.webp']);
+
+    env.BUCKET.put = realPut;
+    expect(await publishStep(env)).toEqual({ done: true, copied: 1, remaining: 0 });
+    expect(text(env.BUCKET, 'notte/c.webp')).toBe('C');
+    expect(text(env.BUCKET, 'notte/d.webp')).toBe('D');
+    expect(json(env.BUCKET, 'notte/manifest.json').map(p => p.name)).toEqual(['a.webp', 'c.webp', 'd.webp']);
+  });
+
+  it('resumes after stopping between the manifests and the album list', async () => {
+    const env = makeEnv({
+      'draft/albums.json': { albums: [album('notte')] },
+      'draft/albums/notte/manifest.json': [photo('a.webp')],
+    });
+    const realPut = env.BUCKET.put.bind(env.BUCKET);
+    env.BUCKET.put = async (key, value, opts) => {
+      if (key === '_data/albums.json') throw new Error('interrupted');
+      return realPut(key, value, opts);
+    };
+    await expect(publishStep(env)).rejects.toThrow('interrupted');
+    env.BUCKET.put = realPut;
+    expect(await publishStep(env)).toEqual({ done: true, copied: 0, remaining: 0 });
+    expect(json(env.BUCKET, '_data/albums.json').albums.map(a => a.slug)).toEqual(['notte']);
+    expect([...env.BUCKET.store.keys()].some(key => key.startsWith('sport/'))).toBe(false);
+    expect(env.BUCKET.store.has('notte/b.webp')).toBe(false);
+  });
+
   it('a first installation: publishes an album and a site that did not exist', async () => {
     const env = { BUCKET: makeFakeBucket(), PRIVATE_BUCKET: makeFakeBucket({
       'draft/site.json': site,

@@ -32,7 +32,7 @@ const adminAlbums = resolveAdminAlbums(albumsRes);
 const ctx = {
   site: siteRes.ok
     ? siteRes.data
-    : { name: siteConfig.name, bio: siteConfig.bio ?? '', hero: null, social: {}, links: normalizeLinks(siteConfig) },
+    : { name: siteConfig.name, bio: siteConfig.bio ?? '', hero: null, social: {}, ...(normalizeLinks(siteConfig).length > 0 ? { links: normalizeLinks(siteConfig) } : {}) },
   albums: adminAlbums.albums,
   r2PublicUrl,
   api: adminApi,

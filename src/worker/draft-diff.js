@@ -3,7 +3,15 @@
  * and show. Pure: works on the states loaded by loadStates() in draft-store.js.
  */
 
-const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+// Same content, whatever the order of an object's keys (arrays keep their order).
+const canonical = value => {
+  if (Array.isArray(value)) return value.map(canonical);
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.keys(value).sort().map(key => [key, canonical(value[key])]));
+  }
+  return value;
+};
+const same = (a, b) => JSON.stringify(canonical(a)) === JSON.stringify(canonical(b));
 const names = manifest => manifest.map(entry => entry.name);
 
 /**

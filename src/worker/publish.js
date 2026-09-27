@@ -60,7 +60,8 @@ function findDeletions(published, effective) {
  * @param {object} env - Worker env with BUCKET and PRIVATE_BUCKET.
  * @param {{photosPerStep?: number}} [options]
  * @returns {Promise<{done: boolean, copied: number, remaining: number} | {problems: Array}>}
- *   `problems` when the draft cannot be published as it is; nothing has been written then.
+ *   `problems` when the draft cannot be published as it is: the site has not been changed
+ *   (photos copied by an earlier batch are tracked in draft/copied.json).
  */
 export async function publishStep(env, { photosPerStep = PHOTOS_PER_STEP } = {}) {
   if (!(await hasDraft(env))) return { done: true, copied: 0, remaining: 0 };
@@ -123,9 +124,11 @@ export async function publishStep(env, { photosPerStep = PHOTOS_PER_STEP } = {})
 
   // 3. Manifests, then the album list, then the site: the list never names an album
   //    whose photos are not in place yet.
-  for (const slug of draft.manifests) {
-    if (effective.albums.some(album => album.slug === slug)) {
-      await writeJson(env.BUCKET, PUBLISHED.manifest(slug), effective.manifests.get(slug));
+  for (const album of effective.albums) {
+    const isNew = !published.albums.some(old => old.slug === album.slug) && !publicKeys.has(PUBLISHED.manifest(album.slug));
+    // A new album without photos still gets its (empty) manifest.
+    if (draft.manifests.has(album.slug) || isNew) {
+      await writeJson(env.BUCKET, PUBLISHED.manifest(album.slug), effective.manifests.get(album.slug) ?? []);
     }
   }
   if (draft.albums) await writeJson(env.BUCKET, PUBLISHED.albums, { albums: effective.albums });
