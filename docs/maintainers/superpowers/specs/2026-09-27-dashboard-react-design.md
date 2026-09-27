@@ -212,12 +212,8 @@ Ogni piano lascia il template funzionante, con i test verdi, e aggiorna README.m
 
 1. **Fondamenta.**
    - React nella build (anche per `custom/`).
-   - Bug della dashboard attuale:
-     - icone mostrate come quadratini;
-     - pagina album più larga dello schermo;
-     - testo del caricamento rimasto in italiano;
-     - "HeroImage:" come etichetta;
-     - "Cover" su tutte le foto.
+   - Testi ancora scritti nel codice della dashboard attuale: la zona di caricamento (in italiano), l'etichetta "HeroImage:" e il pulsante "Cover". Più un test che tiene uguali le chiavi di `texts.config.js` e `texts.it.js`.
+   - Verificati e scartati: le icone a quadratino (emoji senza font nel browser di prova sul server, non sul Mac) e la pagina album "più larga" (solo nello screenshot a pagina intera: la pagina non scorre in orizzontale). "Cover" su ogni foto è il pulsante per sceglierla come copertina, voluto.
    - La correzione di Safari (`'wasm-unsafe-eval'`) è già nel branch `feat/simplify-l-english`.
 2. **Dati.**
    - Bucket privato (rinomino).
