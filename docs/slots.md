@@ -85,21 +85,26 @@ React is part of the template build: a slot in `custom/` can be a `.jsx` file. C
 import { flushSync } from 'react-dom';
 import { createRoot } from 'react-dom/client';
 
-function Landing({ name }) {
-  return <main className="page-main"><h1>{name}</h1></main>;
+function Landing({ site }) {
+  if (!site) return <main className="page-main" aria-busy="true" />;
+  return <main className="page-main"><h1>{site.name}</h1></main>;
 }
 
 export default {
   async mount(container, ctx) {
-    const { site } = await ctx.data;
     const root = createRoot(container);
-    flushSync(() => root.render(<Landing name={site.name} />));
+    // Draw the skeleton at once, then the content when the data arrives.
+    flushSync(() => root.render(<Landing />));
+    const { site } = await ctx.data;
+    flushSync(() => root.render(<Landing site={site} />));
     return { destroy() { root.unmount(); } };
   },
 };
 ```
 
 `flushSync` makes the markup land in the DOM before `mount` resolves, so `page:ready` means the landing is on screen. JSX escapes text by itself; keep `dangerouslySetInnerHTML` out of slots. React is optional: a slot in plain JavaScript keeps working exactly as before. `src/core/react-slot.test.jsx` is a working example of testing one.
+
+React adds about 70 KB (gzipped) to the page that loads it. Declare a React slot with a lazy loader, `landing: () => import('./landing/my-landing.jsx')`, so React is downloaded only on the pages that mount it, not with `custom/slots.js` on every page.
 
 ## The public API: `src/api/index.js`
 

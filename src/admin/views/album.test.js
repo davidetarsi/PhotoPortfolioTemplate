@@ -365,6 +365,10 @@ describe('renderAdminAlbum', () => {
     const covers = [...container.querySelectorAll('.admin-photo__cover')];
     expect(covers.length).toBeGreaterThan(0);
     for (const button of covers) expect(button.textContent).toBe(texts.admin.album.cover);
+    container.querySelector('.admin-view-toggle__btn--list').click();
+    const rowCovers = [...container.querySelectorAll('.admin-photo-row__cover')];
+    expect(rowCovers.length).toBeGreaterThan(0);
+    for (const button of rowCovers) expect(button.textContent).toBe(texts.admin.album.cover);
   });
 
   it('la dropzone mostra i vincoli di formato e dimensione', async () => {
