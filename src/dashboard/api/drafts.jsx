@@ -50,7 +50,12 @@ export function SaveQueueProvider({ children, delay }) {
   const queue = useMemo(() => createSaveQueue({
     delay,
     save: (key, value) => request(savePath(key), { method: 'PUT', json: value }),
-    onSaved: () => client.invalidateQueries({ queryKey: keys.status }),
+    onSaved: key => {
+      client.invalidateQueries({ queryKey: keys.status });
+      // A fetch that started before this save could still answer with the older value, now
+      // that the queue no longer holds it: read the resource again, which drops that fetch.
+      client.invalidateQueries({ queryKey: key.startsWith('manifest:') ? keys.manifest(key.slice('manifest:'.length)) : keys.draft });
+    },
   }), [client, delay]);
 
   useEffect(() => {
@@ -96,23 +101,31 @@ const resolve = (next, prev) => (typeof next === 'function' ? next(prev) : next)
 /**
  * The draft's albums, and a setter that shows the change at once and saves it.
  * `setAlbums(next)` takes the new list or a function of the latest one: two quick changes
- * never lose each other.
+ * never lose each other. Before the draft has loaded there is no list to change, and saving
+ * one built from nothing would replace every album: the setter then does nothing and
+ * returns false.
  */
 export function useAlbums() {
   const client = useQueryClient();
   const queue = useSaveQueue();
   const draft = useDraft();
   const setAlbums = (next, options) => {
-    const albums = resolve(next, client.getQueryData(keys.draft)?.albums ?? []);
+    const current = client.getQueryData(keys.draft)?.albums;
+    if (!current) return false;
+    const albums = resolve(next, current);
     // A fetch already running would answer with the old list: drop it.
     client.cancelQueries({ queryKey: keys.draft });
     client.setQueryData(keys.draft, old => ({ ...old, albums }));
     queue.set('albums', { albums }, options);
+    return true;
   };
   return { ...draft, albums: draft.data?.albums, setAlbums };
 }
 
-/** One album's photos in the draft, and a setter (a list, or a function of the latest one). */
+/**
+ * One album's photos in the draft, and a setter (a list, or a function of the latest one).
+ * Like `setAlbums`, the setter does nothing and returns false until the photos have loaded.
+ */
 export function useManifest(slug) {
   const client = useQueryClient();
   const queue = useSaveQueue();
@@ -123,10 +136,13 @@ export function useManifest(slug) {
     refetchOnWindowFocus: () => !queue.busy(),
   });
   const setManifest = (next, options) => {
-    const entries = resolve(next, client.getQueryData(keys.manifest(slug)) ?? []);
+    const current = client.getQueryData(keys.manifest(slug));
+    if (!current) return false;
+    const entries = resolve(next, current);
     client.cancelQueries({ queryKey: keys.manifest(slug) });
     client.setQueryData(keys.manifest(slug), entries);
     queue.set(`manifest:${slug}`, entries, options);
+    return true;
   };
   return { ...manifest, photos: manifest.data, setManifest };
 }

@@ -54,7 +54,8 @@ export function fakeWorker(answers) {
     let answer = queues.get(key);
     if (Array.isArray(answer)) answer = answer.length > 1 ? answer.shift() : answer[0];
     if (answer === undefined) return json({ error: 'NOT_FOUND' }, 404);
-    if (typeof answer === 'function') answer = answer(init);
+    // A function answers the request; it may return a promise (an answer that arrives later).
+    if (typeof answer === 'function') answer = await answer(init);
     if (answer instanceof Response) return answer;
     return answer?.status && answer.body !== undefined ? json(answer.body, answer.status) : json(answer);
   });
