@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { overlayUnsaved, savePath, useAlbums, useManifest, useSaveQueue, useSaveState } from './drafts.jsx';
+import { overlayUnsaved, savePath, useAlbums, useManifest, useSaveQueue, useSaveState, useSite } from './drafts.jsx';
 import { keys } from './queries.js';
 import { fakeWorker, makeQueryClient, Providers } from '../test-utils.jsx';
 
@@ -153,3 +153,51 @@ describe('useManifest', () => {
     expect(fetchMock.mock.calls.some(([path, init]) => path === '/api/admin/draft/albums/notte/manifest' && init?.method === 'PUT')).toBe(true);
   });
 });
+
+describe('useSite', () => {
+  it('gives the site in the current shape and saves a change of it', async () => {
+    const legacy = { ...DRAFT, site: { name: 'D', bio: '', hero: null, social: { instagram: 'https://instagram.com/d' } } };
+    const fetchMock = fakeWorker({ 'GET /api/admin/draft': legacy, 'PUT /api/admin/draft/site': { ok: true } });
+    const { result } = renderHook(() => ({ ...useSite(), queue: useSaveQueue() }), { wrapper: wrapper(makeQueryClient()) });
+    await waitFor(() => expect(result.current.site).toBeDefined());
+    expect(result.current.site.links).toEqual([{ url: 'https://instagram.com/d' }]);
+    act(() => { result.current.setSite(prev => ({ ...prev, bio: 'Fotografo' })); });
+    await waitFor(() => expect(result.current.site.bio).toBe('Fotografo'));
+    await act(() => result.current.queue.flush());
+    const put = fetchMock.mock.calls.find(([path, init]) => path === '/api/admin/draft/site' && init?.method === 'PUT');
+    // Saved in the current shape: links, no social.
+    expect(JSON.parse(put[1].body)).toEqual({ name: 'D', bio: 'Fotografo', hero: null, links: [{ url: 'https://instagram.com/d' }], texts: {} });
+  });
+
+  it('does nothing before the draft has loaded', () => {
+    const fetchMock = fakeWorker({ 'GET /api/admin/draft': () => new Promise(() => {}) });
+    const { result } = renderHook(() => useSite(), { wrapper: wrapper(makeQueryClient()) });
+    let changed;
+    act(() => { changed = result.current.setSite(prev => ({ ...prev, bio: 'x' })); });
+    expect(changed).toBe(false);
+    expect(fetchMock.mock.calls.some(([, init]) => init?.method === 'PUT')).toBe(false);
+  });
+
+  it('a refused site stays on screen while the albums keep saving', async () => {
+    const fetchMock = fakeWorker({
+      'GET /api/admin/draft': DRAFT,
+      'PUT /api/admin/draft/site': { status: 400, body: { error: 'site.name is required' } },
+      'PUT /api/admin/draft/albums': { ok: true },
+    });
+    const client = makeQueryClient();
+    const { result } = renderHook(() => ({ site: useSite(), albums: useAlbums(), queue: useSaveQueue(), save: useSaveState() }), { wrapper: wrapper(client) });
+    await waitFor(() => expect(result.current.site.site).toBeDefined());
+    act(() => {
+      result.current.site.setSite(prev => ({ ...prev, name: '' }));
+      result.current.albums.setAlbums(prev => prev.map(album => ({ ...album, title: 'Edited' })));
+    });
+    await act(() => result.current.queue.flush());
+    expect(fetchMock.mock.calls.some(([path, init]) => path === '/api/admin/draft/albums' && init?.method === 'PUT')).toBe(true);
+    expect(result.current.save.error).toEqual({ key: 'site', message: 'site.name is required', refused: true });
+    // A refetch keeps what was typed on screen.
+    await act(() => client.invalidateQueries({ queryKey: keys.draft }));
+    await waitFor(() => expect(client.isFetching()).toBe(0));
+    expect(result.current.site.site.name).toBe('');
+  });
+});
+

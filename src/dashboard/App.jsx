@@ -36,6 +36,15 @@ export function DraftState() {
   const { data } = useDraftStatus();
   const queue = useSaveQueue();
   const save = useSaveState();
+  if (save.error?.refused) {
+    // The Worker said the value is wrong: retrying cannot help, the next change is saved.
+    return (
+      <span className="dash-state dash-state--error" role="alert">
+        <span className="dash-state__dot" aria-hidden="true" />
+        {formatText(t.publish.saveRefused, { message: save.error.message })}
+      </span>
+    );
+  }
   if (save.error) {
     return (
       <span className="dash-state dash-state--error" role="alert">

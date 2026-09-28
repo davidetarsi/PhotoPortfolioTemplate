@@ -130,4 +130,54 @@ describe('createSaveQueue', () => {
     expect(listener).toHaveBeenCalled();
     stop();
   });
+
+  it('a value the Worker refuses is set aside: the other resources still save, and it stays on screen', async () => {
+    const refusal = Object.assign(new Error('site.name is required'), { status: 400 });
+    const { queue, saved } = makeQueue(async key => { if (key === 'site') throw refusal; });
+    queue.set('site', { name: '' });
+    queue.set('albums', 'renamed');
+    await queue.flush();
+    expect(saved).toEqual([['albums', 'renamed']]);
+    expect(queue.getState().error).toEqual({ key: 'site', message: 'site.name is required', refused: true });
+    // Still the value shown for the site, until it changes.
+    expect(queue.holds('site')).toBe(true);
+    expect(queue.valueOf('site')).toEqual({ name: '' });
+    expect(queue.busy()).toBe(true);
+  });
+
+  it('the next change of a refused resource is saved normally and clears the error', async () => {
+    let refuse = true;
+    const { queue, saved } = makeQueue(async key => {
+      if (key === 'site' && refuse) throw Object.assign(new Error('site.name is required'), { status: 400 });
+    });
+    queue.set('site', { name: '' });
+    await queue.flush();
+    refuse = false;
+    queue.set('site', { name: 'D' });
+    await queue.flush();
+    expect(saved).toEqual([['site', { name: 'D' }]]);
+    expect(queue.getState().error).toBeNull();
+    expect(queue.busy()).toBe(false);
+  });
+
+  it('any other failure (network, session, server) keeps its place and stops the saves after it', async () => {
+    const { queue, saved } = makeQueue(async key => {
+      if (key === 'site') throw Object.assign(new Error('HTTP 503'), { status: 503 });
+    });
+    queue.set('site', { name: 'D' });
+    queue.set('albums', 'renamed');
+    await queue.flush();
+    expect(saved).toEqual([]);
+    expect(queue.getState().error).toEqual({ key: 'site', message: 'HTTP 503', refused: false });
+    expect(queue.getState().pending).toBe(2);
+  });
+
+  it('clear() also forgets a refused value', async () => {
+    const { queue } = makeQueue(async () => { throw Object.assign(new Error('bad'), { status: 400 }); });
+    queue.set('site', { name: '' });
+    await queue.flush();
+    queue.clear();
+    expect(queue.holds('site')).toBe(false);
+    expect(queue.busy()).toBe(false);
+  });
 });

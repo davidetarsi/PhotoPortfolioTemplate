@@ -12,6 +12,8 @@ import { keys, useDraft } from './queries.js';
 import { createSaveQueue } from './save-queue.js';
 import { SaveQueueContext } from './save-context.js';
 import { SLUG_RE } from '../../shared/content-rules.js';
+import { siteConfig } from '../../../config/site.config.js';
+import { siteForEditing } from '../lib/site.js';
 
 /** Where each queued resource is saved. */
 export function savePath(key) {
@@ -146,3 +148,27 @@ export function useManifest(slug) {
   };
   return { ...manifest, photos: manifest.data, setManifest };
 }
+
+/**
+ * The site being edited (name, bio, home image, links, page texts), always in the current
+ * shape, and a setter like `setAlbums`: a value or a function of the latest one, nothing
+ * (and false) before the draft has loaded.
+ */
+export function useSite() {
+  const client = useQueryClient();
+  const queue = useSaveQueue();
+  const draft = useDraft();
+  const loaded = draft.data?.site;
+  const site = useMemo(() => (draft.data ? siteForEditing(loaded, siteConfig) : undefined), [draft.data, loaded]);
+  const setSite = (next, options) => {
+    const data = client.getQueryData(keys.draft);
+    if (!data) return false;
+    const value = resolve(next, siteForEditing(data.site, siteConfig));
+    client.cancelQueries({ queryKey: keys.draft });
+    client.setQueryData(keys.draft, old => ({ ...old, site: value }));
+    queue.set('site', value, options);
+    return true;
+  };
+  return { ...draft, site, setSite };
+}
+

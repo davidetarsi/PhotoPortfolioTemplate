@@ -3,6 +3,7 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { texts } from '../../config/texts.config.js';
 import { DraftState, routes } from './App.jsx';
+import { formatText } from '../utils/formatText.js';
 import { useSaveQueue } from './api/drafts.jsx';
 import { fakeWorker, installDialogPolyfill, makeQueryClient, Providers, renderWithQuery } from './test-utils.jsx';
 
@@ -61,6 +62,21 @@ describe('dashboard frame', () => {
     expect(screen.getByRole('alert').textContent).toContain('STORAGE_ERROR');
     fireEvent.click(screen.getByRole('button', { name: texts.admin.publish.retry }));
     expect(await screen.findByText(texts.admin.publish.draftSaved)).toBeTruthy();
+  });
+
+  it('a value the Worker refuses is explained without Retry: the next change saves it', async () => {
+    fakeWorker({
+      'GET /api/admin/draft/status': STATUS,
+      'PUT /api/admin/draft/site': { status: 400, body: { error: 'site.name is required' } },
+    });
+    let queue;
+    function WithQueue() { queue = useSaveQueue(); return <DraftState />; }
+    renderWithQuery(<WithQueue />);
+    await screen.findByText(texts.admin.publish.allPublished);
+    act(() => { queue.set('site', { name: '' }); });
+    await act(() => queue.flush());
+    expect(screen.getByRole('alert').textContent).toBe(formatText(texts.admin.publish.saveRefused, { message: 'site.name is required' }));
+    expect(screen.queryByRole('button', { name: texts.admin.publish.retry })).toBeNull();
   });
 
   it('says so when the draft cannot be loaded', async () => {

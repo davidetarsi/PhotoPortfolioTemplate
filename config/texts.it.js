@@ -90,6 +90,7 @@ export const texts = {
       saving: 'Salvataggio…',
       waitingPublication: 'Le modifiche aspettano la pubblicazione',
       saveFailed: 'Non salvato: {message}',
+      saveRefused: 'Non accettato: {message}. Correggilo per salvarlo.',
       retry: 'Riprova',
       changesTitle: 'Cosa cambia pubblicando',
       close: 'Chiudi',
