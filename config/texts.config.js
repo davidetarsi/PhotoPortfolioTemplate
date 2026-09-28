@@ -185,6 +185,11 @@ export const texts = {
       deleteAlbum: 'Delete album',
       deleteAlbumTitle: 'Delete "{album}"?',
       deleteAlbumBody: 'The album and its photos disappear from the site when you publish.',
+      upload: 'Upload photos',
+      uploadFailedItem: '{nome}: {motivo}',
+      uploadWaits: 'Uploads wait until publishing is finished.',
+      dropHere: 'Drop the photos to upload them',
+      dropHint: 'You can also drop the photos here',
       cancel: 'Cancel',
     },
     status: {

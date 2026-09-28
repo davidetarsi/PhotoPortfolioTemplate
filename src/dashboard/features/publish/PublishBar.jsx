@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useIsMutating } from '@tanstack/react-query';
 import { texts } from '../../../../config/texts.config.js';
 import { formatText } from '../../../utils/formatText.js';
 import { useDiscard, useDraftStatus, usePublish } from '../../api/queries.js';
@@ -47,6 +48,9 @@ export function PublishBar() {
   const queue = useSaveQueue();
   const saveState = useSaveState();
   const starting = useRef(false); // a publication is being started (double-click guard)
+  // An upload in progress writes to the draft outside the save queue: publishing or
+  // discarding waits for it (its mutation key starts with 'draft-save').
+  const uploading = useIsMutating({ mutationKey: ['draft-save'] }) > 0;
 
   const publish = usePublish({ onStep: step => setPhotosLeft(step.done ? null : step.remaining) });
   const discard = useDiscard();
@@ -121,7 +125,7 @@ export function PublishBar() {
     }
   };
 
-  const busy = publish.isPending || discard.isPending || saveState.saving;
+  const busy = publish.isPending || discard.isPending || saveState.saving || uploading;
   const count = changes.length === 1 ? t.changesOne : formatText(t.changesMany, { n: changes.length });
 
   return (

@@ -10,6 +10,8 @@ import { Button } from '../../ui/Button.jsx';
 import { ConfirmDialog } from '../../ui/ConfirmDialog.jsx';
 import { AlbumDetails } from './AlbumDetails.jsx';
 import { PhotoGrid } from './PhotoGrid.jsx';
+import { UploadPanel } from './UploadPanel.jsx';
+import { photoCount } from '../albums/AlbumCard.jsx';
 import '../albums/albums.css';
 import './album.css';
 
@@ -65,7 +67,7 @@ export function AlbumScreen() {
       <AlbumDetails album={album} onChange={updateAlbum} />
 
       <div className="dash-screen-head">
-        <p className="dash-label">{photos ? formatText(texts.admin.albums.photoCountMany, { n: photos.length }) : ''}</p>
+        <p className="dash-label">{photos ? photoCount(photos.length) : ''}</p>
         <div className="dash-screen-head__actions">
           {photos?.length > 1 && (
             <Button onClick={() => setReordering(value => !value)} aria-pressed={reordering}>
@@ -75,6 +77,7 @@ export function AlbumScreen() {
         </div>
       </div>
 
+      {photos && <UploadPanel slug={slug} photos={photos} setManifest={setManifest} />}
       {manifestError && <p className="dash-form__error" role="alert">{t.manifestError}</p>}
       {photos?.length === 0 && <p className="dash-empty">{t.empty}</p>}
       {photos?.length > 0 && (

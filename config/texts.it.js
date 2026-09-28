@@ -183,6 +183,11 @@ export const texts = {
       deleteAlbum: 'Elimina l\'album',
       deleteAlbumTitle: 'Eliminare «{album}»?',
       deleteAlbumBody: 'L\'album e le sue foto spariscono dal sito quando pubblichi.',
+      upload: 'Carica foto',
+      uploadFailedItem: '{nome}: {motivo}',
+      uploadWaits: 'I caricamenti aspettano la fine della pubblicazione.',
+      dropHere: 'Rilascia le foto per caricarle',
+      dropHint: 'Puoi anche trascinare qui le foto',
       cancel: 'Annulla',
     },
     status: {
