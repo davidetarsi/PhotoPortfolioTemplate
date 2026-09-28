@@ -16,6 +16,9 @@ export function Sheet({ open, onClose, title, children, className = '', role, de
   // The latest `open`, for the browser's own "close" event.
   const openRef = useRef(open);
   openRef.current = open;
+  // Where the pointer went down: selecting text inside and releasing outside is not a click
+  // on the backdrop, and must not close the panel (with what was being typed).
+  const downOnBackdrop = useRef(false);
 
   // A <dialog> is opened with a method, not an attribute: this is where React talks to the DOM.
   useEffect(() => {
@@ -41,8 +44,13 @@ export function Sheet({ open, onClose, title, children, className = '', role, de
       onCancel={event => { event.preventDefault(); if (dismissible) onClose(); }}
       // Some browsers close the dialog anyway (a second Esc): keep the parent in step.
       onClose={() => { if (openRef.current) onClose(); }}
-      // A click on the backdrop lands on the dialog element itself.
-      onClick={event => { if (dismissible && event.target === ref.current) onClose(); }}
+      // A press and a release on the backdrop both land on the dialog element itself.
+      onPointerDown={event => { downOnBackdrop.current = event.target === ref.current; }}
+      onClick={event => {
+        const onBackdrop = event.target === ref.current && downOnBackdrop.current;
+        downOnBackdrop.current = false;
+        if (dismissible && onBackdrop) onClose();
+      }}
     >
       <div className="dash-sheet__body">
         <h2 id={titleId} className="dash-sheet__title">{title}</h2>

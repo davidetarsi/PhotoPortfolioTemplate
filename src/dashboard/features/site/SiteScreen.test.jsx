@@ -1,0 +1,109 @@
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { createMemoryRouter, RouterProvider } from 'react-router';
+import { texts } from '../../../../config/texts.config.js';
+import { routes } from '../../App.jsx';
+import { useSaveQueue } from '../../api/drafts.jsx';
+import { fakeWorker, installDialogPolyfill, makeQueryClient, Providers } from '../../test-utils.jsx';
+
+const t = texts.admin.site;
+beforeAll(installDialogPolyfill);
+afterEach(() => vi.unstubAllGlobals());
+
+const SITE = { name: 'Davide', bio: 'Fotografo', hero: null, links: [], texts: { 'about.heading': 'Scrivimi' } };
+const DRAFT = { site: SITE, albums: [], hasDraft: false };
+const STATUS = { hasDraft: false, publishing: false, changes: [] };
+
+let queue;
+function QueueSpy() { queue = useSaveQueue(); return null; }
+function renderSite() {
+  const router = createMemoryRouter(routes, { initialEntries: ['/site'] });
+  render(<Providers client={makeQueryClient()}><QueueSpy /><RouterProvider router={router} /></Providers>);
+}
+// A Worker that keeps what is saved, as the real one does: a refetch after a save reads it back.
+function worker(extra = {}) {
+  let draft = DRAFT;
+  return fakeWorker({
+    'GET /api/admin/draft': () => draft,
+    'GET /api/admin/draft/status': STATUS,
+    'PUT /api/admin/draft/site': init => { draft = { ...draft, site: JSON.parse(init.body) }; return { ok: true }; },
+    ...extra,
+  });
+}
+const siteSaves = fetchMock => fetchMock.mock.calls
+  .filter(([path, init]) => path === '/api/admin/draft/site' && init?.method === 'PUT').map(([, init]) => JSON.parse(init.body));
+// A row, once the draft has loaded (before that the rows are there but cannot be opened).
+async function row(label) {
+  const button = await screen.findByRole('button', { name: new RegExp(`^${label}`) });
+  await waitFor(() => expect(button.disabled).toBe(false));
+  return button;
+}
+
+describe('Site screen', () => {
+  it('shows each field as a row with its value; a page text not changed says it is the template text', async () => {
+    worker();
+    renderSite();
+    expect((await row(t.nameLabel)).textContent).toContain('Davide');
+    expect((await row(t.aboutHeadingLabel)).textContent).toContain('Scrivimi');
+    const body = await row(t.aboutBodyLabel);
+    expect(body.textContent).toContain(texts.about.body);
+    expect(body.textContent).toContain(t.templateText);
+  });
+
+  it('edits a field in a sheet and saves it as soon as the sheet closes', async () => {
+    const fetchMock = worker();
+    renderSite();
+    fireEvent.click(await row(t.bioLabel));
+    const sheet = await screen.findByRole('dialog', { name: t.bioLabel });
+    fireEvent.change(within(sheet).getByLabelText(t.bioLabel), { target: { value: 'Fotografo di montagna' } });
+    fireEvent.click(within(sheet).getByRole('button', { name: t.done }));
+    await waitFor(() => expect(siteSaves(fetchMock).at(-1)?.bio).toBe('Fotografo di montagna'));
+    expect((await row(t.bioLabel)).textContent).toContain('Fotografo di montagna');
+  });
+
+  it('never saves an empty name: the field says why and the last one is kept', async () => {
+    const fetchMock = worker();
+    renderSite();
+    fireEvent.click(await row(t.nameLabel));
+    const sheet = await screen.findByRole('dialog', { name: t.nameLabel });
+    fireEvent.change(within(sheet).getByLabelText(t.nameLabel), { target: { value: ' ' } });
+    expect(within(sheet).getByRole('alert').textContent).toBe(t.nameRequired);
+    fireEvent.click(within(sheet).getByRole('button', { name: t.done }));
+    await act(() => queue.flush());
+    expect(siteSaves(fetchMock)).toEqual([]);
+  });
+
+  it('gives a page text back to the template', async () => {
+    const fetchMock = worker();
+    renderSite();
+    fireEvent.click(await row(t.aboutHeadingLabel));
+    const sheet = await screen.findByRole('dialog', { name: t.aboutHeadingLabel });
+    fireEvent.click(within(sheet).getByRole('button', { name: t.restoreDefault }));
+    expect(within(sheet).getByLabelText(t.aboutHeadingLabel).value).toBe(texts.about.heading);
+    fireEvent.click(within(sheet).getByRole('button', { name: t.done }));
+    await waitFor(() => expect(siteSaves(fetchMock).at(-1)?.texts).toEqual({}));
+  });
+
+  it('on a phone the sheet shows the page of the field above it, and the whole page on request', async () => {
+    worker();
+    renderSite();
+    fireEvent.click(await row(t.successMessageLabel));
+    const sheet = await screen.findByRole('dialog', { name: t.successMessageLabel });
+    const frame = within(sheet).getByTitle(t.previewTitle);
+    expect(frame.getAttribute('src')).toBe('/about?preview=1');
+    expect(within(sheet).getByText(t.formNote)).toBeTruthy();
+    fireEvent.click(within(sheet).getByRole('button', { name: t.previewFull }));
+    expect(frame.className).toContain('dash-preview--full');
+  });
+
+  it('on a computer the preview stands beside the fields and follows the field being edited', async () => {
+    vi.stubGlobal('matchMedia', () => ({ matches: true, addEventListener() {}, removeEventListener() {} }));
+    worker();
+    renderSite();
+    const frame = await screen.findByTitle(t.previewTitle);
+    expect(frame.getAttribute('src')).toBe('/?preview=1');
+    fireEvent.click(await row(t.aboutBodyLabel));
+    await waitFor(() => expect(frame.getAttribute('src')).toBe('/about?preview=1'));
+    expect(screen.getAllByTitle(t.previewTitle)).toHaveLength(1);
+  });
+});

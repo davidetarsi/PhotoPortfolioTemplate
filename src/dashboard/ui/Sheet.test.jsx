@@ -24,9 +24,19 @@ describe('Sheet', () => {
     render(<Sheet open onClose={onClose} title="T"><button type="button">inside</button></Sheet>);
     const dialog = screen.getByRole('dialog');
     fireEvent(dialog, new Event('cancel', { cancelable: true }));
+    fireEvent.pointerDown(dialog);
     fireEvent.click(dialog);
     fireEvent.click(screen.getByRole('button', { name: 'inside' }));
     expect(onClose).toHaveBeenCalledTimes(2);
+  });
+
+  it('selecting text inside and releasing on the backdrop does not close it', () => {
+    const onClose = vi.fn();
+    render(<Sheet open onClose={onClose} title="T"><input aria-label="field" /></Sheet>);
+    const dialog = screen.getByRole('dialog');
+    fireEvent.pointerDown(screen.getByLabelText('field'));
+    fireEvent.click(dialog);
+    expect(onClose).not.toHaveBeenCalled();
   });
 });
 

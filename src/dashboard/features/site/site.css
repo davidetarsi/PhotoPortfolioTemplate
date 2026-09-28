@@ -4,3 +4,26 @@
   border-radius: var(--admin-radius); background: #fff;
 }
 .dash-preview--full { height: calc(100dvh - 12rem); }
+
+.dash-site { display: grid; gap: 1.5rem; }
+.dash-site--wide { grid-template-columns: minmax(18rem, 26rem) 1fr; align-items: start; }
+.dash-site__preview { position: sticky; top: 1rem; }
+.dash-site--wide .dash-preview--full { height: calc(100dvh - 10rem); }
+.dash-site-group { display: grid; gap: 0.5rem; margin-bottom: 1.25rem; }
+.dash-site-group h2 { margin: 0; }
+.dash-site-rows { list-style: none; margin: 0; padding: 0; display: grid; gap: 1px; border-radius: var(--admin-radius); overflow: hidden; background: var(--admin-line); }
+.dash-site-row {
+  display: grid; grid-template-columns: 1fr auto; gap: 0.15rem 0.75rem; width: 100%; padding: 0.75rem 1rem;
+  border: 0; background: var(--admin-surface); color: inherit; text-align: left; cursor: pointer;
+}
+.dash-site-row:hover { background: var(--admin-raised); }
+.dash-site-row__label { font-size: 0.8rem; color: var(--admin-muted); }
+.dash-site-row__value { grid-column: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dash-site-row__value--empty { color: var(--admin-muted); font-style: italic; }
+.dash-site-row__badge { grid-column: 2; grid-row: 1 / span 2; align-self: center; font: 0.7rem/1 var(--admin-font-mono); color: var(--admin-muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.dash-site__slice { display: grid; gap: 0.5rem; justify-items: end; }
+.dash-field-sheet { width: min(40rem, calc(100vw - 2rem)); }
+/* On a computer the sheet opens over the fields: the preview beside it stays in view. */
+.dash-field-sheet--side { margin: 6rem auto auto 1.25rem; width: min(26rem, calc(100vw - 2rem)); }
+.dash-field-sheet--side::backdrop { background: rgb(0 0 0 / 0.25); }
+

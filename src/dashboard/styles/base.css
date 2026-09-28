@@ -17,3 +17,17 @@ button, input, textarea, select { font: inherit; color: inherit; }
   text-transform: uppercase;
   color: var(--admin-muted);
 }
+
+/* Shared by the screens: heading row, hints, form fields. */
+.dash-screen-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.dash-screen-head .dash-screen-title { margin: 0; }
+.dash-screen-head__actions { display: flex; gap: 0.5rem; }
+.dash-hint, .dash-empty { color: var(--admin-muted); margin: 0 0 1rem; }
+.dash-form { display: grid; gap: 0.5rem; }
+.dash-input {
+  width: 100%; min-height: 44px; padding: 0 0.75rem; border-radius: var(--admin-radius);
+  border: 1px solid var(--admin-line); background: var(--admin-bg);
+}
+textarea.dash-input { padding: 0.6rem 0.75rem; resize: vertical; }
+.dash-input:focus-visible { outline: 2px solid var(--admin-accent); outline-offset: 0; }
+.dash-form__error { margin: 0; color: var(--admin-danger); font-size: 0.85rem; }
