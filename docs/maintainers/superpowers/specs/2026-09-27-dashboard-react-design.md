@@ -302,6 +302,10 @@ Ogni piano lascia il template funzionante, con i test verdi, e aggiorna README.m
   - le modifiche fatte durante una pubblicazione restano in memoria e si salvano dopo, senza perderle;
   - l'indicatore mostra anche "salvataggio…" ed "errore di salvataggio — riprova".
 - **Moduli (4.2, 4.3):** ogni campo tiene il suo valore nello stato locale e non si reimposta dai dati riletti mentre lo si sta modificando. La bozza si rilegge quando si torna sulla scheda.
+- **Tema (primo task del 4.2):**
+  - il testo attenuato passa dal 60% al 70% dell'inchiostro: su carta chiara a 60% il contrasto è 3,8:1, a 70% circa 5:1;
+  - leggere anche `:root` in un elenco di selettori (`:root, html`) e dentro `@layer`;
+  - ricavare chiaro o scuro anche da sfondi non esadecimali (`rgb()`), o in mancanza dalla luminosità del testo.
 - **Foglio (4.3):** chiudere toccando fuori solo se sia la pressione sia il rilascio sono sullo sfondo, così trascinare una selezione di testo fuori dal foglio non lo chiude.
 - **4.4:**
   - `IS_REACT_ACT_ENVIRONMENT` impostato esplicitamente per i test;
