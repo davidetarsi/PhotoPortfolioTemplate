@@ -308,6 +308,12 @@ Ogni piano lascia il template funzionante, con i test verdi, e aggiorna README.m
   - **La pausa della pubblicazione si toglie sempre**, anche se la barra sparisce.
   - **I salvataggi passano dalla coda**, non da mutazioni `['draft-save', …]`. La chiave resta per i caricamenti, e Pubblica e Annulla li aspettano.
   - **"Pubblica disattivato finché c'è un salvataggio in attesa"** si realizza così: Pubblica prima salva ciò che è in attesa, poi pubblica.
+- **Caricamenti (dopo la revisione del Task 5 del 4.2):**
+  - **Il nome di una foto nuova evita anche i nomi pubblicati**, compresi quelli tolti dalla bozza: una foto in attesa vince su quella pubblicata, e con lo stesso nome la pubblicazione la copierebbe sopra prima che il sito smetta di nominarla. Il Worker rifiuta comunque quel nome (409 `NAME_PUBLISHED`).
+  - **Il "Riprova" delle foto fallite sta nel riepilogo del caricamento**, con il motivo di ciascuna, e non come segnaposto nella griglia: la foto non è ancora nella bozza.
+  - **Da quando si preme Pubblica i caricamenti aspettano**, anche mentre si salvano le modifiche in attesa. Un caricamento partito un attimo prima ferma la pubblicazione con un messaggio.
+  - **Un solo caricamento alla volta per album**, anche se si esce dall'album e ci si rientra.
+  - **Una foto lasciata cadere mentre i caricamenti aspettano non fa uscire dalla dashboard.**
 - **Moduli (4.2, 4.3):** ogni campo tiene il suo valore nello stato locale e non si reimposta dai dati riletti mentre lo si sta modificando. La bozza si rilegge quando si torna sulla scheda.
 - **Tema (primo task del 4.2):**
   - il testo attenuato passa dal 60% al 70% dell'inchiostro: su carta chiara a 60% il contrasto è 3,8:1, a 70% circa 5:1;
@@ -316,6 +322,12 @@ Ogni piano lascia il template funzionante, con i test verdi, e aggiorna README.m
 - **Foglio (4.3):** chiudere toccando fuori solo se sia la pressione sia il rilascio sono sullo sfondo, così trascinare una selezione di testo fuori dal foglio non lo chiude.
 - **4.4:**
   - `IS_REACT_ACT_ENVIRONMENT` impostato esplicitamente per i test;
+  - dalle revisioni del 4.2:
+    - test per copertina ed eliminazione disattivate durante la pubblicazione, e per l'errore nel leggere le foto dell'album;
+    - il testo di conferma dell'eliminazione di una foto mai pubblicata;
+    - l'esito di un caricamento ancora in corso quando si esce dall'album (oggi va perso);
+    - gli annunci delle aree `aria-live` del caricamento: il primo può perdersi, e ogni fase di ogni file viene annunciata;
+    - i caricamenti ancora possibili durante una pubblicazione interrotta: conta solo quella avviata da questa scheda, come per i salvataggi;
   - un messaggio quando lo stato della bozza non si può leggere;
   - i README (eccezione voluta: la dashboard è solo cornice fino alle schermate, e il branch non esce prima).
 
