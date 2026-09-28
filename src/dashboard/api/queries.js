@@ -5,10 +5,14 @@
 import { useIsMutating, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { request } from './client.js';
 
+// Every query about the draft has a key starting with 'draft': a publication or a discard
+// refreshes exactly those (the messages, for example, are not touched).
 export const keys = Object.freeze({
   draft: ['draft'],
   status: ['draft-status'],
+  manifest: slug => ['draft-manifest', slug],
 });
+const isDraftQuery = query => String(query.queryKey[0]).startsWith('draft');
 
 /** The draft's site and album list ({ site, albums, hasDraft }). */
 export function useDraft() {
@@ -23,7 +27,7 @@ export function useDraftStatus() {
 /** Everything that depends on the draft is read again. */
 function useRefreshDraft() {
   const client = useQueryClient();
-  return () => client.invalidateQueries();
+  return () => client.invalidateQueries({ predicate: isDraftQuery });
 }
 
 /**

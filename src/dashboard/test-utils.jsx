@@ -5,8 +5,11 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, vi } from 'vitest';
 
 // Vitest runs without globals, so Testing Library cannot clean up by itself: unmount
-// what each test rendered, in every file that uses these helpers.
-afterEach(() => cleanup());
+// what each test rendered, and give back the real fetch that fakeWorker replaced.
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
 
 /** jsdom has no <dialog> methods: open and close by attribute, as the browser shows it. */
 export function installDialogPolyfill() {

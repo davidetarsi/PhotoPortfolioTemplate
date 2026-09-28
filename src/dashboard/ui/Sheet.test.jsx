@@ -14,6 +14,7 @@ describe('Sheet', () => {
     rerender(<Sheet open onClose={() => {}} title="Titolo">body</Sheet>);
     expect(dialog.open).toBe(true);
     expect(screen.getByRole('heading', { name: 'Titolo' })).toBeTruthy();
+    expect(screen.getByRole('dialog', { name: 'Titolo' })).toBe(dialog);
     rerender(<Sheet open={false} onClose={() => {}} title="Titolo">body</Sheet>);
     expect(dialog.open).toBe(false);
   });

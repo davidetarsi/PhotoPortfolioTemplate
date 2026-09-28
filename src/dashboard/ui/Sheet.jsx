@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useId, useRef } from 'react';
 import './ui.css';
 
 /**
@@ -10,6 +10,7 @@ import './ui.css';
  */
 export function Sheet({ open, onClose, title, children, className = '' }) {
   const ref = useRef(null);
+  const titleId = useId();
 
   // A <dialog> is opened with a method, not an attribute: this is where React talks to the DOM.
   useEffect(() => {
@@ -28,14 +29,14 @@ export function Sheet({ open, onClose, title, children, className = '' }) {
     <dialog
       ref={ref}
       className={`dash-sheet ${className}`.trim()}
-      aria-label={title}
+      aria-labelledby={titleId}
       // Esc: the browser fires "cancel"; the parent closes by changing `open`.
       onCancel={event => { event.preventDefault(); onClose(); }}
       // A click on the backdrop lands on the dialog element itself.
       onClick={event => { if (event.target === ref.current) onClose(); }}
     >
       <div className="dash-sheet__body">
-        <h2 className="dash-sheet__title">{title}</h2>
+        <h2 id={titleId} className="dash-sheet__title">{title}</h2>
         {children}
       </div>
     </dialog>
