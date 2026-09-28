@@ -1,4 +1,4 @@
-import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { createMemoryRouter, RouterProvider } from 'react-router';
@@ -13,7 +13,6 @@ function renderDashboard(path = '/') {
 }
 
 beforeAll(installDialogPolyfill);
-afterEach(() => vi.unstubAllGlobals());
 
 const DRAFT = { site: { name: 'Davide Tarsi', bio: '', hero: null }, albums: [], hasDraft: false };
 const STATUS = { hasDraft: false, publishing: false, changes: [] };

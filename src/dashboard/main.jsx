@@ -11,6 +11,8 @@ import './styles/base.css';
 for (const [name, value] of Object.entries(themeTokens)) {
   document.documentElement.style.setProperty(name, value);
 }
+// A light site theme: light form controls and scrollbars too.
+if (themeTokens['--admin-scheme']) document.documentElement.style.colorScheme = themeTokens['--admin-scheme'];
 
 const queryClient = new QueryClient({
   defaultOptions: {

@@ -85,6 +85,7 @@ export const texts = {
       problemCover: '{album}: la copertina {name} non è nell\'album.',
       problemHero: 'L\'immagine della home {name} non è nell\'album {album}.',
       failed: 'Pubblicazione interrotta: {message}. Premi Pubblica per riprendere.',
+      noProgress: 'La pubblicazione non va avanti. Riprova tra qualche minuto.',
     },
     site: {
       sectionTitle: 'Sito',

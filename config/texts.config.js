@@ -87,6 +87,7 @@ export const texts = {
       problemCover: '{album}: the cover {name} is not in the album.',
       problemHero: 'Home image {name} is not in the album {album}.',
       failed: 'Publishing stopped: {message}. Press Publish to resume.',
+      noProgress: 'Publishing is not moving forward. Try again in a few minutes.',
     },
     site: {
       sectionTitle: 'Site',

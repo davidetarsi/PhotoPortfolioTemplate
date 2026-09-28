@@ -1,14 +1,13 @@
-import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { vi } from 'vitest';
 import { texts } from '../../../../config/texts.config.js';
-import { PublishBar, describeProblem } from './PublishBar.jsx';
+import { MESSAGE_MS, PublishBar, describeProblem } from './PublishBar.jsx';
 import { fakeWorker, installDialogPolyfill, makeQueryClient, renderWithQuery } from '../../test-utils.jsx';
 
 const t = texts.admin.publish;
 beforeAll(installDialogPolyfill);
-afterEach(() => vi.unstubAllGlobals());
 
 const STATUS_DRAFT = { hasDraft: true, publishing: false, changes: [{ type: 'site' }, { type: 'album-added', slug: 'notte' }] };
 const STATUS_CLEAN = { hasDraft: false, publishing: false, changes: [] };
@@ -51,10 +50,48 @@ describe('PublishBar', () => {
     expect(within(alert).getByText(describeProblem({ slug: 'notte', name: 'a.webp', reason: 'PHOTO_MISSING' }))).toBeTruthy();
   });
 
-  it('offers to resume a publication that stopped half-way', async () => {
+  it('offers to resume a publication that stopped half-way, and no longer to discard', async () => {
     fakeWorker({ 'GET /api/admin/draft/status': { ...STATUS_DRAFT, publishing: true } });
     renderWithQuery(<PublishBar />);
     expect(await screen.findByRole('button', { name: t.resume })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: t.discard })).toBeNull();
+  });
+
+  it('stops asking when the publication does not move forward', async () => {
+    fakeWorker({
+      'GET /api/admin/draft/status': STATUS_DRAFT,
+      'POST /api/admin/publish': { done: false, copied: 0, remaining: 5 },
+    });
+    renderWithQuery(<PublishBar />);
+    fireEvent.click(await screen.findByRole('button', { name: t.publish }));
+    expect((await screen.findByRole('alert')).textContent).toBe(t.noProgress);
+  });
+
+  it('the discard confirmation is an alert dialog described by its text', async () => {
+    fakeWorker({ 'GET /api/admin/draft/status': STATUS_DRAFT });
+    renderWithQuery(<PublishBar />);
+    fireEvent.click(await screen.findByRole('button', { name: t.discard }));
+    const dialog = await screen.findByRole('alertdialog', { name: t.discardTitle });
+    expect(dialog.getAttribute('aria-describedby')).toBeTruthy();
+    expect(document.getElementById(dialog.getAttribute('aria-describedby')).textContent).toBe(t.discardBody);
+  });
+
+  it('a confirmation disappears by itself after a few seconds', async () => {
+    // Fake timers that still move on their own, so the waits of Testing Library work.
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    fakeWorker({
+      'GET /api/admin/draft/status': [STATUS_DRAFT, STATUS_CLEAN],
+      'POST /api/admin/publish': { done: true, copied: 0, remaining: 0 },
+    });
+    renderWithQuery(<PublishBar />);
+    fireEvent.click(await screen.findByRole('button', { name: t.publish }));
+    expect(await screen.findByText(t.published)).toBeTruthy();
+    try {
+      act(() => { vi.advanceTimersByTime(MESSAGE_MS); });
+      expect(screen.queryByText(t.published)).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('discards after a confirmation in the page', async () => {
@@ -86,9 +123,9 @@ describe('PublishBar', () => {
     expect(screen.queryByText(t.discarded)).toBeNull();
   });
 
-  it('says to finish with Publish when discarding is refused', async () => {
+  it('says to finish with Publish when discarding is refused (a publication started elsewhere)', async () => {
     fakeWorker({
-      'GET /api/admin/draft/status': { ...STATUS_DRAFT, publishing: true },
+      'GET /api/admin/draft/status': STATUS_DRAFT,
       'DELETE /api/admin/draft': { status: 409, body: { error: 'PUBLISH_IN_PROGRESS' } },
     });
     renderWithQuery(<PublishBar />);

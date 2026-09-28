@@ -3,7 +3,10 @@
  * and never call fetch themselves.
  */
 import { useIsMutating, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { request } from './client.js';
+import { ApiError, request } from './client.js';
+
+/** Steps in a row without fewer photos left: the publication is stuck, stop asking. */
+export const MAX_STEPS_WITHOUT_PROGRESS = 3;
 
 // Every query about the draft has a key starting with 'draft': a publication or a discard
 // refreshes exactly those (the messages, for example, are not touched).
@@ -40,10 +43,18 @@ export function usePublish({ onStep } = {}) {
   return useMutation({
     mutationKey: ['publish'],
     mutationFn: async () => {
+      let best = Infinity;
+      let stalled = 0;
       for (;;) {
         const step = await request('/api/admin/publish', { method: 'POST' });
         onStep?.(step);
         if (step.done) return step;
+        if (step.remaining < best) {
+          best = step.remaining;
+          stalled = 0;
+        } else if (++stalled >= MAX_STEPS_WITHOUT_PROGRESS) {
+          throw new ApiError(0, { error: 'NO_PROGRESS' });
+        }
       }
     },
     onSettled: refresh,

@@ -1,12 +1,14 @@
 /* The dashboard's own look ("B — camera oscura"). A site with custom/theme.css overrides
-   these at start-up with its colours and fonts (src/utils/adminTheme.js). */
+   these at start-up with its colours and fonts (src/utils/adminTheme.js). Panels, lines
+   and muted text are mixed from background and text, so a light site theme that sets
+   only those two still gives a readable dashboard. */
 :root {
   --admin-bg: #141517;
-  --admin-surface: #1b1c1f;
-  --admin-raised: #26282c;
   --admin-ink: #ececea;
-  --admin-muted: #8d9096;
-  --admin-line: #2d2f33;
+  --admin-surface: color-mix(in srgb, var(--admin-bg) 95%, var(--admin-ink));
+  --admin-raised: color-mix(in srgb, var(--admin-bg) 88%, var(--admin-ink));
+  --admin-line: color-mix(in srgb, var(--admin-bg) 84%, var(--admin-ink));
+  --admin-muted: color-mix(in srgb, var(--admin-ink) 60%, var(--admin-bg));
   --admin-accent: #e3b341;
   --admin-on-accent: #141517;
   --admin-ok: #5fb38a;

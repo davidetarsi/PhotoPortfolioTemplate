@@ -15,6 +15,7 @@ export const ADMIN_TOKEN_MAP = Object.freeze({
   '--color-muted': '--admin-muted',
   '--color-border': '--admin-line',
   '--color-accent': '--admin-accent',
+  '--color-error': '--admin-danger',
   '--font-body': '--admin-font-body',
   '--font-heading': '--admin-font-display',
   '--font-mono': '--admin-font-mono',
@@ -34,26 +35,68 @@ function luminance(color) {
   return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 }
 
+/** Bodies of the top-level `:root { … }` rules (not those inside @media or other blocks). */
+function topLevelRootBodies(css) {
+  const bodies = [];
+  let depth = 0;
+  let selectorStart = 0;
+  let selector = '';
+  let bodyStart = -1;
+  for (let i = 0; i < css.length; i++) {
+    const c = css[i];
+    if (c === '{') {
+      if (depth === 0) {
+        selector = css.slice(selectorStart, i).trim();
+        bodyStart = i + 1;
+      }
+      depth++;
+    } else if (c === '}') {
+      depth--;
+      if (depth === 0) {
+        if (selector === ':root') bodies.push(css.slice(bodyStart, i));
+        selectorStart = i + 1;
+      }
+    } else if (c === ';' && depth === 0) {
+      selectorStart = i + 1; // an @import or @charset before the rules
+    }
+  }
+  return bodies;
+}
+
+/** Readable status colours on a light background (the defaults are for a dark one). */
+const LIGHT_STATUS = { '--admin-ok': '#2e7d4f', '--admin-danger': '#b3261e' };
+
 /**
  * The dashboard tokens found in a theme's CSS.
- * Reads `--name: value;` declarations inside `:root { … }` blocks: site tokens are mapped
- * with ADMIN_TOKEN_MAP, `--admin-*` tokens are taken as they are. Values that depend on
- * other variables (`var(…)`) are skipped: the dashboard does not load the site's theme.
- * When the accent is a hex colour, the text on it (`--admin-on-accent`) is chosen dark or
- * light for contrast, unless the theme sets it.
+ * Reads `--name: value;` declarations of the top-level `:root { … }` rules, the last value
+ * winning as in CSS: site tokens are mapped with ADMIN_TOKEN_MAP, `--admin-*` tokens are
+ * taken as they are and win over mapped ones. Values that depend on other variables
+ * (`var(…)`) are skipped: the dashboard does not load the site's theme.
+ * The other surfaces (panels, lines, muted text) follow from background and text in
+ * src/dashboard/styles/tokens.css. With a hex background the tokens also say whether the
+ * theme is light or dark (`--admin-scheme`), with status colours readable on it; with a
+ * hex accent, the text on it is chosen dark or light for contrast.
  * @param {string} cssText
  * @returns {Record<string, string>} Dashboard custom properties.
  */
 export function adminThemeTokens(cssText) {
-  const tokens = {};
+  const mapped = {};
+  const explicit = {};
   const withoutComments = String(cssText).replace(/\/\*[\s\S]*?\*\//g, '');
-  for (const [, body] of withoutComments.matchAll(/:root\s*\{([^}]*)\}/g)) {
+  for (const body of topLevelRootBodies(withoutComments)) {
     for (const [, name, rawValue] of body.matchAll(/(--[\w-]+)\s*:\s*([^;]+);?/g)) {
       const value = rawValue.trim();
       if (!value || value.includes('var(')) continue;
-      if (name.startsWith('--admin-')) tokens[name] = value;
-      else if (ADMIN_TOKEN_MAP[name] && !(ADMIN_TOKEN_MAP[name] in tokens)) tokens[ADMIN_TOKEN_MAP[name]] = value;
+      if (name.startsWith('--admin-')) explicit[name] = value;
+      else if (ADMIN_TOKEN_MAP[name]) mapped[ADMIN_TOKEN_MAP[name]] = value;
     }
+  }
+  const tokens = { ...mapped, ...explicit };
+  const bg = tokens['--admin-bg'] ? luminance(tokens['--admin-bg']) : null;
+  if (bg !== null) {
+    const light = bg > 0.35;
+    if (!tokens['--admin-scheme']) tokens['--admin-scheme'] = light ? 'light' : 'dark';
+    if (light) for (const [name, value] of Object.entries(LIGHT_STATUS)) tokens[name] ??= value;
   }
   if (tokens['--admin-accent'] && !tokens['--admin-on-accent']) {
     const l = luminance(tokens['--admin-accent']);

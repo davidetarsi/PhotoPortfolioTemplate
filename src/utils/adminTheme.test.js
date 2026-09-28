@@ -20,7 +20,30 @@ describe('adminThemeTokens', () => {
       '--admin-accent': '#b0245f',
       '--admin-on-accent': '#ffffff',
       '--admin-font-display': "'Fraunces', serif",
+      // A light background: light scheme and status colours readable on it.
+      '--admin-scheme': 'light',
+      '--admin-ok': '#2e7d4f',
+      '--admin-danger': '#b3261e',
     });
+  });
+
+  it('a dark site theme stays dark and keeps the default status colours', () => {
+    expect(adminThemeTokens(':root { --color-bg: #101112; --color-text: #ece7de; }')).toEqual({
+      '--admin-bg': '#101112', '--admin-ink': '#ece7de', '--admin-scheme': 'dark',
+    });
+  });
+
+  it('the site error colour is the dashboard danger colour', () => {
+    expect(adminThemeTokens(':root { --color-bg: #f8f3e6; --color-error: #9b1c1c; }')['--admin-danger']).toBe('#9b1c1c');
+  });
+
+  it('reads only top-level :root rules, the last value winning as in CSS', () => {
+    const css = `
+      :root { --color-accent: #111111; }
+      @media (prefers-color-scheme: dark) { :root { --color-accent: #222222; } }
+      [data-theme="x"] :root { --color-accent: #333333; }
+      :root { --color-accent: #444444; }`;
+    expect(adminThemeTokens(css)['--admin-accent']).toBe('#444444');
   });
 
   it('takes --admin-* tokens as they are, and they win over the mapped ones', () => {

@@ -56,6 +56,7 @@ export function PublishBar() {
       onError: error => {
         setPhotosLeft(null);
         if (error.body?.error === 'PUBLISH_CHECK_FAILED') setProblems(error.body.problems ?? []);
+        else if (error.body?.error === 'NO_PROGRESS') setMessage({ text: t.noProgress, tone: 'error' });
         else setMessage({ text: formatText(t.failed, { message: error.message }), tone: 'error' });
       },
     });
@@ -85,7 +86,8 @@ export function PublishBar() {
         </p>
         {dirty && (
           <div className="dash-publish__actions">
-            <Button onClick={() => setConfirming(true)} disabled={busy} className="dash-publish__discard">{t.discard}</Button>
+            {/* Once a publication has started it can only be finished (the Worker refuses to discard). */}
+            {!publishing && <Button onClick={() => setConfirming(true)} disabled={busy} className="dash-publish__discard">{t.discard}</Button>}
             <a className="dash-button dash-button--secondary" href="/?preview=1" target="_blank" rel="noopener">{t.preview}</a>
             <Button variant="primary" onClick={onPublish} disabled={busy}>{publishing ? t.resume : t.publish}</Button>
           </div>
