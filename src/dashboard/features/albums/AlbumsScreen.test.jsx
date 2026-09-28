@@ -98,7 +98,23 @@ describe('albums gallery', () => {
     fireEvent.click(await screen.findByRole('button', { name: t.reorder }));
     fireEvent.click(screen.getByRole('button', { name: 'Move Viaggio earlier' }));
     await waitFor(() => expect([...document.querySelectorAll('.dash-album-card__title')].map(el => el.textContent)).toEqual(['Viaggio', 'Notte']));
-    expect(screen.getByRole('button', { name: 'Move Viaggio earlier' }).disabled).toBe(true);
+    // At the top the arrow stays focusable (a disabled button would drop the focus) and does nothing.
+    const top = screen.getByRole('button', { name: 'Move Viaggio earlier' });
+    expect(top.disabled).toBe(false);
+    expect(top.getAttribute('aria-disabled')).toBe('true');
+    fireEvent.click(top);
+    await act(() => queue.flush());
+    expect(puts(fetchMock, '/api/admin/draft/albums').map(body => body.albums.map(a => a.slug))).toEqual([['viaggio', 'notte']]);
+  });
+
+  it('reorders by dragging a card onto another and saves the new order', async () => {
+    const fetchMock = worker();
+    renderAt('/');
+    fireEvent.click(await screen.findByRole('button', { name: t.reorder }));
+    const [notte, viaggio] = document.querySelectorAll('.dash-album-card');
+    fireEvent.dragStart(viaggio);
+    fireEvent.drop(notte);
+    await waitFor(() => expect([...document.querySelectorAll('.dash-album-card__title')].map(el => el.textContent)).toEqual(['Viaggio', 'Notte']));
     await act(() => queue.flush());
     expect(puts(fetchMock, '/api/admin/draft/albums').at(-1).albums.map(a => a.slug)).toEqual(['viaggio', 'notte']);
   });

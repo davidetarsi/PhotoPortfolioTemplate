@@ -20,7 +20,7 @@
   width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--admin-line);
   background: var(--admin-surface); color: var(--admin-ink); cursor: pointer;
 }
-.dash-album-card__move button:disabled { opacity: 0.4; cursor: default; }
+.dash-album-card__move button[aria-disabled="true"] { opacity: 0.4; cursor: default; }
 
 .dash-form { display: grid; gap: 0.5rem; }
 .dash-input {

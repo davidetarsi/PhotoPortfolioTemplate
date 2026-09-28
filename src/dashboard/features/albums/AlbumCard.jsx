@@ -3,6 +3,7 @@ import { texts } from '../../../../config/texts.config.js';
 import { formatText } from '../../../utils/formatText.js';
 import { useManifest } from '../../api/drafts.jsx';
 import { photoSrc } from '../../api/photos.js';
+import { MoveButtons } from '../../ui/MoveButtons.jsx';
 
 const t = texts.admin.albums;
 
@@ -31,10 +32,9 @@ export function AlbumCard({ album, index, total, reordering, onMove }) {
       </Link>
       {reordering && (
         <span className="dash-album-card__move">
-          <button type="button" onClick={() => onMove(index, index - 1)} disabled={index === 0}
-            aria-label={formatText(t.moveEarlier, { album: album.title })}>←</button>
-          <button type="button" onClick={() => onMove(index, index + 1)} disabled={index === total - 1}
-            aria-label={formatText(t.moveLater, { album: album.title })}>→</button>
+          <MoveButtons index={index} total={total} onMove={onMove}
+            earlierLabel={formatText(t.moveEarlier, { album: album.title })}
+            laterLabel={formatText(t.moveLater, { album: album.title })} />
         </span>
       )}
     </li>
