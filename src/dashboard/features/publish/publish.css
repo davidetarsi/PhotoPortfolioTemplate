@@ -15,7 +15,7 @@
 .dash-publish__problems ul { margin: 0.25rem 0 0; padding-left: 1.2rem; }
 @media (max-width: 640px) {
   /* Above the tab bar on a phone. */
-  .dash-publish { bottom: var(--admin-tabs-height); }
+  .dash-publish { bottom: var(--admin-tabs-space); }
   .dash-publish__actions { width: 100%; }
   .dash-publish__actions > :last-child { flex: 1; }
 }

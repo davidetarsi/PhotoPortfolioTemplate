@@ -17,5 +17,7 @@
   --admin-radius: 8px;
   --admin-gap: 1rem;
   --admin-tabs-height: 64px;
+  /* The tab bar as tall as it really is on a phone with a home indicator. */
+  --admin-tabs-space: calc(var(--admin-tabs-height) + env(safe-area-inset-bottom, 0px));
   color-scheme: dark;
 }
