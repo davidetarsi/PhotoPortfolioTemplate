@@ -1,0 +1,65 @@
+/**
+ * TanStack Query hooks for the draft and the publication. Screens read with these hooks
+ * and never call fetch themselves.
+ */
+import { useIsMutating, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { request } from './client.js';
+
+export const keys = Object.freeze({
+  draft: ['draft'],
+  status: ['draft-status'],
+});
+
+/** The draft's site and album list ({ site, albums, hasDraft }). */
+export function useDraft() {
+  return useQuery({ queryKey: keys.draft, queryFn: () => request('/api/admin/draft') });
+}
+
+/** What publishing would change ({ hasDraft, publishing, changes }). */
+export function useDraftStatus() {
+  return useQuery({ queryKey: keys.status, queryFn: () => request('/api/admin/draft/status') });
+}
+
+/** Everything that depends on the draft is read again. */
+function useRefreshDraft() {
+  const client = useQueryClient();
+  return () => client.invalidateQueries();
+}
+
+/**
+ * Publishes in steps: calls POST /api/admin/publish until it says done, reporting the
+ * photos left after each step. A 409 with problems rejects with them in error.body.
+ * @param {{onStep?: (step: {copied: number, remaining: number}) => void}} [options]
+ */
+export function usePublish({ onStep } = {}) {
+  const refresh = useRefreshDraft();
+  return useMutation({
+    mutationKey: ['publish'],
+    mutationFn: async () => {
+      for (;;) {
+        const step = await request('/api/admin/publish', { method: 'POST' });
+        onStep?.(step);
+        if (step.done) return step;
+      }
+    },
+    onSettled: refresh,
+  });
+}
+
+/** Deletes the draft and the waiting photos. Refused (409) once a publication started. */
+export function useDiscard() {
+  const refresh = useRefreshDraft();
+  return useMutation({
+    mutationKey: ['discard'],
+    mutationFn: () => request('/api/admin/draft', { method: 'DELETE' }),
+    onSettled: refresh,
+  });
+}
+
+/**
+ * True while a publication runs. Saving the draft and uploading photos must wait:
+ * the publication's close removes the draft files it started from (spec, plan-2 rules).
+ */
+export function useIsPublishing() {
+  return useIsMutating({ mutationKey: ['publish'] }) > 0;
+}

@@ -1,0 +1,30 @@
+.dash-button {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
+  min-height: 40px; padding: 0 0.95rem;
+  border-radius: var(--admin-radius); border: 1px solid var(--admin-line);
+  background: transparent; color: var(--admin-ink);
+  font-weight: 500; font-size: 0.9rem; cursor: pointer; text-decoration: none;
+}
+.dash-button:hover { background: var(--admin-raised); }
+.dash-button:disabled { opacity: 0.55; cursor: default; }
+.dash-button--primary { background: var(--admin-accent); border-color: var(--admin-accent); color: var(--admin-on-accent); }
+.dash-button--primary:hover { background: var(--admin-accent); filter: brightness(1.08); }
+.dash-button--danger { color: var(--admin-danger); border-color: color-mix(in srgb, var(--admin-danger) 45%, transparent); }
+
+.dash-sheet {
+  padding: 0; border: 1px solid var(--admin-line); border-radius: 16px;
+  background: var(--admin-surface); color: var(--admin-ink);
+  width: min(32rem, calc(100vw - 2rem)); max-height: calc(100dvh - 2rem);
+}
+.dash-sheet::backdrop { background: rgb(0 0 0 / 0.55); }
+.dash-sheet__body { padding: 1.25rem; display: grid; gap: 1rem; }
+.dash-sheet__title { margin: 0; font: 500 1.05rem/1.3 var(--admin-font-display); }
+@media (max-width: 640px) {
+  /* On a phone the panel rises from the bottom, full width. */
+  .dash-sheet {
+    width: 100%; max-width: none; margin: auto 0 0; border-radius: 16px 16px 0 0;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+}
+.dash-confirm__body { margin: 0; color: var(--admin-muted); }
+.dash-confirm__actions { display: flex; justify-content: flex-end; gap: 0.5rem; flex-wrap: wrap; }
