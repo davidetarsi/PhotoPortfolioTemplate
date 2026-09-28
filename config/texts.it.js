@@ -66,6 +66,7 @@ export const texts = {
       changesMany: '{n} modifiche',
       preview: 'Anteprima',
       publish: 'Pubblica',
+      regionLabel: 'Pubblicazione',
       resume: 'Riprendi la pubblicazione',
       publishing: 'Pubblicazione…',
       photosLeft: 'Pubblicazione… mancano {n} foto',

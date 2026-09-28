@@ -24,7 +24,7 @@
   .dash { grid-template-rows: auto 1fr auto; padding-bottom: var(--admin-tabs-height); }
   .dash-sections {
     position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
-    height: var(--admin-tabs-height); padding: 0 0 env(safe-area-inset-bottom, 0px);
+    height: calc(var(--admin-tabs-height) + env(safe-area-inset-bottom, 0px)); padding: 0 0 env(safe-area-inset-bottom, 0px);
     display: grid; grid-template-columns: repeat(3, 1fr); gap: 0;
     background: var(--admin-surface); border-top: 1px solid var(--admin-line); border-bottom: 0;
   }

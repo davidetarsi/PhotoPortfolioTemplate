@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { texts } from '../../../../config/texts.config.js';
 import { formatText } from '../../../utils/formatText.js';
 import { useDiscard, useDraftStatus, usePublish } from '../../api/queries.js';
@@ -7,6 +7,8 @@ import { ConfirmDialog } from '../../ui/ConfirmDialog.jsx';
 import './publish.css';
 
 const t = texts.admin.publish;
+/** How long a confirmation stays on screen. */
+export const MESSAGE_MS = 4000;
 
 /** One line per problem that stops a publication. */
 export function describeProblem({ slug, name, reason }) {
@@ -29,7 +31,22 @@ export function PublishBar() {
   const discard = useDiscard();
 
   const { hasDraft = false, publishing = false, changes = [] } = status.data ?? {};
-  if (!hasDraft && !publishing && !message) return null;
+  const dirty = hasDraft || publishing;
+
+  // A confirmation ("Published.", "Changes discarded.") is for the moment: it goes away by
+  // itself, and as soon as new changes appear.
+  const wasDirty = useRef(dirty);
+  useEffect(() => {
+    if (dirty && !wasDirty.current) setMessage(null);
+    wasDirty.current = dirty;
+  }, [dirty]);
+  useEffect(() => {
+    if (message?.tone !== 'ok') return undefined;
+    const timer = setTimeout(() => setMessage(null), MESSAGE_MS);
+    return () => clearTimeout(timer);
+  }, [message]);
+
+  if (!dirty && !message) return null;
 
   const onPublish = () => {
     setMessage(null);
@@ -45,6 +62,8 @@ export function PublishBar() {
   };
 
   const onDiscard = () => {
+    setMessage(null);
+    setProblems([]);
     discard.mutate(undefined, {
       onSuccess: () => { setConfirming(false); setProblems([]); setMessage({ text: t.discarded, tone: 'ok' }); },
       onError: error => {
@@ -58,13 +77,13 @@ export function PublishBar() {
   const count = changes.length === 1 ? t.changesOne : formatText(t.changesMany, { n: changes.length });
 
   return (
-    <section className="dash-publish" aria-label={t.publish}>
+    <section className="dash-publish" aria-label={t.regionLabel}>
       <div className="dash-publish__row">
         <p className="dash-publish__count" role="status">
           {publish.isPending ? (photosLeft ? formatText(t.photosLeft, { n: photosLeft }) : t.publishing)
-            : hasDraft || publishing ? count : message?.text}
+            : dirty ? count : message?.text}
         </p>
-        {(hasDraft || publishing) && (
+        {dirty && (
           <div className="dash-publish__actions">
             <Button onClick={() => setConfirming(true)} disabled={busy} className="dash-publish__discard">{t.discard}</Button>
             <a className="dash-button dash-button--secondary" href="/?preview=1" target="_blank" rel="noopener">{t.preview}</a>
@@ -72,8 +91,10 @@ export function PublishBar() {
           </div>
         )}
       </div>
-      {message && (hasDraft || publishing) && (
-        <p className={`dash-publish__message dash-publish__message--${message.tone}`}>{message.text}</p>
+      {message && dirty && (
+        <p className={`dash-publish__message dash-publish__message--${message.tone}`} role={message.tone === 'error' ? 'alert' : 'status'}>
+          {message.text}
+        </p>
       )}
       {problems.length > 0 && (
         <div className="dash-publish__problems" role="alert">

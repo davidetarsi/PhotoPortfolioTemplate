@@ -14,8 +14,9 @@ for (const [name, value] of Object.entries(themeTokens)) {
 
 const queryClient = new QueryClient({
   defaultOptions: {
-    // The draft changes only through this dashboard: no refetch on every focus.
-    queries: { refetchOnWindowFocus: false, retry: 1 },
+    // Back on this tab, the draft is read again (another tab may have changed it: spec,
+    // "Concorrenza"). Screens keep what is being typed in their own state.
+    queries: { refetchOnWindowFocus: true, retry: 1 },
   },
 });
 

@@ -68,6 +68,7 @@ export const texts = {
       changesMany: '{n} changes',
       preview: 'Preview',
       publish: 'Publish',
+      regionLabel: 'Publishing',
       resume: 'Resume publishing',
       publishing: 'Publishing…',
       photosLeft: 'Publishing… {n} photos left',

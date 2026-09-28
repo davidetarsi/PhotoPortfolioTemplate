@@ -1,9 +1,10 @@
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
-import { fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { vi } from 'vitest';
 import { texts } from '../../../../config/texts.config.js';
 import { PublishBar, describeProblem } from './PublishBar.jsx';
-import { fakeWorker, installDialogPolyfill, renderWithQuery } from '../../test-utils.jsx';
+import { fakeWorker, installDialogPolyfill, makeQueryClient, renderWithQuery } from '../../test-utils.jsx';
 
 const t = texts.admin.publish;
 beforeAll(installDialogPolyfill);
@@ -68,6 +69,23 @@ describe('PublishBar', () => {
     expect(fetchMock.mock.calls.some(([path, init]) => path === '/api/admin/draft' && init?.method === 'DELETE')).toBe(true);
   });
 
+  it('a confirmation goes away when new changes appear', async () => {
+    const fetchMock = fakeWorker({
+      'GET /api/admin/draft/status': [STATUS_DRAFT, STATUS_CLEAN],
+      'DELETE /api/admin/draft': { ok: true },
+    });
+    const client = makeQueryClient();
+    render(<QueryClientProvider client={client}><PublishBar /></QueryClientProvider>);
+    fireEvent.click(await screen.findByRole('button', { name: t.discard }));
+    fireEvent.click(await screen.findByRole('button', { name: t.discardConfirm }));
+    expect(await screen.findByText(t.discarded)).toBeTruthy();
+    // An edit elsewhere makes the draft dirty again.
+    fetchMock.mockImplementation(async () => new Response(JSON.stringify(STATUS_DRAFT), { status: 200 }));
+    await act(() => client.invalidateQueries());
+    expect(await screen.findByText('2 changes')).toBeTruthy();
+    expect(screen.queryByText(t.discarded)).toBeNull();
+  });
+
   it('says to finish with Publish when discarding is refused', async () => {
     fakeWorker({
       'GET /api/admin/draft/status': { ...STATUS_DRAFT, publishing: true },
@@ -76,6 +94,6 @@ describe('PublishBar', () => {
     renderWithQuery(<PublishBar />);
     fireEvent.click(await screen.findByRole('button', { name: t.discard }));
     fireEvent.click(await screen.findByRole('button', { name: t.discardConfirm }));
-    expect(await screen.findByText(t.inProgress)).toBeTruthy();
+    expect((await screen.findByRole('alert')).textContent).toBe(t.inProgress);
   });
 });
