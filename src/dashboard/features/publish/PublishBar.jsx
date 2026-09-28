@@ -46,6 +46,7 @@ export function PublishBar() {
   const [listing, setListing] = useState(false);
   const queue = useSaveQueue();
   const saveState = useSaveState();
+  const starting = useRef(false); // a publication is being started (double-click guard)
 
   const publish = usePublish({ onStep: step => setPhotosLeft(step.done ? null : step.remaining) });
   const discard = useDiscard();
@@ -69,27 +70,35 @@ export function PublishBar() {
   if (!dirty && !message) return null;
 
   const onPublish = async () => {
+    // One publication at a time, even with a quick double click.
+    if (starting.current) return;
+    starting.current = true;
     setMessage(null);
     setProblems([]);
     // What is still waiting is saved first: the draft published is the one on screen.
     await queue.flush();
     const saveError = queue.getState().error;
     if (saveError) {
+      starting.current = false;
       setMessage({ text: formatText(t.saveFailed, { message: saveError.message }), tone: 'error' });
       return;
     }
     // No save runs during the publication; changes made meanwhile wait and are saved after.
+    // `finally`: the queue always resumes, whatever happens to this component.
     queue.pause();
-    publish.mutate(undefined, {
-      onSettled: () => queue.resume(),
-      onSuccess: () => { setPhotosLeft(null); setMessage({ text: t.published, tone: 'ok' }); },
-      onError: error => {
-        setPhotosLeft(null);
-        if (error.body?.error === 'PUBLISH_CHECK_FAILED') setProblems(error.body.problems ?? []);
-        else if (error.body?.error === 'NO_PROGRESS') setMessage({ text: t.noProgress, tone: 'error' });
-        else setMessage({ text: formatText(t.failed, { message: error.message }), tone: 'error' });
-      },
-    });
+    try {
+      await publish.mutateAsync();
+      setPhotosLeft(null);
+      setMessage({ text: t.published, tone: 'ok' });
+    } catch (error) {
+      setPhotosLeft(null);
+      if (error.body?.error === 'PUBLISH_CHECK_FAILED') setProblems(error.body.problems ?? []);
+      else if (error.body?.error === 'NO_PROGRESS') setMessage({ text: t.noProgress, tone: 'error' });
+      else setMessage({ text: formatText(t.failed, { message: error.message }), tone: 'error' });
+    } finally {
+      queue.resume();
+      starting.current = false;
+    }
   };
 
   const onDiscard = async () => {
@@ -99,14 +108,17 @@ export function PublishBar() {
     queue.pause();
     queue.clear();
     await queue.whenIdle();
-    discard.mutate(undefined, {
-      onSettled: () => queue.resume(),
-      onSuccess: () => { setConfirming(false); setProblems([]); setMessage({ text: t.discarded, tone: 'ok' }); },
-      onError: error => {
-        setConfirming(false);
-        setMessage({ text: error.body?.error === 'PUBLISH_IN_PROGRESS' ? t.inProgress : formatText(t.failed, { message: error.message }), tone: 'error' });
-      },
-    });
+    try {
+      await discard.mutateAsync();
+      setConfirming(false);
+      setProblems([]);
+      setMessage({ text: t.discarded, tone: 'ok' });
+    } catch (error) {
+      setConfirming(false);
+      setMessage({ text: error.body?.error === 'PUBLISH_IN_PROGRESS' ? t.inProgress : formatText(t.failed, { message: error.message }), tone: 'error' });
+    } finally {
+      queue.resume();
+    }
   };
 
   const busy = publish.isPending || discard.isPending || saveState.saving;

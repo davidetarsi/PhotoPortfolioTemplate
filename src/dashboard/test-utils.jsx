@@ -35,7 +35,10 @@ export function Providers({ client, children }) {
 
 /** Renders one component inside the dashboard's providers. */
 export function renderWithQuery(ui, client = makeQueryClient()) {
-  return { client, ...render(<Providers client={client}>{ui}</Providers>) };
+  const result = render(<Providers client={client}>{ui}</Providers>);
+  // Re-render inside the same providers (and the same queue).
+  const rerender = next => result.rerender(<Providers client={client}>{next}</Providers>);
+  return { client, ...result, rerender };
 }
 
 const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });

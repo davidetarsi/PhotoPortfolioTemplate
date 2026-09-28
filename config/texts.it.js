@@ -87,6 +87,7 @@ export const texts = {
       failed: 'Pubblicazione interrotta: {message}. Premi Pubblica per riprendere.',
       noProgress: 'La pubblicazione non va avanti. Riprova tra qualche minuto.',
       saving: 'Salvataggio…',
+      waitingPublication: 'Le modifiche aspettano la pubblicazione',
       saveFailed: 'Non salvato: {message}',
       retry: 'Riprova',
       changesTitle: 'Cosa cambia pubblicando',

@@ -1,4 +1,5 @@
-import { createHashRouter, Navigate, NavLink, Outlet, RouterProvider } from 'react-router';
+import { useEffect } from 'react';
+import { createHashRouter, Navigate, NavLink, Outlet, RouterProvider, useLocation } from 'react-router';
 import { texts } from '../../config/texts.config.js';
 import { formatText } from '../utils/formatText.js';
 import { useDraft, useDraftStatus } from './api/queries.js';
@@ -44,6 +45,9 @@ export function DraftState() {
       </span>
     );
   }
+  if (save.paused && save.pending > 0) {
+    return <span className="dash-state dash-state--draft" role="status"><span className="dash-state__dot" aria-hidden="true" />{t.publish.waitingPublication}</span>;
+  }
   if (save.pending > 0 || save.saving) {
     return <span className="dash-state dash-state--draft" role="status"><span className="dash-state__dot" aria-hidden="true" />{t.publish.saving}</span>;
   }
@@ -63,6 +67,10 @@ export function DraftState() {
  */
 export function Shell() {
   const draft = useDraft();
+  const queue = useSaveQueue();
+  const location = useLocation();
+  // Changing screen saves what is waiting at once (spec: "subito quando si cambia vista").
+  useEffect(() => { queue.flush(); }, [location.pathname, queue]);
   const siteName = draft.data?.site?.name;
   const sections = [
     { to: '/', end: true, icon: 'albums', label: t.common.navAlbums },

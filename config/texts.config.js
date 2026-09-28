@@ -89,6 +89,7 @@ export const texts = {
       failed: 'Publishing stopped: {message}. Press Publish to resume.',
       noProgress: 'Publishing is not moving forward. Try again in a few minutes.',
       saving: 'Saving…',
+      waitingPublication: 'Changes wait for the publication',
       saveFailed: 'Not saved: {message}',
       retry: 'Retry',
       changesTitle: 'What publishing changes',

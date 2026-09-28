@@ -80,6 +80,47 @@ describe('createSaveQueue', () => {
     expect(saved.map(([key]) => key)).toEqual(['albums', 'manifest:notte']);
   });
 
+  it('a save that fails keeps its place in line; its error clears only when it is saved', async () => {
+    let fail = true;
+    const { queue, saved } = makeQueue(async key => { if (key === 'albums' && fail) throw new Error('offline'); });
+    queue.set('albums', 1);
+    queue.set('manifest:nuovo', []);
+    await queue.flush();
+    expect(queue.getState().error).toMatchObject({ key: 'albums' });
+    fail = false;
+    await queue.flush();
+    expect(saved.map(([key]) => key)).toEqual(['albums', 'manifest:nuovo']);
+    expect(queue.getState().error).toBeNull();
+  });
+
+  it('clear(): a save running at that moment that then fails is not brought back', async () => {
+    let reject;
+    const { queue } = makeQueue(() => new Promise((_, r) => { reject = r; }));
+    queue.set('albums', 'discarded');
+    const running = queue.flush();
+    queue.pause();
+    queue.clear();
+    reject(new Error('offline'));
+    await running;
+    expect(queue.getState()).toMatchObject({ pending: 0, error: null });
+    expect(queue.holds('albums')).toBe(false);
+  });
+
+  it('valueOf and holds cover the value waiting and the one being saved', async () => {
+    let release;
+    const { queue } = makeQueue((key, value) => (value === 'saving' ? new Promise(r => { release = r; }) : undefined));
+    queue.set('albums', 'saving');
+    const running = queue.flush();
+    expect(queue.holds('albums')).toBe(true);
+    expect(queue.valueOf('albums')).toBe('saving');
+    queue.set('albums', 'newer');
+    expect(queue.valueOf('albums')).toBe('newer');
+    release();
+    await running;
+    await queue.flush();
+    expect(queue.holds('albums')).toBe(false);
+  });
+
   it('tells subscribers when its state changes', async () => {
     const { queue } = makeQueue();
     const listener = vi.fn();

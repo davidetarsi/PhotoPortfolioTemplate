@@ -75,6 +75,35 @@ describe('PublishBar', () => {
     await waitFor(() => expect(order).toEqual(['save', 'publish', 'save']), { timeout: 3000 });
   });
 
+  it('a double click on Publish starts one publication', async () => {
+    const fetchMock = fakeWorker({
+      'GET /api/admin/draft/status': STATUS_DRAFT,
+      'POST /api/admin/publish': { done: true, copied: 0, remaining: 0 },
+    });
+    renderWithQuery(<PublishBar />);
+    const button = await screen.findByRole('button', { name: t.publish });
+    fireEvent.click(button);
+    fireEvent.click(button);
+    expect(await screen.findByText(t.published)).toBeTruthy();
+    expect(fetchMock.mock.calls.filter(([, init]) => init?.method === 'POST')).toHaveLength(1);
+  });
+
+  it('the queue resumes even if the bar goes away during the publication', async () => {
+    let queue;
+    let finish;
+    function WithQueue({ show }) { queue = useSaveQueue(); return show ? <PublishBar /> : null; }
+    fakeWorker({
+      'GET /api/admin/draft/status': STATUS_DRAFT,
+      'POST /api/admin/publish': () => new Promise(resolve => { finish = resolve; }),
+    });
+    const { rerender } = renderWithQuery(<WithQueue show />);
+    fireEvent.click(await screen.findByRole('button', { name: t.publish }));
+    await waitFor(() => expect(queue.getState().paused).toBe(true));
+    rerender(<WithQueue show={false} />);
+    await act(async () => { finish(new Response(JSON.stringify({ done: true, copied: 0, remaining: 0 }), { status: 200 })); });
+    await waitFor(() => expect(queue.getState().paused).toBe(false));
+  });
+
   it('discarding drops the changes still waiting to be saved', async () => {
     let queue;
     function WithQueue() { queue = useSaveQueue(); return <PublishBar />; }
