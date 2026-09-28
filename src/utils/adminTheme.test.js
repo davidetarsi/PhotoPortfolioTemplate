@@ -56,9 +56,21 @@ describe('adminThemeTokens', () => {
     expect(adminThemeTokens(':root { --color-accent: #fc0; }')['--admin-on-accent']).toBe('#141517');
   });
 
-  it('skips values that depend on other variables, and non-hex accents get no computed text colour', () => {
-    expect(adminThemeTokens(':root { --color-bg: var(--paper); --color-accent: rgb(1 2 3); }'))
-      .toEqual({ '--admin-accent': 'rgb(1 2 3)' });
+  it('skips values that depend on other variables; colours it cannot read get no computed text colour', () => {
+    expect(adminThemeTokens(':root { --color-bg: var(--paper); --color-accent: hsl(0 0% 1%); }'))
+      .toEqual({ '--admin-accent': 'hsl(0 0% 1%)' });
+  });
+
+  it('reads :root in a selector list and inside @layer', () => {
+    expect(adminThemeTokens(':root, html { --color-accent: #111111; }')['--admin-accent']).toBe('#111111');
+    expect(adminThemeTokens('@layer base, theme; @layer theme { :root { --color-accent: #222222; } }')['--admin-accent']).toBe('#222222');
+  });
+
+  it('tells light from dark with rgb() colours, or from the text when the background cannot be read', () => {
+    expect(adminThemeTokens(':root { --color-bg: rgb(248 243 230); }')['--admin-scheme']).toBe('light');
+    expect(adminThemeTokens(':root { --color-bg: rgb(16, 17, 18); }')['--admin-scheme']).toBe('dark');
+    expect(adminThemeTokens(':root { --color-bg: oklch(97% 0.02 90); --color-text: #15304a; }')['--admin-scheme']).toBe('light');
+    expect(adminThemeTokens(':root { --color-accent: rgb(176 36 95); }')['--admin-on-accent']).toBe('#ffffff');
   });
 
   it('no :root, no tokens', () => {

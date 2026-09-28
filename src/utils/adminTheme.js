@@ -22,21 +22,37 @@ export const ADMIN_TOKEN_MAP = Object.freeze({
 });
 
 const HEX_RE = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
+const RGB_RE = /^rgba?\(\s*(\d+(?:\.\d+)?)[\s,]+(\d+(?:\.\d+)?)[\s,]+(\d+(?:\.\d+)?)/i;
 
-/** Relative luminance of a #rgb / #rrggbb colour (WCAG), or null for anything else. */
+/** The 0–255 channels of a #rgb, #rrggbb or rgb()/rgba() colour, or null for anything else. */
+function channels(color) {
+  const value = color.trim();
+  const hex = HEX_RE.exec(value);
+  if (hex) {
+    const full = hex[1].length === 3 ? [...hex[1]].map(c => c + c).join('') : hex[1];
+    return [0, 2, 4].map(i => parseInt(full.slice(i, i + 2), 16));
+  }
+  const rgb = RGB_RE.exec(value);
+  return rgb ? rgb.slice(1, 4).map(Number) : null;
+}
+
+/** Relative luminance of a colour (WCAG), or null when it cannot be read. */
 function luminance(color) {
-  const match = HEX_RE.exec(color.trim());
-  if (!match) return null;
-  const hex = match[1].length === 3 ? [...match[1]].map(c => c + c).join('') : match[1];
-  const [r, g, b] = [0, 2, 4].map(i => {
-    const c = parseInt(hex.slice(i, i + 2), 16) / 255;
+  const rgb = channels(color);
+  if (!rgb) return null;
+  const [r, g, b] = rgb.map(v => {
+    const c = v / 255;
     return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
   });
   return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 }
 
-/** Bodies of the top-level `:root { … }` rules (not those inside @media or other blocks). */
-function topLevelRootBodies(css) {
+/**
+ * Bodies of the rules that apply to `:root` everywhere: a selector list that names `:root`
+ * (`:root, html { … }`), also inside `@layer` blocks; never inside @media, @supports or a
+ * compound selector (`[data-theme] :root`), which apply only sometimes.
+ */
+function rootBodies(css) {
   const bodies = [];
   let depth = 0;
   let selectorStart = 0;
@@ -53,11 +69,13 @@ function topLevelRootBodies(css) {
     } else if (c === '}') {
       depth--;
       if (depth === 0) {
-        if (selector === ':root') bodies.push(css.slice(bodyStart, i));
+        const body = css.slice(bodyStart, i);
+        if (/^@layer\b/.test(selector)) bodies.push(...rootBodies(body));
+        else if (selector.split(',').some(part => part.trim() === ':root')) bodies.push(body);
         selectorStart = i + 1;
       }
     } else if (c === ';' && depth === 0) {
-      selectorStart = i + 1; // an @import or @charset before the rules
+      selectorStart = i + 1; // an @import, @charset or @layer list before the rules
     }
   }
   return bodies;
@@ -73,9 +91,9 @@ const LIGHT_STATUS = { '--admin-ok': '#2e7d4f', '--admin-danger': '#b3261e' };
  * taken as they are and win over mapped ones. Values that depend on other variables
  * (`var(…)`) are skipped: the dashboard does not load the site's theme.
  * The other surfaces (panels, lines, muted text) follow from background and text in
- * src/dashboard/styles/tokens.css. With a hex background the tokens also say whether the
- * theme is light or dark (`--admin-scheme`), with status colours readable on it; with a
- * hex accent, the text on it is chosen dark or light for contrast.
+ * src/dashboard/styles/tokens.css. When background or text can be read (hex or rgb()), the
+ * tokens also say whether the theme is light or dark (`--admin-scheme`), with status colours
+ * readable on it; with a readable accent, the text on it is chosen dark or light for contrast.
  * @param {string} cssText
  * @returns {Record<string, string>} Dashboard custom properties.
  */
@@ -83,7 +101,7 @@ export function adminThemeTokens(cssText) {
   const mapped = {};
   const explicit = {};
   const withoutComments = String(cssText).replace(/\/\*[\s\S]*?\*\//g, '');
-  for (const body of topLevelRootBodies(withoutComments)) {
+  for (const body of rootBodies(withoutComments)) {
     for (const [, name, rawValue] of body.matchAll(/(--[\w-]+)\s*:\s*([^;]+);?/g)) {
       const value = rawValue.trim();
       if (!value || value.includes('var(')) continue;
@@ -92,9 +110,12 @@ export function adminThemeTokens(cssText) {
     }
   }
   const tokens = { ...mapped, ...explicit };
+  // Light or dark: from the background, or, when it cannot be read, from the text
+  // (dark text means a light theme).
   const bg = tokens['--admin-bg'] ? luminance(tokens['--admin-bg']) : null;
-  if (bg !== null) {
-    const light = bg > 0.35;
+  const ink = tokens['--admin-ink'] ? luminance(tokens['--admin-ink']) : null;
+  const light = bg !== null ? bg > 0.35 : ink !== null ? ink < 0.35 : null;
+  if (light !== null) {
     if (!tokens['--admin-scheme']) tokens['--admin-scheme'] = light ? 'light' : 'dark';
     if (light) for (const [name, value] of Object.entries(LIGHT_STATUS)) tokens[name] ??= value;
   }

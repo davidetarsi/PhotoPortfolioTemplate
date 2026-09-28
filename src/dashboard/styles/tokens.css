@@ -8,7 +8,7 @@
   --admin-surface: color-mix(in srgb, var(--admin-bg) 95%, var(--admin-ink));
   --admin-raised: color-mix(in srgb, var(--admin-bg) 88%, var(--admin-ink));
   --admin-line: color-mix(in srgb, var(--admin-bg) 84%, var(--admin-ink));
-  --admin-muted: color-mix(in srgb, var(--admin-ink) 60%, var(--admin-bg));
+  --admin-muted: color-mix(in srgb, var(--admin-ink) 70%, var(--admin-bg));
   --admin-accent: #e3b341;
   --admin-on-accent: #141517;
   --admin-ok: #5fb38a;
