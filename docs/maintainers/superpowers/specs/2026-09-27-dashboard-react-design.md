@@ -293,6 +293,21 @@ Ogni piano lascia il template funzionante, con i test verdi, e aggiorna README.m
 - **Codice ripetuto:** la validazione del nome foto è ripetuta tra la route delle foto in anteprima e quella delle foto in attesa. Unirle quando si tolgono le vecchie route di scrittura.
 - **Pagine d'esempio:** `custom.example/pages/chrome.js` monta nav e footer con i testi di `config/`, non con quelli uniti. Va corretto nel giro di documentazione.
 
+## Da portare nei piani 4.2–4.4 (dalla revisione del piano 4.1)
+
+- **Barra di pubblicazione:** resta in basso, fissa, su telefono e computer. Sostituisce il "in alto a destra" scritto sopra per il computer: una sola posizione, sempre sotto il pollice e sotto gli occhi. L'**elenco delle modifiche** al tocco del conteggio arriva nel **4.2**, con le frasi per ogni tipo di modifica.
+- **Salvataggio automatico (4.2):**
+  - le mutazioni di salvataggio hanno una chiave `['draft-save', …]`;
+  - "Pubblica" resta disattivato finché c'è un salvataggio in attesa (gli 800 ms) o in corso, e prima di pubblicare i salvataggi in attesa si mandano subito;
+  - le modifiche fatte durante una pubblicazione restano in memoria e si salvano dopo, senza perderle;
+  - l'indicatore mostra anche "salvataggio…" ed "errore di salvataggio — riprova".
+- **Moduli (4.2, 4.3):** ogni campo tiene il suo valore nello stato locale e non si reimposta dai dati riletti mentre lo si sta modificando. La bozza si rilegge quando si torna sulla scheda.
+- **Foglio (4.3):** chiudere toccando fuori solo se sia la pressione sia il rilascio sono sullo sfondo, così trascinare una selezione di testo fuori dal foglio non lo chiude.
+- **4.4:**
+  - `IS_REACT_ACT_ENVIRONMENT` impostato esplicitamente per i test;
+  - un messaggio quando lo stato della bozza non si può leggere;
+  - i README (eccezione voluta: la dashboard è solo cornice fino alle schermate, e il branch non esce prima).
+
 ## Fuori da questa specifica
 
 - Il sito pubblico in React.
