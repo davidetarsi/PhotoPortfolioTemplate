@@ -1,0 +1,21 @@
+.dash-publish {
+  position: sticky; bottom: 0; z-index: 5;
+  background: var(--admin-surface); border-top: 1px solid var(--admin-line);
+  padding: 0.6rem 1.25rem;
+}
+.dash-publish__row { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; }
+.dash-publish__count { margin: 0; font: 500 0.8rem/1.3 var(--admin-font-mono); color: var(--admin-ink); }
+.dash-publish__actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.dash-publish__discard { border-color: transparent; color: var(--admin-muted); }
+.dash-publish__message { margin: 0.4rem 0 0; font-size: 0.85rem; }
+.dash-publish__message--ok { color: var(--admin-ok); }
+.dash-publish__message--error { color: var(--admin-danger); }
+.dash-publish__problems { margin-top: 0.5rem; font-size: 0.85rem; color: var(--admin-danger); }
+.dash-publish__problems p { margin: 0; }
+.dash-publish__problems ul { margin: 0.25rem 0 0; padding-left: 1.2rem; }
+@media (max-width: 640px) {
+  /* Above the tab bar on a phone. */
+  .dash-publish { bottom: var(--admin-tabs-height); }
+  .dash-publish__actions { width: 100%; }
+  .dash-publish__actions > :last-child { flex: 1; }
+}

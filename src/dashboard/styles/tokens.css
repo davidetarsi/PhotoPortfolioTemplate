@@ -1,0 +1,21 @@
+/* The dashboard's own look ("B — camera oscura"). A site with custom/theme.css overrides
+   these at start-up with its colours and fonts (src/utils/adminTheme.js). */
+:root {
+  --admin-bg: #141517;
+  --admin-surface: #1b1c1f;
+  --admin-raised: #26282c;
+  --admin-ink: #ececea;
+  --admin-muted: #8d9096;
+  --admin-line: #2d2f33;
+  --admin-accent: #e3b341;
+  --admin-on-accent: #141517;
+  --admin-ok: #5fb38a;
+  --admin-danger: #e5645f;
+  --admin-font-body: 'Sora', system-ui, sans-serif;
+  --admin-font-display: 'Sora', system-ui, sans-serif;
+  --admin-font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --admin-radius: 8px;
+  --admin-gap: 1rem;
+  --admin-tabs-height: 64px;
+  color-scheme: dark;
+}

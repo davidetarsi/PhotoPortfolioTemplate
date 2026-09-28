@@ -1,0 +1,37 @@
+.dash { min-height: 100dvh; display: grid; grid-template-rows: auto auto 1fr auto; }
+.dash-top {
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  padding: 0.9rem 1.25rem; border-bottom: 1px solid var(--admin-line);
+}
+.dash-brand { font: 500 0.85rem/1 var(--admin-font-mono); letter-spacing: 0.02em; }
+.dash-state { display: inline-flex; align-items: center; gap: 0.4rem; font: 0.75rem/1 var(--admin-font-mono); color: var(--admin-muted); }
+.dash-state__dot { width: 7px; height: 7px; border-radius: 50%; background: var(--admin-ok); }
+.dash-state--draft .dash-state__dot { background: var(--admin-accent); }
+
+.dash-sections { display: flex; gap: 1.5rem; padding: 0 1.25rem; border-bottom: 1px solid var(--admin-line); }
+.dash-sections__link {
+  display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.8rem 0;
+  color: var(--admin-muted); text-decoration: none; font-size: 0.9rem;
+  border-bottom: 2px solid transparent; margin-bottom: -1px;
+}
+.dash-sections__link.active { color: var(--admin-ink); border-bottom-color: var(--admin-accent); }
+.dash-main { padding: 1.5rem 1.25rem; width: 100%; }
+.dash-error { color: var(--admin-danger); }
+.dash-screen-title { margin: 0 0 1rem; font: 500 1.5rem/1.2 var(--admin-font-display); }
+
+@media (max-width: 640px) {
+  /* A phone app: the sections become a tab bar at the bottom. */
+  .dash { grid-template-rows: auto 1fr auto; padding-bottom: var(--admin-tabs-height); }
+  .dash-sections {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
+    height: var(--admin-tabs-height); padding: 0 0 env(safe-area-inset-bottom, 0px);
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 0;
+    background: var(--admin-surface); border-top: 1px solid var(--admin-line); border-bottom: 0;
+  }
+  .dash-sections__link {
+    flex-direction: column; justify-content: center; gap: 0.2rem; padding: 0; margin: 0;
+    font: 0.7rem/1.2 var(--admin-font-mono); border-bottom: 0;
+  }
+  .dash-sections__link.active { color: var(--admin-accent); }
+  .dash-main { padding: 1.1rem 1rem; }
+}
