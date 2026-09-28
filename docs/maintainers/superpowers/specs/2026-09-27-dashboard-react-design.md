@@ -337,6 +337,8 @@ Ogni piano lascia il template funzionante, con i test verdi, e aggiorna README.m
     - rileggere l'elenco delle foto all'inizio di un caricamento, perché con due finestre aperte una può riusare il nome di una foto ancora in attesa;
     - `photoCount` e gli stili condivisi (`.dash-screen-head`, `.dash-empty`) vanno spostati in `lib/` e `styles/`: oggi `features/album` li importa da `features/albums`;
     - togliere `features/albums/new-album.js` o `src/admin/album-creation.js` quando si rimuove la dashboard vecchia (oggi sono duplicati);
+    - un titolo d'album svuotato e lasciato: rimettere subito l'ultimo titolo salvato, invece di dipendere da quando arriva la rilettura;
+    - se un caricamento finito fuori dall'album non riesce a rileggere l'elenco delle foto, scriverlo anche nella console;
   - un messaggio quando lo stato della bozza non si può leggere;
   - i README (eccezione voluta: la dashboard è solo cornice fino alle schermate, e il branch non esce prima).
 
