@@ -22,16 +22,17 @@ export function moveItem(arr, from, to) {
  * Children with draggable=true are sortable.
  * @param {HTMLElement} listEl - The container element (typically ul or div).
  * @param {Function} onMove - Callback(fromIndex, toIndex) when item is moved.
+ * @param {AbortSignal} [signal] - Aborting it removes the listeners.
  */
-export function attachSortable(listEl, onMove) {
+export function attachSortable(listEl, onMove, signal) {
   let fromIndex = null;
   const indexOf = el => [...listEl.children].indexOf(el.closest('[draggable]'));
-  listEl.addEventListener('dragstart', e => { fromIndex = indexOf(e.target); });
-  listEl.addEventListener('dragover', e => e.preventDefault());
+  listEl.addEventListener('dragstart', e => { fromIndex = indexOf(e.target); }, { signal });
+  listEl.addEventListener('dragover', e => e.preventDefault(), { signal });
   listEl.addEventListener('drop', e => {
     e.preventDefault();
     const to = indexOf(e.target);
     if (fromIndex !== null && to !== -1 && to !== fromIndex) onMove(fromIndex, to);
     fromIndex = null;
-  });
+  }, { signal });
 }
