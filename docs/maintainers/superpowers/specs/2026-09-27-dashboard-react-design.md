@@ -301,6 +301,13 @@ Ogni piano lascia il template funzionante, con i test verdi, e aggiorna README.m
   - "Pubblica" resta disattivato finché c'è un salvataggio in attesa (gli 800 ms) o in corso, e prima di pubblicare i salvataggi in attesa si mandano subito;
   - le modifiche fatte durante una pubblicazione restano in memoria e si salvano dopo, senza perderle;
   - l'indicatore mostra anche "salvataggio…" ed "errore di salvataggio — riprova".
+- **Come è stato fatto nel 4.2 (dopo la revisione del Task 2):**
+  - **La coda è la verità** per ciò che non è ancora salvato. Ogni risposta del server viene coperta con i valori in attesa o in salvataggio, quindi nessuna rilettura (al ritorno sulla scheda, dopo Pubblica, da un'altra scheda) mostra una versione vecchia.
+  - **Ogni modifica è una funzione dell'ultimo valore** (`setAlbums(prev => …)`), così due modifiche ravvicinate non si annullano.
+  - **"Annulla" non fa resuscitare le modifiche:** un salvataggio in corso che poi fallisce non torna in coda.
+  - **La pausa della pubblicazione si toglie sempre**, anche se la barra sparisce.
+  - **I salvataggi passano dalla coda**, non da mutazioni `['draft-save', …]`. La chiave resta per i caricamenti, e Pubblica e Annulla li aspettano.
+  - **"Pubblica disattivato finché c'è un salvataggio in attesa"** si realizza così: Pubblica prima salva ciò che è in attesa, poi pubblica.
 - **Moduli (4.2, 4.3):** ogni campo tiene il suo valore nello stato locale e non si reimposta dai dati riletti mentre lo si sta modificando. La bozza si rilegge quando si torna sulla scheda.
 - **Tema (primo task del 4.2):**
   - il testo attenuato passa dal 60% al 70% dell'inchiostro: su carta chiara a 60% il contrasto è 3,8:1, a 70% circa 5:1;
