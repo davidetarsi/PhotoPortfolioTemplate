@@ -1,15 +1,15 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { QueryClientProvider } from '@tanstack/react-query';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { texts } from '../../config/texts.config.js';
-import { routes } from './App.jsx';
-import { fakeWorker, installDialogPolyfill, makeQueryClient } from './test-utils.jsx';
+import { DraftState, routes } from './App.jsx';
+import { useSaveQueue } from './api/drafts.jsx';
+import { fakeWorker, installDialogPolyfill, makeQueryClient, Providers, renderWithQuery } from './test-utils.jsx';
 
 /** The whole dashboard at a hash path, e.g. '/album/notte', with the real routes in memory. */
 function renderDashboard(path = '/') {
   const router = createMemoryRouter(routes, { initialEntries: [path] });
-  return { router, ...render(<QueryClientProvider client={makeQueryClient()}><RouterProvider router={router} /></QueryClientProvider>) };
+  return { router, ...render(<Providers client={makeQueryClient()}><RouterProvider router={router} /></Providers>) };
 }
 
 beforeAll(installDialogPolyfill);
@@ -43,6 +43,23 @@ describe('dashboard frame', () => {
     fakeWorker({ 'GET /api/admin/draft': DRAFT, 'GET /api/admin/draft/status': STATUS });
     const { router } = renderDashboard('/nowhere');
     await waitFor(() => expect(router.state.location.pathname).toBe('/'));
+  });
+
+  it('the state says saving, then not saved with Retry when a save fails, then saved', async () => {
+    fakeWorker({
+      'GET /api/admin/draft/status': [STATUS, { hasDraft: true, publishing: false, changes: [] }],
+      'PUT /api/admin/draft/albums': [{ status: 500, body: { error: 'STORAGE_ERROR' } }, { ok: true }],
+    });
+    let queue;
+    function WithQueue() { queue = useSaveQueue(); return <DraftState />; }
+    renderWithQuery(<WithQueue />);
+    await screen.findByText(texts.admin.publish.allPublished);
+    act(() => { queue.set('albums', { albums: [] }); });
+    expect(screen.getByText(texts.admin.publish.saving)).toBeTruthy();
+    await act(() => queue.flush());
+    expect(screen.getByRole('alert').textContent).toContain('STORAGE_ERROR');
+    fireEvent.click(screen.getByRole('button', { name: texts.admin.publish.retry }));
+    expect(await screen.findByText(texts.admin.publish.draftSaved)).toBeTruthy();
   });
 
   it('says so when the draft cannot be loaded', async () => {

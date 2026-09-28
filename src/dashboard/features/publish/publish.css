@@ -19,3 +19,9 @@
   .dash-publish__actions { width: 100%; }
   .dash-publish__actions > :last-child { flex: 1; }
 }
+
+.dash-publish__changes {
+  padding: 0; border: 0; background: none; font: inherit; color: inherit;
+  text-decoration: underline dotted; text-underline-offset: 3px; cursor: pointer;
+}
+.dash-publish__list { margin: 0; padding-left: 1.2rem; display: grid; gap: 0.35rem; }

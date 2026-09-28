@@ -2,8 +2,10 @@
  * TanStack Query hooks for the draft and the publication. Screens read with these hooks
  * and never call fetch themselves.
  */
+import { useContext } from 'react';
 import { useIsMutating, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ApiError, request } from './client.js';
+import { SaveQueueContext } from './save-context.js';
 
 /** Steps in a row without fewer photos left: the publication is stuck, stop asking. */
 export const MAX_STEPS_WITHOUT_PROGRESS = 3;
@@ -19,7 +21,9 @@ const isDraftQuery = query => String(query.queryKey[0]).startsWith('draft');
 
 /** The draft's site and album list ({ site, albums, hasDraft }). */
 export function useDraft() {
-  return useQuery({ queryKey: keys.draft, queryFn: () => request('/api/admin/draft') });
+  // Never refetched over changes still waiting to be saved (see drafts.jsx).
+  const queue = useContext(SaveQueueContext);
+  return useQuery({ queryKey: keys.draft, queryFn: () => request('/api/admin/draft'), refetchOnWindowFocus: () => !queue?.busy() });
 }
 
 /** What publishing would change ({ hasDraft, publishing, changes }). */

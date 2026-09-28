@@ -17,6 +17,25 @@ export class ApiError extends Error {
 }
 
 /**
+ * Sends a photo (a WebP blob) with PUT, e.g. to /api/admin/staging/<slug>/<name>.
+ * @param {string} path
+ * @param {Blob} blob
+ * @param {{fetchImpl?: Function}} [options]
+ */
+export async function upload(path, blob, { fetchImpl = globalThis.fetch } = {}) {
+  let res;
+  try {
+    res = await fetchImpl(path, { method: 'PUT', headers: { 'Content-Type': 'image/webp' }, body: blob });
+  } catch {
+    throw new ApiError(0, { error: 'NETWORK' });
+  }
+  if (res.ok) return;
+  let body = {};
+  try { body = await res.json(); } catch { /* not JSON */ }
+  throw new ApiError(res.status, body);
+}
+
+/**
  * @param {string} path - Absolute path, e.g. '/api/admin/draft'.
  * @param {{method?: string, json?: any, fetchImpl?: Function}} [options]
  * @returns {Promise<any>} The parsed JSON answer.

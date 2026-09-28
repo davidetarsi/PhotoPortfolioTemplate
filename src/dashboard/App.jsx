@@ -1,6 +1,8 @@
 import { createHashRouter, Navigate, NavLink, Outlet, RouterProvider } from 'react-router';
 import { texts } from '../../config/texts.config.js';
+import { formatText } from '../utils/formatText.js';
 import { useDraft, useDraftStatus } from './api/queries.js';
+import { useSaveQueue, useSaveState } from './api/drafts.jsx';
 import { Icon } from './ui/Icon.jsx';
 import { PublishBar } from './features/publish/PublishBar.jsx';
 import { AlbumsScreen } from './features/albums/AlbumsScreen.jsx';
@@ -26,13 +28,29 @@ export const routes = [
   },
 ];
 
-/** Whether the draft is saved or everything is published: shown in the top bar. */
-function DraftState() {
+/**
+ * Saving, not saved (with Retry), draft saved, or everything published: shown in the top bar.
+ */
+export function DraftState() {
   const { data } = useDraftStatus();
+  const queue = useSaveQueue();
+  const save = useSaveState();
+  if (save.error) {
+    return (
+      <span className="dash-state dash-state--error" role="alert">
+        <span className="dash-state__dot" aria-hidden="true" />
+        {formatText(t.publish.saveFailed, { message: save.error.message })}
+        <button type="button" className="dash-state__retry" onClick={() => queue.flush()}>{t.publish.retry}</button>
+      </span>
+    );
+  }
+  if (save.pending > 0 || save.saving) {
+    return <span className="dash-state dash-state--draft" role="status"><span className="dash-state__dot" aria-hidden="true" />{t.publish.saving}</span>;
+  }
   if (!data) return null;
   const draft = data.hasDraft || data.publishing;
   return (
-    <span className={`dash-state${draft ? ' dash-state--draft' : ''}`}>
+    <span className={`dash-state${draft ? ' dash-state--draft' : ''}`} role="status">
       <span className="dash-state__dot" aria-hidden="true" />
       {draft ? t.publish.draftSaved : t.publish.allPublished}
     </span>

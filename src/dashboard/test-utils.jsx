@@ -3,6 +3,7 @@
 import { cleanup, render } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, vi } from 'vitest';
+import { SaveQueueProvider } from './api/drafts.jsx';
 
 // Vitest runs without globals, so Testing Library cannot clean up by itself: unmount
 // what each test rendered, and give back the real fetch that fakeWorker replaced.
@@ -23,10 +24,18 @@ export function makeQueryClient() {
   return new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
 }
 
-/** Renders one component inside a query cache. */
-export function renderWithQuery(ui) {
-  const client = makeQueryClient();
-  return render(<QueryClientProvider client={client}>{ui}</QueryClientProvider>);
+/** The providers of the dashboard (query cache and save queue) around a tree. */
+export function Providers({ client, children }) {
+  return (
+    <QueryClientProvider client={client}>
+      <SaveQueueProvider>{children}</SaveQueueProvider>
+    </QueryClientProvider>
+  );
+}
+
+/** Renders one component inside the dashboard's providers. */
+export function renderWithQuery(ui, client = makeQueryClient()) {
+  return { client, ...render(<Providers client={client}>{ui}</Providers>) };
 }
 
 const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });

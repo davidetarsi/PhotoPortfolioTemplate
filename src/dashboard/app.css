@@ -7,6 +7,9 @@
 .dash-state { display: inline-flex; align-items: center; gap: 0.4rem; font: 0.75rem/1 var(--admin-font-mono); color: var(--admin-muted); }
 .dash-state__dot { width: 7px; height: 7px; border-radius: 50%; background: var(--admin-ok); }
 .dash-state--draft .dash-state__dot { background: var(--admin-accent); }
+.dash-state--error { color: var(--admin-danger); }
+.dash-state--error .dash-state__dot { background: var(--admin-danger); }
+.dash-state__retry { margin-left: 0.4rem; padding: 0; border: 0; background: none; color: var(--admin-accent); font: inherit; text-decoration: underline; cursor: pointer; }
 
 .dash-sections { display: flex; gap: 1.5rem; padding: 0 1.25rem; border-bottom: 1px solid var(--admin-line); }
 .dash-sections__link {

@@ -1,9 +1,9 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { QueryClientProvider } from '@tanstack/react-query';
 import { vi } from 'vitest';
 import { texts } from '../../../../config/texts.config.js';
-import { MESSAGE_MS, PublishBar, describeProblem } from './PublishBar.jsx';
+import { MESSAGE_MS, PublishBar, describeChange, describeProblem } from './PublishBar.jsx';
+import { useSaveQueue } from '../../api/drafts.jsx';
 import { fakeWorker, installDialogPolyfill, makeQueryClient, renderWithQuery } from '../../test-utils.jsx';
 
 const t = texts.admin.publish;
@@ -37,6 +37,60 @@ describe('PublishBar', () => {
     fireEvent.click(await screen.findByRole('button', { name: t.publish }));
     expect(await screen.findByText(t.published)).toBeTruthy();
     expect(fetchMock.mock.calls.filter(([, init]) => init?.method === 'POST')).toHaveLength(2);
+  });
+
+  it('lists what publishing changes when the count is touched', async () => {
+    fakeWorker({ 'GET /api/admin/draft/status': STATUS_DRAFT });
+    renderWithQuery(<PublishBar />);
+    fireEvent.click(await screen.findByRole('button', { name: '2 changes' }));
+    const sheet = await screen.findByRole('dialog', { name: t.changesTitle });
+    expect([...sheet.querySelectorAll('li')].map(li => li.textContent)).toEqual([
+      describeChange({ type: 'site' }), describeChange({ type: 'album-added', slug: 'notte' }),
+    ]);
+    expect(describeChange({ type: 'photos-added', slug: 'notte', count: 3 })).toBe('notte: 3 new photos');
+  });
+
+  it('saves what is waiting before publishing, and holds saves while publishing', async () => {
+    let queue;
+    function WithQueue() { queue = useSaveQueue(); return <PublishBar />; }
+    const order = [];
+    fakeWorker({
+      'GET /api/admin/draft/status': STATUS_DRAFT,
+      'PUT /api/admin/draft/albums': () => { order.push('save'); return { ok: true }; },
+      'POST /api/admin/publish': () => {
+        order.push('publish');
+        // A change made during the publication: it must wait.
+        queue.set('albums', { albums: [] });
+        expect(queue.getState().paused).toBe(true);
+        return { done: true, copied: 0, remaining: 0 };
+      },
+    });
+    renderWithQuery(<WithQueue />);
+    await screen.findByRole('button', { name: t.publish });
+    act(() => { queue.set('albums', { albums: [] }); });
+    fireEvent.click(screen.getByRole('button', { name: t.publish }));
+    expect(await screen.findByText(t.published)).toBeTruthy();
+    expect(order.slice(0, 2)).toEqual(['save', 'publish']);
+    // Resumed: the change made during the publication is saved after it.
+    await waitFor(() => expect(order).toEqual(['save', 'publish', 'save']), { timeout: 3000 });
+  });
+
+  it('discarding drops the changes still waiting to be saved', async () => {
+    let queue;
+    function WithQueue() { queue = useSaveQueue(); return <PublishBar />; }
+    const fetchMock = fakeWorker({
+      'GET /api/admin/draft/status': [STATUS_DRAFT, STATUS_CLEAN],
+      'DELETE /api/admin/draft': { ok: true },
+      'PUT /api/admin/draft/albums': { ok: true },
+    });
+    renderWithQuery(<WithQueue />);
+    await screen.findByRole('button', { name: t.discard });
+    act(() => { queue.set('albums', { albums: [] }); });
+    fireEvent.click(screen.getByRole('button', { name: t.discard }));
+    fireEvent.click(await screen.findByRole('button', { name: t.discardConfirm }));
+    expect(await screen.findByText(t.discarded)).toBeTruthy();
+    await act(() => queue.flush());
+    expect(fetchMock.mock.calls.some(([, init]) => init?.method === 'PUT')).toBe(false);
   });
 
   it('lists what stops the publication', async () => {
@@ -111,8 +165,7 @@ describe('PublishBar', () => {
       'GET /api/admin/draft/status': [STATUS_DRAFT, STATUS_CLEAN],
       'DELETE /api/admin/draft': { ok: true },
     });
-    const client = makeQueryClient();
-    render(<QueryClientProvider client={client}><PublishBar /></QueryClientProvider>);
+    const { client } = renderWithQuery(<PublishBar />);
     fireEvent.click(await screen.findByRole('button', { name: t.discard }));
     fireEvent.click(await screen.findByRole('button', { name: t.discardConfirm }));
     expect(await screen.findByText(t.discarded)).toBeTruthy();

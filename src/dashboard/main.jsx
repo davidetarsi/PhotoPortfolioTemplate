@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import themeTokens from 'virtual:admin-theme';
 import { App } from './App.jsx';
+import { SaveQueueProvider } from './api/drafts.jsx';
 import './styles/tokens.css';
 import './styles/base.css';
 
@@ -25,7 +26,9 @@ const queryClient = new QueryClient({
 createRoot(document.getElementById('admin-root')).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <App />
+      <SaveQueueProvider>
+        <App />
+      </SaveQueueProvider>
     </QueryClientProvider>
   </StrictMode>,
 );

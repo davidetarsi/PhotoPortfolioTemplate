@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { texts } from '../../../../config/texts.config.js';
 import { formatText } from '../../../utils/formatText.js';
 import { useDiscard, useDraftStatus, usePublish } from '../../api/queries.js';
+import { useSaveQueue, useSaveState } from '../../api/drafts.jsx';
+import { Sheet } from '../../ui/Sheet.jsx';
 import { Button } from '../../ui/Button.jsx';
 import { ConfirmDialog } from '../../ui/ConfirmDialog.jsx';
 import './publish.css';
@@ -16,6 +18,21 @@ export function describeProblem({ slug, name, reason }) {
   return formatText(template ?? t.problemPhotoMissing, { album: slug, name });
 }
 
+/** One line per change the publication would make. */
+export function describeChange({ type, slug, count }) {
+  const template = {
+    site: t.changeSite,
+    'albums-reordered': t.changeAlbumsReordered,
+    'album-added': t.changeAlbumAdded,
+    'album-removed': t.changeAlbumRemoved,
+    'album-changed': t.changeAlbumChanged,
+    'photos-added': t.changePhotosAdded,
+    'photos-removed': t.changePhotosRemoved,
+    'photos-reordered': t.changePhotosReordered,
+  }[type] ?? type;
+  return formatText(template, { album: slug, n: count });
+}
+
 /**
  * "N changes · Preview · Publish": shown while the draft differs from the published site,
  * or while a publication has to be resumed. Publishes in steps and says what stops it.
@@ -26,6 +43,9 @@ export function PublishBar() {
   const [message, setMessage] = useState(null); // { text, tone: 'ok' | 'error' }
   const [problems, setProblems] = useState([]);
   const [confirming, setConfirming] = useState(false);
+  const [listing, setListing] = useState(false);
+  const queue = useSaveQueue();
+  const saveState = useSaveState();
 
   const publish = usePublish({ onStep: step => setPhotosLeft(step.done ? null : step.remaining) });
   const discard = useDiscard();
@@ -48,10 +68,20 @@ export function PublishBar() {
 
   if (!dirty && !message) return null;
 
-  const onPublish = () => {
+  const onPublish = async () => {
     setMessage(null);
     setProblems([]);
+    // What is still waiting is saved first: the draft published is the one on screen.
+    await queue.flush();
+    const saveError = queue.getState().error;
+    if (saveError) {
+      setMessage({ text: formatText(t.saveFailed, { message: saveError.message }), tone: 'error' });
+      return;
+    }
+    // No save runs during the publication; changes made meanwhile wait and are saved after.
+    queue.pause();
     publish.mutate(undefined, {
+      onSettled: () => queue.resume(),
       onSuccess: () => { setPhotosLeft(null); setMessage({ text: t.published, tone: 'ok' }); },
       onError: error => {
         setPhotosLeft(null);
@@ -62,10 +92,15 @@ export function PublishBar() {
     });
   };
 
-  const onDiscard = () => {
+  const onDiscard = async () => {
     setMessage(null);
     setProblems([]);
+    // Changes waiting to be saved belong to the draft being discarded.
+    queue.pause();
+    queue.clear();
+    await queue.whenIdle();
     discard.mutate(undefined, {
+      onSettled: () => queue.resume(),
       onSuccess: () => { setConfirming(false); setProblems([]); setMessage({ text: t.discarded, tone: 'ok' }); },
       onError: error => {
         setConfirming(false);
@@ -74,7 +109,7 @@ export function PublishBar() {
     });
   };
 
-  const busy = publish.isPending || discard.isPending;
+  const busy = publish.isPending || discard.isPending || saveState.saving;
   const count = changes.length === 1 ? t.changesOne : formatText(t.changesMany, { n: changes.length });
 
   return (
@@ -82,7 +117,9 @@ export function PublishBar() {
       <div className="dash-publish__row">
         <p className="dash-publish__count" role="status">
           {publish.isPending ? (photosLeft ? formatText(t.photosLeft, { n: photosLeft }) : t.publishing)
-            : dirty ? count : message?.text}
+            : dirty && changes.length > 0 ? (
+              <button type="button" className="dash-publish__changes" onClick={() => setListing(true)}>{count}</button>
+            ) : dirty ? count : message?.text}
         </p>
         {dirty && (
           <div className="dash-publish__actions">
@@ -104,6 +141,14 @@ export function PublishBar() {
           <ul>{problems.map(problem => <li key={`${problem.slug}/${problem.name}/${problem.reason}`}>{describeProblem(problem)}</li>)}</ul>
         </div>
       )}
+      <Sheet open={listing} onClose={() => setListing(false)} title={t.changesTitle}>
+        <ul className="dash-publish__list">
+          {changes.map(change => <li key={`${change.type}/${change.slug ?? ''}`}>{describeChange(change)}</li>)}
+        </ul>
+        <div className="dash-confirm__actions">
+          <Button onClick={() => setListing(false)}>{t.close}</Button>
+        </div>
+      </Sheet>
       <ConfirmDialog
         open={confirming}
         title={t.discardTitle}
