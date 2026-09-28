@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useIsMutating } from '@tanstack/react-query';
+import { useIsMutating, useMutation, useQueryClient } from '@tanstack/react-query';
 import { texts } from '../../../../config/texts.config.js';
 import { formatText } from '../../../utils/formatText.js';
 import { useDiscard, useDraftStatus, usePublish } from '../../api/queries.js';
@@ -53,6 +53,10 @@ export function PublishBar() {
   const uploading = useIsMutating({ mutationKey: ['draft-save'] }) > 0;
 
   const publish = usePublish({ onStep: step => setPhotosLeft(step.done ? null : step.remaining) });
+  // Saving what waits before publishing already counts as publishing (its key starts with
+  // 'publish'): uploads are held from the click on, not only once the publication runs.
+  const client = useQueryClient();
+  const prepare = useMutation({ mutationKey: ['publish', 'prepare'], mutationFn: () => queue.flush() });
   const discard = useDiscard();
 
   const { hasDraft = false, publishing = false, changes = [] } = status.data ?? {};
@@ -80,11 +84,17 @@ export function PublishBar() {
     setMessage(null);
     setProblems([]);
     // What is still waiting is saved first: the draft published is the one on screen.
-    await queue.flush();
+    await prepare.mutateAsync();
     const saveError = queue.getState().error;
     if (saveError) {
       starting.current = false;
       setMessage({ text: formatText(t.saveFailed, { message: saveError.message }), tone: 'error' });
+      return;
+    }
+    // An upload that started just before the click is still writing to the waiting area.
+    if (client.isMutating({ mutationKey: ['draft-save', 'upload'] }) > 0) {
+      starting.current = false;
+      setMessage({ text: t.waitUploads, tone: 'error' });
       return;
     }
     // No save runs during the publication; changes made meanwhile wait and are saved after.

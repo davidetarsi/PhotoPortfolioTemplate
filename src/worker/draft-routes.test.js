@@ -96,6 +96,16 @@ describe('draft routes', () => {
     expect((await call(env, 'GET', '/api/admin/staging/notte/c.webp')).status).toBe(404);
   });
 
+  it('staging refuses the name of a published photo: publishing would copy the new one over it', async () => {
+    const env = makeEnv({ 'notte/manifest.json': [{ name: 'bosco.webp', width: 4, height: 3 }] });
+    const webp = { 'Content-Type': 'image/webp' };
+    const res = await call(env, 'PUT', '/api/admin/staging/notte/bosco.webp', new Uint8Array([1]), webp);
+    expect(res.status).toBe(409);
+    expect(await res.json()).toEqual({ error: 'NAME_PUBLISHED' });
+    expect(env.PRIVATE_BUCKET.store.has('staging/notte/bosco.webp')).toBe(false);
+    expect((await call(env, 'PUT', '/api/admin/staging/notte/bosco-2.webp', new Uint8Array([1]), webp)).status).toBe(200);
+  });
+
   it('status lists the changes; DELETE /draft discards draft and waiting photos', async () => {
     const env = makeEnv({ '_site/site.json': SITE, '_data/albums.json': { albums: [ALBUM] } }, {
       'draft/site.json': { ...SITE, bio: 'Bozza' },

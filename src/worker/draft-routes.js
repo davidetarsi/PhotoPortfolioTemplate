@@ -36,6 +36,10 @@ async function handleStaging(request, env, slug, name) {
     const bytes = await request.arrayBuffer();
     if (bytes.byteLength > MAX_PHOTO_BYTES) return jsonResponse({ error: 'File over 10MB' }, 413);
     if (bytes.byteLength === 0) return jsonResponse({ error: 'Empty body' }, 400);
+    // A staged photo wins over the published one at publication: one with the name of a
+    // published photo would be copied over it before the site stops naming it.
+    const published = (await readJson(env.BUCKET, PUBLISHED.manifest(slug))) ?? [];
+    if (published.some(entry => entry.name === name)) return jsonResponse({ error: 'NAME_PUBLISHED' }, 409);
     await env.PRIVATE_BUCKET.put(key, bytes, { httpMetadata: { contentType: 'image/webp' } });
     return jsonResponse({ ok: true });
   }

@@ -32,6 +32,8 @@
 .dash-upload--dragging { border-color: var(--admin-accent); background: color-mix(in srgb, var(--admin-accent) 8%, transparent); }
 .dash-upload__button { cursor: pointer; }
 .dash-upload__button.is-disabled { opacity: 0.55; pointer-events: none; }
+/* The real control is the hidden input before the button: its keyboard focus shows on the button. */
+.dash-upload__input:focus-visible + .dash-upload__button { outline: 2px solid var(--admin-accent); outline-offset: 2px; }
 .dash-upload__hint { margin: 0; color: var(--admin-muted); font-size: 0.85rem; }
 .dash-upload__rows { margin: 0; padding: 0; list-style: none; font: 0.75rem/1.5 var(--admin-font-mono); color: var(--admin-muted); }
 .dash-upload__row--done { color: var(--admin-ok); }
@@ -40,3 +42,4 @@
 .dash-upload__summary ul { margin: 0.25rem 0 0; padding-left: 1.2rem; font-size: 0.85rem; }
 .dash-upload__summary--ok { color: var(--admin-ok); }
 .dash-upload__summary--error { color: var(--admin-danger); }
+.dash-upload__retry { margin-top: 0.5rem; }

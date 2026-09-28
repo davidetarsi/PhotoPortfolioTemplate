@@ -67,4 +67,94 @@ describe('UploadPanel', () => {
     await act(async () => { finish(new Response('{"ok":true}', { status: 200 })); });
     await waitFor(() => expect(publish.disabled).toBe(false));
   });
+
+  it('never gives a new photo the name of a published one, even one deleted from the draft', async () => {
+    const setManifest = vi.fn();
+    const fetchMock = fakeWorker({
+      'GET /api/data/albums/notte/manifest': [[{ name: 'a.webp', width: 4, height: 3 }, { name: 'bosco.webp', width: 4, height: 3 }]],
+      'PUT /api/admin/staging/notte/bosco-2.webp': { ok: true },
+    });
+    renderWithQuery(<Panel setManifest={setManifest} />);
+    choose([file('bosco.jpg')]);
+    expect(await screen.findByText(t.uploadSuccessOne)).toBeTruthy();
+    expect(fetchMock.mock.calls.filter(([, init]) => init?.method === 'PUT').map(([path]) => path)).toEqual(['/api/admin/staging/notte/bosco-2.webp']);
+    // The published photo deleted from the draft is not brought back.
+    const [update] = setManifest.mock.calls.at(-1);
+    expect(update([{ name: 'a.webp' }]).map(entry => entry.name)).toEqual(['a.webp', 'bosco-2.webp']);
+  });
+
+  it('says so when the upload cannot start, and offers to try again', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const fetchMock = fakeWorker({ 'PUT /api/admin/staging/notte/bosco.webp': { ok: true } });
+    let loads = 0;
+    const flaky = async () => { loads += 1; if (loads === 1) throw new Error('Failed to fetch dynamically imported module'); return makeProcessFileImpl(); };
+    renderWithQuery(<Panel setManifest={vi.fn()} makeProcessFileImpl={flaky} />);
+    choose([file('bosco.jpg')]);
+    const alert = await screen.findByRole('alert');
+    expect(alert.textContent).toContain(formatText(t.uploadError, { message: 'Failed to fetch dynamically imported module' }));
+    fireEvent.click(screen.getByRole('button', { name: t.retry }));
+    expect(await screen.findByText(t.uploadSuccessOne)).toBeTruthy();
+    expect(fetchMock.mock.calls.some(([path, init]) => path === '/api/admin/staging/notte/bosco.webp' && init?.method === 'PUT')).toBe(true);
+  });
+
+  it('offers to try again the photos that failed', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    fakeWorker({ 'PUT /api/admin/staging/notte/bosco.webp': [{ status: 500, body: { error: 'STORAGE_ERROR' } }, { ok: true }] });
+    renderWithQuery(<Panel setManifest={vi.fn()} />);
+    choose([file('bosco.jpg')]);
+    fireEvent.click(await screen.findByRole('button', { name: t.retry }));
+    expect(await screen.findByText(t.uploadSuccessOne)).toBeTruthy();
+  });
+
+  it('keeps the list of files it cannot upload next to the result of the others', async () => {
+    fakeWorker({ 'PUT /api/admin/staging/notte/bosco.webp': { ok: true } });
+    renderWithQuery(<Panel setManifest={vi.fn()} />);
+    choose([file('IMG.HEIC', ''), file('bosco.jpg')]);
+    await waitFor(() => expect(screen.getByRole('alert').textContent).toContain(t.uploadSuccessOne));
+    expect(screen.getByRole('alert').textContent).toContain('IMG.HEIC');
+  });
+
+  it('one batch at a time per album, even from another copy of the screen (left and reopened)', async () => {
+    let finish;
+    fakeWorker({ 'PUT /api/admin/staging/notte/bosco.webp': () => new Promise(resolve => { finish = resolve; }) });
+    renderWithQuery(<><Panel setManifest={vi.fn()} /><Panel setManifest={vi.fn()} /></>);
+    const [first, second] = document.querySelectorAll('input[type=file]');
+    fireEvent.change(first, { target: { files: [file('bosco.jpg')] } });
+    await waitFor(() => expect(second.disabled).toBe(true));
+    await act(async () => { finish(new Response('{"ok":true}', { status: 200 })); });
+    await waitFor(() => expect(second.disabled).toBe(false));
+  });
+
+  it('a photo dropped while uploads wait does not leave the dashboard, and is not uploaded', async () => {
+    let finish;
+    const fetchMock = fakeWorker({ 'PUT /api/admin/staging/notte/bosco.webp': () => new Promise(resolve => { finish = resolve; }) });
+    renderWithQuery(<Panel setManifest={vi.fn()} />);
+    choose([file('bosco.jpg')]);
+    await waitFor(() => expect(document.querySelector('input[type=file]').disabled).toBe(true));
+    const zone = document.querySelector('.dash-upload');
+    const dataTransfer = { types: ['Files'], files: [file('lago.jpg')] };
+    // fireEvent answers false when the browser's default action (opening the file) was prevented.
+    expect(fireEvent.dragOver(zone, { dataTransfer })).toBe(false);
+    expect(fireEvent.drop(zone, { dataTransfer })).toBe(false);
+    expect(fireEvent.drop(document.body, { dataTransfer })).toBe(false);
+    await act(async () => { finish(new Response('{"ok":true}', { status: 200 })); });
+    expect(fetchMock.mock.calls.filter(([, init]) => init?.method === 'PUT').map(([path]) => path)).toEqual(['/api/admin/staging/notte/bosco.webp']);
+  });
+
+  it('uploads are held from the click on Publish, while the changes still waiting are saved', async () => {
+    let saved;
+    fakeWorker({
+      'GET /api/admin/draft/status': { hasDraft: true, publishing: false, changes: [{ type: 'site' }] },
+      'PUT /api/admin/draft/site': () => new Promise(resolve => { saved = resolve; }),
+      'POST /api/admin/publish': { done: true, copied: 0, remaining: 0 },
+    });
+    renderWithQuery(<><Panel setManifest={vi.fn()} /><PublishBar /></>);
+    const publish = await screen.findByRole('button', { name: texts.admin.publish.publish });
+    act(() => { queue.set('site', { name: 'D', bio: '', hero: null }); });
+    fireEvent.click(publish);
+    await waitFor(() => expect(document.querySelector('input[type=file]').disabled).toBe(true));
+    await act(async () => { saved(new Response('{"ok":true}', { status: 200 })); });
+    expect(await screen.findByText(texts.admin.publish.published)).toBeTruthy();
+    await waitFor(() => expect(document.querySelector('input[type=file]').disabled).toBe(false));
+  });
 });
