@@ -118,6 +118,7 @@ export const texts = {
       heroUpdated: 'Hero aggiornata.',
       heroReadError: 'Impossibile leggere le foto di questo album.',
       heroChooseAlbum: 'Scegli album…',
+      previewTitle: 'Anteprima del sito, con le modifiche non ancora pubblicate',
       heroNone: 'nessuna',
     },
     albums: {

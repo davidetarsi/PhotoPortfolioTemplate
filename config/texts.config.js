@@ -121,6 +121,7 @@ export const texts = {
       heroReadError: 'Could not read the photos of this album.',
       heroChooseAlbum: 'Choose an album…',
       heroNone: 'none',
+      previewTitle: 'Preview of the site, with the changes not yet published',
     },
     albums: {
       sectionTitle: 'Albums',

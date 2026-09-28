@@ -1,0 +1,6 @@
+/* The real site in a frame: a slice of the page while a field is edited, or all of it. */
+.dash-preview {
+  display: block; width: 100%; height: min(40vh, 22rem); border: 1px solid var(--admin-line);
+  border-radius: var(--admin-radius); background: #fff;
+}
+.dash-preview--full { height: calc(100dvh - 12rem); }
