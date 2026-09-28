@@ -319,6 +319,10 @@ Ogni piano lascia il template funzionante, con i test verdi, e aggiorna README.m
   - il testo attenuato passa dal 60% al 70% dell'inchiostro: su carta chiara a 60% il contrasto è 3,8:1, a 70% circa 5:1;
   - leggere anche `:root` in un elenco di selettori (`:root, html`) e dentro `@layer`;
   - ricavare chiaro o scuro anche da sfondi non esadecimali (`rgb()`), o in mancanza dalla luminosità del testo.
+- **Da portare nel 4.3 (revisione finale del 4.2):**
+  - un salvataggio che il Worker rifiuta (400) resta primo in coda e blocca quelli dopo: prima dei moduli del Sito serve una gestione a parte per gli errori di validazione;
+  - i campi del Sito seguono la stessa regola dei dettagli dell'album: quando non si stanno modificando seguono la bozza (dopo Annulla mostrano ciò che resta);
+  - eliminare l'album o la foto usata come immagine della home blocca la pubblicazione (`HERO_NOT_IN_ALBUM`): la conferma dell'eliminazione lo deve dire.
 - **Foglio (4.3):** chiudere toccando fuori solo se sia la pressione sia il rilascio sono sullo sfondo, così trascinare una selezione di testo fuori dal foglio non lo chiude.
 - **4.4:**
   - `IS_REACT_ACT_ENVIRONMENT` impostato esplicitamente per i test;
@@ -328,6 +332,11 @@ Ogni piano lascia il template funzionante, con i test verdi, e aggiorna README.m
     - l'esito di un caricamento ancora in corso quando si esce dall'album (oggi va perso);
     - gli annunci delle aree `aria-live` del caricamento: il primo può perdersi, e ogni fase di ogni file viene annunciata;
     - i caricamenti ancora possibili durante una pubblicazione interrotta: conta solo quella avviata da questa scheda, come per i salvataggi;
+    - la protezione contro una foto lasciata cadere fuori dall'area di caricamento va spostata nella cornice di tutta la dashboard, e `NAME_PUBLISHED` va spiegato a parole;
+    - un'unica lettura per la galleria: il numero di foto e la prima foto di ogni album nella risposta di `GET /api/admin/draft`, invece di una richiesta per album;
+    - rileggere l'elenco delle foto all'inizio di un caricamento, perché con due finestre aperte una può riusare il nome di una foto ancora in attesa;
+    - `photoCount` e gli stili condivisi (`.dash-screen-head`, `.dash-empty`) vanno spostati in `lib/` e `styles/`: oggi `features/album` li importa da `features/albums`;
+    - togliere `features/albums/new-album.js` o `src/admin/album-creation.js` quando si rimuove la dashboard vecchia (oggi sono duplicati);
   - un messaggio quando lo stato della bozza non si può leggere;
   - i README (eccezione voluta: la dashboard è solo cornice fino alle schermate, e il branch non esce prima).
 
