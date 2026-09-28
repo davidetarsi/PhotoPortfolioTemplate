@@ -101,7 +101,9 @@ export const texts = {
       changeAlbumRemoved: 'Album deleted: {album}',
       changeAlbumChanged: 'Album changed: {album}',
       changePhotosAdded: '{album}: {n} new photos',
+      changePhotosAddedOne: '{album}: 1 new photo',
       changePhotosRemoved: '{album}: {n} photos removed',
+      changePhotosRemovedOne: '{album}: 1 photo removed',
       changePhotosReordered: '{album}: photos in a new order',
     },
     site: {

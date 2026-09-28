@@ -99,7 +99,9 @@ export const texts = {
       changeAlbumRemoved: 'Album eliminato: {album}',
       changeAlbumChanged: 'Album modificato: {album}',
       changePhotosAdded: '{album}: {n} foto nuove',
+      changePhotosAddedOne: '{album}: 1 foto nuova',
       changePhotosRemoved: '{album}: {n} foto tolte',
+      changePhotosRemovedOne: '{album}: 1 foto tolta',
       changePhotosReordered: '{album}: foto in un nuovo ordine',
     },
     site: {
@@ -146,7 +148,7 @@ export const texts = {
       save: 'Salva',
       saved: 'Album salvato.',
       cover: 'Cover',
-      coverAsButton: 'Usa come cover',
+      coverAsButton: 'Usa come copertina',
       coverSelected: 'Cover selezionata: {nome} (premi Salva per confermare).',
       subtitleLabel: 'Sottotitolo',
       subtitlePlaceholder: 'Aggiungi un sottotitolo…',
@@ -157,7 +159,7 @@ export const texts = {
       sortedByDate: 'Foto ordinate per data.',
       confirmDeletePhoto: 'Eliminare {nome}?',
       deletePhoto: 'Elimina',
-      manifestError: 'Impossibile caricare il manifest.',
+      manifestError: "Impossibile caricare l'elenco delle foto.",
       unsavedChanges: 'Ci sono modifiche non salvate. Uscire comunque?',
       uploadProgress: '{nome} — {fase}',
       uploadPhases: {

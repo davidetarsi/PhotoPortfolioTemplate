@@ -113,7 +113,8 @@ describe('albums gallery', () => {
     fireEvent.click(await screen.findByRole('button', { name: t.reorder }));
     const [notte, viaggio] = document.querySelectorAll('.dash-album-card');
     fireEvent.dragStart(viaggio);
-    fireEvent.drop(notte);
+    // Dropped on the title inside the card, as a mouse usually does.
+    fireEvent.drop(notte.querySelector('.dash-album-card__title'));
     await waitFor(() => expect([...document.querySelectorAll('.dash-album-card__title')].map(el => el.textContent)).toEqual(['Viaggio', 'Notte']));
     await act(() => queue.flush());
     expect(puts(fetchMock, '/api/admin/draft/albums').at(-1).albums.map(a => a.slug)).toEqual(['viaggio', 'notte']);

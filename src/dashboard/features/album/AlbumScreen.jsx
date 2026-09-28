@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useIsMutating } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from 'react-router';
 import { texts } from '../../../../config/texts.config.js';
 import { formatText } from '../../../utils/formatText.js';
@@ -27,6 +28,8 @@ export function AlbumScreen() {
   const { albums, setAlbums, isPending: albumsPending } = useAlbums();
   const { photos, setManifest, isError: manifestError } = useManifest(slug);
   const publishing = useIsPublishing();
+  // An upload still running would add its photos to the album after it is deleted.
+  const uploading = useIsMutating({ mutationKey: ['draft-save', 'upload', slug] }) > 0;
   const [reordering, setReordering] = useState(false);
   const [deletingPhoto, setDeletingPhoto] = useState(null);
   const [deletingAlbum, setDeletingAlbum] = useState(false);
@@ -88,7 +91,7 @@ export function AlbumScreen() {
       )}
 
       <div className="dash-album__danger">
-        <Button variant="danger" onClick={() => setDeletingAlbum(true)} disabled={publishing}>{t.deleteAlbum}</Button>
+        <Button variant="danger" onClick={() => setDeletingAlbum(true)} disabled={publishing || uploading}>{t.deleteAlbum}</Button>
       </div>
 
       <ConfirmDialog open={deletingPhoto !== null}

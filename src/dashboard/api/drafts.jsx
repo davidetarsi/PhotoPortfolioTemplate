@@ -11,8 +11,7 @@ import { request } from './client.js';
 import { keys, useDraft } from './queries.js';
 import { createSaveQueue } from './save-queue.js';
 import { SaveQueueContext } from './save-context.js';
-
-export { SaveQueueContext };
+import { SLUG_RE } from '../../shared/content-rules.js';
 
 /** Where each queued resource is saved. */
 export function savePath(key) {
@@ -132,7 +131,8 @@ export function useManifest(slug) {
   const manifest = useQuery({
     queryKey: keys.manifest(slug),
     queryFn: () => request(`/api/admin/draft/albums/${slug}/manifest`),
-    enabled: Boolean(slug),
+    // The address comes from the URL: only a valid one is ever read.
+    enabled: Boolean(slug) && SLUG_RE.test(slug),
     refetchOnWindowFocus: () => !queue.busy(),
   });
   const setManifest = (next, options) => {

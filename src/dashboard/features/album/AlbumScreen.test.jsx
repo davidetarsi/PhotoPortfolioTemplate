@@ -111,4 +111,33 @@ describe('open album', () => {
     expect((await screen.findByRole('alert')).textContent).toBe(t.notFound);
     expect(screen.getByRole('link', { name: texts.admin.common.allAlbums }).getAttribute('href')).toBe('/');
   });
+
+  it('reorders the photos by dragging one onto another, dropped on the image', async () => {
+    const fetchMock = worker();
+    renderAt('/album/notte');
+    fireEvent.click(await screen.findByRole('button', { name: texts.admin.albums.reorder }));
+    const tiles = document.querySelectorAll('.dash-photo');
+    fireEvent.dragStart(tiles[2]);
+    fireEvent.drop(tiles[0].querySelector('img'));
+    await waitFor(() => expect(photoNames()).toEqual(['c.webp', 'a.webp', 'b.webp']));
+    await act(() => queue.flush());
+    expect(lastPut(fetchMock, '/api/admin/draft/albums/notte/manifest').map(p => p.name)).toEqual(['c.webp', 'a.webp', 'b.webp']);
+  });
+
+  it('after Discard the title shows what is left in the draft, and is not saved back', async () => {
+    const fetchMock = worker({
+      'GET /api/admin/draft/status': { hasDraft: true, publishing: false, changes: [{ type: 'album-changed', slug: 'notte' }] },
+      'DELETE /api/admin/draft': { ok: true },
+    });
+    renderAt('/album/notte');
+    const title = await screen.findByLabelText(t.titleLabel);
+    fireEvent.change(title, { target: { value: 'Sbagliato' } });
+    fireEvent.click(await screen.findByRole('button', { name: texts.admin.publish.discard }));
+    const dialog = await screen.findByRole('alertdialog');
+    fireEvent.click(within(dialog).getByRole('button', { name: texts.admin.publish.discardConfirm }));
+    await waitFor(() => expect(screen.getByLabelText(t.titleLabel).value).toBe('Notte'));
+    fireEvent.change(screen.getByLabelText(t.subtitleLabel), { target: { value: 'Cieli stellati' } });
+    await act(() => queue.flush());
+    expect(lastPut(fetchMock, '/api/admin/draft/albums').albums[0]).toEqual({ ...NOTTE, description: 'Cieli stellati' });
+  });
 });

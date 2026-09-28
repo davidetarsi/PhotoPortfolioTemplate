@@ -30,4 +30,14 @@ describe('attachSortable', () => {
     b.dispatchEvent(new Event('drop', { bubbles: true, cancelable: true }));
     expect(onMove).toHaveBeenCalledTimes(1);
   });
+
+  it('a drop on what is inside an item (an image not draggable on its own) counts as that item', () => {
+    const list = document.createElement('ul');
+    list.innerHTML = '<li draggable="true"><a draggable="false"><img draggable="false"></a></li><li draggable="true"><a draggable="false"><img draggable="false"></a></li>';
+    const onMove = vi.fn();
+    attachSortable(list, onMove);
+    list.children[0].dispatchEvent(new Event('dragstart', { bubbles: true }));
+    list.querySelectorAll('img')[1].dispatchEvent(new Event('drop', { bubbles: true, cancelable: true }));
+    expect(onMove).toHaveBeenCalledWith(0, 1);
+  });
 });

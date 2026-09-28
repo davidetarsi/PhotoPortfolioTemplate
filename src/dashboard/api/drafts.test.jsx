@@ -131,6 +131,13 @@ describe('after a save', () => {
 });
 
 describe('useManifest', () => {
+  it('never reads an address that is not an album address (it comes from the URL)', async () => {
+    const fetchMock = fakeWorker({});
+    const { result } = renderHook(() => useManifest('..%2Fstatus'), { wrapper: wrapper(makeQueryClient()) });
+    expect(result.current.fetchStatus).toBe('idle');
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it('reads the draft manifest and saves changes under its album', async () => {
     const fetchMock = fakeWorker({
       // An array of answers is a queue: a manifest (itself an array) goes inside one.

@@ -48,6 +48,8 @@ describe('PublishBar', () => {
       describeChange({ type: 'site' }), describeChange({ type: 'album-added', slug: 'notte' }),
     ]);
     expect(describeChange({ type: 'photos-added', slug: 'notte', count: 3 })).toBe('notte: 3 new photos');
+    expect(describeChange({ type: 'photos-added', slug: 'notte', count: 1 })).toBe('notte: 1 new photo');
+    expect(describeChange({ type: 'photos-removed', slug: 'notte', count: 1 })).toBe('notte: 1 photo removed');
   });
 
   it('saves what is waiting before publishing, and holds saves while publishing', async () => {

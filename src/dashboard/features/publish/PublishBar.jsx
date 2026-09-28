@@ -27,8 +27,8 @@ export function describeChange({ type, slug, count }) {
     'album-added': t.changeAlbumAdded,
     'album-removed': t.changeAlbumRemoved,
     'album-changed': t.changeAlbumChanged,
-    'photos-added': t.changePhotosAdded,
-    'photos-removed': t.changePhotosRemoved,
+    'photos-added': count === 1 ? t.changePhotosAddedOne : t.changePhotosAdded,
+    'photos-removed': count === 1 ? t.changePhotosRemovedOne : t.changePhotosRemoved,
     'photos-reordered': t.changePhotosReordered,
   }[type] ?? type;
   return formatText(template, { album: slug, n: count });

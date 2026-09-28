@@ -1,11 +1,11 @@
 import { useEffect, useId, useState } from 'react';
-import { useIsMutating, useMutation } from '@tanstack/react-query';
+import { useIsMutating, useMutation, useQueryClient } from '@tanstack/react-query';
 import { texts } from '../../../../config/texts.config.js';
 import { formatText } from '../../../utils/formatText.js';
 import { partitionBySupport, processFile } from '../../../admin/pipeline.js';
 import { runBatch } from '../../../admin/upload-manager.js';
 import { ApiError, request, upload } from '../../api/client.js';
-import { useIsPublishing } from '../../api/queries.js';
+import { keys, useIsPublishing } from '../../api/queries.js';
 
 const t = texts.admin.album;
 
@@ -39,6 +39,7 @@ const isFileDrag = event => Boolean(event.dataTransfer?.types?.includes('Files')
  */
 export function UploadPanel({ slug, photos, setManifest, makeProcessFileImpl = makeProcessFile }) {
   const publishing = useIsPublishing();
+  const client = useQueryClient();
   // Counted across the app, not by this component: an upload started before leaving the
   // album and coming back is still running, and a second batch would pick the same names.
   const uploading = useIsMutating({ mutationKey: ['draft-save', 'upload', slug] }) > 0;
@@ -76,7 +77,12 @@ export function UploadPanel({ slug, photos, setManifest, makeProcessFileImpl = m
         // Only the photos this batch added, onto the latest list: a photo deleted or moved
         // while the upload ran stays deleted or moved.
         putManifest: async entries => {
-          setManifest(prev => [...prev, ...entries.filter(entry => !before.has(entry.name) && !prev.some(photo => photo.name === entry.name))], { now: true });
+          const add = prev => [...prev, ...entries.filter(entry => !before.has(entry.name) && !prev.some(photo => photo.name === entry.name))];
+          if (setManifest(add, { now: true })) return;
+          // The screen was left long enough for the album's photo list to leave the cache:
+          // read it again, so the photos just uploaded still reach the draft.
+          await client.fetchQuery({ queryKey: keys.manifest(slug), queryFn: () => request(`/api/admin/draft/albums/${slug}/manifest`) });
+          if (!setManifest(add, { now: true })) throw new Error(t.manifestError);
         },
         // Each file keeps its place in the list while its phase changes.
         onProgress: (name, phase) => setRows(current => (current.some(row => row.name === name)

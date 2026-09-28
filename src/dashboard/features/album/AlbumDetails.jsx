@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { texts } from '../../../../config/texts.config.js';
 
 const t = texts.admin.album;
@@ -6,7 +6,8 @@ const t = texts.admin.album;
 /**
  * Title and subtitle of an album, edited in place. What is typed stays in this component's
  * state and is handed to `onChange` as it changes; a refetch of the draft never resets a
- * field being edited (spec, "Moduli").
+ * field being edited (spec, "Moduli"). When the fields are not being edited they follow the
+ * draft: after Discard they show the values that are left, not the discarded ones.
  * @param {{album: object, onChange: (fields: {title: string, description: string}) => void}} props
  */
 export function AlbumDetails({ album, onChange }) {
@@ -15,12 +16,20 @@ export function AlbumDetails({ album, onChange }) {
   const titleId = useId();
   const descriptionId = useId();
   const errorId = useId();
+  const formRef = useRef(null);
 
   // Another album opened in the same component: start from its values.
   useEffect(() => {
     setTitle(album.title);
     setDescription(album.description);
   }, [album.slug]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // The draft changed while nobody was typing here (Discard, another tab): show it.
+  useEffect(() => {
+    if (formRef.current?.contains(document.activeElement)) return;
+    setTitle(album.title);
+    setDescription(album.description);
+  }, [album.title, album.description]);
 
   const titleMissing = !title.trim();
   const change = (nextTitle, nextDescription) => {
@@ -30,7 +39,7 @@ export function AlbumDetails({ album, onChange }) {
   };
 
   return (
-    <div className="dash-album-details">
+    <div className="dash-album-details" ref={formRef}>
       <label htmlFor={titleId} className="dash-label">{t.titleLabel}</label>
       <input id={titleId} className="dash-input dash-album-details__title" value={title}
         aria-invalid={titleMissing ? 'true' : undefined} aria-describedby={titleMissing ? errorId : undefined}
