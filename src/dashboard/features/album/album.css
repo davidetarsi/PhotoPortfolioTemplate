@@ -1,0 +1,26 @@
+.dash-back { display: inline-block; margin-bottom: 1rem; color: var(--admin-muted); text-decoration: none; font: 0.8rem/1 var(--admin-font-mono); }
+.dash-back:hover { color: var(--admin-ink); }
+.dash-album-details { display: grid; gap: 0.4rem; max-width: 40rem; margin-bottom: 1.5rem; }
+.dash-album-details__title { font: 500 1.35rem/1.2 var(--admin-font-display); min-height: 52px; }
+.dash-album-details__subtitle { padding: 0.6rem 0.75rem; resize: vertical; min-height: 64px; }
+
+.dash-photo-grid { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.6rem; grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr)); }
+.dash-photo { display: grid; gap: 0.3rem; }
+.dash-photo-grid--reordering .dash-photo { cursor: grab; }
+.dash-photo__figure { position: relative; margin: 0; aspect-ratio: 4 / 5; border-radius: 3px; overflow: hidden; background: var(--admin-raised); box-shadow: 0 0 0 1px var(--admin-line); }
+.dash-photo__figure img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.dash-photo__number { position: absolute; right: 0.4rem; bottom: 0.3rem; font: 0.7rem/1 var(--admin-font-mono); color: #fff; text-shadow: 0 1px 2px rgb(0 0 0 / 0.6); }
+.dash-photo__cover { position: absolute; left: 0.4rem; top: 0.4rem; padding: 0.2rem 0.45rem; border-radius: 999px; background: var(--admin-accent); color: var(--admin-on-accent); font: 500 0.65rem/1 var(--admin-font-mono); text-transform: uppercase; }
+.dash-photo__actions { display: flex; gap: 0.3rem; }
+.dash-photo__actions button {
+  flex: 1; min-height: 36px; border-radius: var(--admin-radius); border: 1px solid var(--admin-line);
+  background: transparent; color: var(--admin-ink); cursor: pointer;
+}
+.dash-photo__actions button[aria-pressed='true'] { background: var(--admin-accent); border-color: var(--admin-accent); color: var(--admin-on-accent); }
+.dash-photo__actions button:disabled,
+.dash-photo__actions button[aria-disabled="true"] { opacity: 0.45; cursor: default; }
+.dash-photo__delete { color: var(--admin-danger) !important; }
+.dash-album__danger { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--admin-line); }
+@media (max-width: 640px) {
+  .dash-photo-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.4rem; }
+}

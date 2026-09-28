@@ -36,7 +36,8 @@ describe('dashboard frame', () => {
     fireEvent.click(await screen.findByRole('link', { name: texts.admin.common.navSite }));
     expect(await screen.findByRole('heading', { name: texts.admin.site.sectionTitle })).toBeTruthy();
     await router.navigate('/album/notte');
-    expect(await screen.findByRole('heading', { name: 'notte' })).toBeTruthy();
+    // Not in this draft: the album screen says so.
+    expect(await screen.findByText(texts.admin.album.notFound)).toBeTruthy();
   });
 
   it('an unknown address goes back to the albums', async () => {
