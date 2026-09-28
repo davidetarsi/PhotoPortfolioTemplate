@@ -88,7 +88,8 @@ export function PublishBar() {
     const saveError = queue.getState().error;
     if (saveError) {
       starting.current = false;
-      setMessage({ text: formatText(t.saveFailed, { message: saveError.message }), tone: 'error' });
+      // A refused value would be published without the change on screen: it must be fixed first.
+      setMessage({ text: formatText(saveError.refused ? t.saveRefused : t.saveFailed, { message: saveError.message }), tone: 'error' });
       return;
     }
     // An upload that started just before the click is still writing to the waiting area.

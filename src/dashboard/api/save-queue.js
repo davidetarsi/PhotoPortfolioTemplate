@@ -18,7 +18,8 @@
  * A save the Worker refuses (the value is not valid: 400, 413, 415, 422) would fail again
  * unchanged, so it is set aside instead of kept first in line: the other resources go on
  * saving, the refused value stays on screen with the Worker's reason, and the next change
- * of that resource is saved normally. A save that failed for any other reason (network,
+ * of that resource is saved normally. While any value stays refused its reason is the error
+ * shown (and publishing waits): another error that comes and goes never hides it. A save that failed for any other reason (network,
  * session expired, server error) keeps its place and blocks the ones after it until Retry.
  *
  * Plain JavaScript (no React).
@@ -41,12 +42,17 @@ export function createSaveQueue({ save, delay = SAVE_DELAY_MS, onSaved }) {
   let inFlight = null; // { key, value } being saved
   let paused = false;
   let error = null; // { key, message, refused }
-  const refused = new Map(); // key → value the Worker refused, until the next change of it
+  const refused = new Map(); // key → { value, message } the Worker refused, until the next change of it
   let timer = null;
   let running = null; // the promise of the flush in progress
   let generation = 0; // bumped by clear(): a save started before it is not put back
   let state = { pending: 0, saving: false, paused: false, error: null };
 
+  // The reason of a value still refused, once no other error is shown.
+  const refusedError = () => {
+    const first = refused.entries().next().value;
+    return first ? { key: first[0], message: first[1].message, refused: true } : null;
+  };
   const notify = () => {
     state = { pending: pending.size, saving: inFlight !== null, paused, error };
     for (const listener of listeners) listener();
@@ -65,14 +71,15 @@ export function createSaveQueue({ save, delay = SAVE_DELAY_MS, onSaved }) {
       notify();
       try {
         await save(key, value);
-        if (error?.key === key) error = null;
+        if (error?.key === key) error = refusedError();
         onSaved?.(key);
       } catch (e) {
         if (started !== generation) return;
         if (isRefusal(e)) {
           // Set aside, unless a newer value arrived meanwhile: the others keep saving.
-          if (!pending.has(key)) refused.set(key, value);
-          error = { key, message: e?.message ?? String(e), refused: true };
+          const message = e?.message ?? String(e);
+          if (!pending.has(key)) refused.set(key, { value, message });
+          error = { key, message, refused: true };
           continue;
         }
         // Keep the change, first in line, unless a newer one arrived meanwhile.
@@ -99,6 +106,7 @@ export function createSaveQueue({ save, delay = SAVE_DELAY_MS, onSaved }) {
     /** Queues the latest value of a resource; saved after the delay, or now with { now: true }. */
     set(key, value, { now = false } = {}) {
       refused.delete(key); // a new value gets its own chance
+      if (error?.refused && error.key === key) error = refusedError();
       pending.set(key, value); // an existing key keeps its place in the order
       notify();
       if (now) flush(); else schedule();
@@ -136,7 +144,7 @@ export function createSaveQueue({ save, delay = SAVE_DELAY_MS, onSaved }) {
     /** The value waiting (else being saved, else refused) for this resource, or undefined. */
     valueOf: key => (pending.has(key) ? pending.get(key)
       : inFlight?.key === key ? inFlight.value
-        : refused.get(key)),
+        : refused.get(key)?.value),
     getState: () => state,
     subscribe(listener) {
       listeners.add(listener);

@@ -2,6 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { vi } from 'vitest';
 import { texts } from '../../../../config/texts.config.js';
+import { formatText } from '../../../utils/formatText.js';
 import { MESSAGE_MS, PublishBar, describeChange, describeProblem } from './PublishBar.jsx';
 import { useSaveQueue } from '../../api/drafts.jsx';
 import { fakeWorker, installDialogPolyfill, makeQueryClient, renderWithQuery } from '../../test-utils.jsx';
@@ -75,6 +76,26 @@ describe('PublishBar', () => {
     expect(order.slice(0, 2)).toEqual(['save', 'publish']);
     // Resumed: the change made during the publication is saved after it.
     await waitFor(() => expect(order).toEqual(['save', 'publish', 'save']), { timeout: 3000 });
+  });
+
+  it('does not publish while a value stays refused: it would go out without the change on screen', async () => {
+    let queue;
+    function WithQueue() { queue = useSaveQueue(); return <PublishBar />; }
+    const fetchMock = fakeWorker({
+      'GET /api/admin/draft/status': STATUS_DRAFT,
+      'PUT /api/admin/draft/site': { status: 400, body: { error: 'site.name is required' } },
+      'PUT /api/admin/draft/albums': [{ status: 503, body: { error: 'HTTP 503' } }, { ok: true }],
+      'POST /api/admin/publish': { done: true, copied: 0, remaining: 0 },
+    });
+    renderWithQuery(<WithQueue />);
+    await screen.findByRole('button', { name: t.publish });
+    // The site is refused; then another error comes and goes (albums fail, then save).
+    act(() => { queue.set('site', { name: '' }); queue.set('albums', { albums: [] }); });
+    await act(() => queue.flush());
+    await act(() => queue.flush());
+    fireEvent.click(screen.getByRole('button', { name: t.publish }));
+    expect((await screen.findByRole('alert')).textContent).toBe(formatText(t.saveRefused, { message: 'site.name is required' }));
+    expect(fetchMock.mock.calls.some(([path]) => path === '/api/admin/publish')).toBe(false);
   });
 
   it('a double click on Publish starts one publication', async () => {

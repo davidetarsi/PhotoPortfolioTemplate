@@ -158,8 +158,7 @@ export function useSite() {
   const client = useQueryClient();
   const queue = useSaveQueue();
   const draft = useDraft();
-  const loaded = draft.data?.site;
-  const site = useMemo(() => (draft.data ? siteForEditing(loaded, siteConfig) : undefined), [draft.data, loaded]);
+  const site = useMemo(() => (draft.data ? siteForEditing(draft.data.site, siteConfig) : undefined), [draft.data]);
   const setSite = (next, options) => {
     const data = client.getQueryData(keys.draft);
     if (!data) return false;

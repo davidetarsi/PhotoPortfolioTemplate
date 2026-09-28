@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { overlayUnsaved, savePath, useAlbums, useManifest, useSaveQueue, useSaveState, useSite } from './drafts.jsx';
 import { keys } from './queries.js';
+import { siteConfig } from '../../../config/site.config.js';
 import { fakeWorker, makeQueryClient, Providers } from '../test-utils.jsx';
 
 const DRAFT = { site: { name: 'D', bio: '', hero: null }, albums: [{ slug: 'notte', title: 'Notte', description: '', coverName: null }], hasDraft: false };
@@ -167,6 +168,17 @@ describe('useSite', () => {
     const put = fetchMock.mock.calls.find(([path, init]) => path === '/api/admin/draft/site' && init?.method === 'PUT');
     // Saved in the current shape: links, no social.
     expect(JSON.parse(put[1].body)).toEqual({ name: 'D', bio: 'Fotografo', hero: null, links: [{ url: 'https://instagram.com/d' }], texts: {} });
+  });
+
+  it('on a new installation starts from config/site.config.js and saves it as the first site', async () => {
+    const fetchMock = fakeWorker({ 'GET /api/admin/draft': { ...DRAFT, site: null }, 'PUT /api/admin/draft/site': { ok: true } });
+    const { result } = renderHook(() => ({ ...useSite(), queue: useSaveQueue() }), { wrapper: wrapper(makeQueryClient()) });
+    await waitFor(() => expect(result.current.site).toBeDefined());
+    expect(result.current.site.name).toBe(siteConfig.name);
+    act(() => { result.current.setSite(prev => ({ ...prev, bio: 'Fotografo' })); });
+    await act(() => result.current.queue.flush());
+    const put = fetchMock.mock.calls.find(([path, init]) => path === '/api/admin/draft/site' && init?.method === 'PUT');
+    expect(JSON.parse(put[1].body)).toMatchObject({ name: siteConfig.name, bio: 'Fotografo', texts: {} });
   });
 
   it('does nothing before the draft has loaded', () => {
