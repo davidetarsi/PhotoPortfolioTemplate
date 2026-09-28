@@ -14,6 +14,7 @@ import { customPagesPlugin } from './src/utils/customPagesPlugin.js'
 import { isExpectedBuildWarning } from './src/utils/buildWarnings.js'
 import { wranglerConfigPath } from './src/utils/wranglerConfigPath.js'
 import { createFontsPlugin } from './src/utils/fontsPlugin.js'
+import { createAdminThemePlugin } from './src/utils/adminTheme.js'
 import { googleFontsUrl } from './theme/fonts.js'
 
 // Letto una volta: serve sia al meta og:image sia alla CSP, e leggerlo due
@@ -74,6 +75,7 @@ export default defineConfig({
     devRouteFallbackPlugin(),
     siteMetaPlugin(),
     createFontsPlugin(googleFontsUrl),
+    createAdminThemePlugin({ root: __dirname }),
     ...createCustomThemePlugins({ root: __dirname, publicPages: customPages.map(page => page.html) }),
     customPagesPlugin(customPages),
     headersPlugin(),

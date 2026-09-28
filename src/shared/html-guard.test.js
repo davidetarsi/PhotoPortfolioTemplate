@@ -7,7 +7,7 @@ function sources(dir) {
   return readdirSync(dir, { withFileTypes: true }).flatMap(entry => {
     const path = join(dir, entry.name);
     if (entry.isDirectory()) return sources(path);
-    return entry.name.endsWith('.js') && !entry.name.endsWith('.test.js') ? [path] : [];
+    return /\.jsx?$/.test(entry.name) && !/\.test\.jsx?$/.test(entry.name) ? [path] : [];
   });
 }
 
@@ -17,6 +17,11 @@ describe('HTML templates', () => {
       readFileSync(file, 'utf8').split('\n')
         .map((line, i) => (/innerHTML\s*=\s*`/.test(line) ? `${file}:${i + 1}` : null))
         .filter(Boolean));
+    expect(offenders).toEqual([]);
+  });
+
+  it('never use dangerouslySetInnerHTML in React code: JSX escapes text by itself', () => {
+    const offenders = sources('src').filter(file => readFileSync(file, 'utf8').includes('dangerouslySetInnerHTML'));
     expect(offenders).toEqual([]);
   });
 });
