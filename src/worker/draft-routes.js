@@ -16,6 +16,12 @@ const MANIFEST_RE = /^\/api\/admin\/draft\/albums\/([^/]+)\/manifest$/;
 const STAGING_RE = /^\/api\/admin\/staging\/([^/]+)\/([^/]+)$/;
 const PREVIEW_PHOTO_RE = /^\/api\/admin\/preview\/photo\/([^/]+)\/([^/]+)$/;
 
+function decodePhotoName(slug, rawName) {
+  let name;
+  try { name = decodeURIComponent(rawName); } catch { return null; }
+  return SLUG_RE.test(slug) && PHOTO_NAME_RE.test(name) ? name : null;
+}
+
 async function saveValidated(request, key, validate, env) {
   let data;
   try { data = await request.json(); } catch { return jsonResponse({ error: 'Malformed JSON' }, 400); }
@@ -169,9 +175,8 @@ export async function handleDraftRequest(request, env, pathname) {
   const staging = pathname.match(STAGING_RE);
   if (staging) {
     const slug = staging[1];
-    let name;
-    try { name = decodeURIComponent(staging[2]); } catch { return jsonResponse({ error: 'Invalid name or slug' }, 400); }
-    if (!SLUG_RE.test(slug) || !PHOTO_NAME_RE.test(name)) return jsonResponse({ error: 'Invalid name or slug' }, 400);
+    const name = decodePhotoName(slug, staging[2]);
+    if (!name) return jsonResponse({ error: 'Invalid name or slug' }, 400);
     return handleStaging(request, env, slug, name);
   }
 
@@ -181,9 +186,8 @@ export async function handleDraftRequest(request, env, pathname) {
   if (previewPhoto) {
     if (method !== 'GET') return jsonResponse({ error: 'METHOD_NOT_ALLOWED' }, 405);
     const slug = previewPhoto[1];
-    let name;
-    try { name = decodeURIComponent(previewPhoto[2]); } catch { return jsonResponse({ error: 'Invalid name or slug' }, 400); }
-    if (!SLUG_RE.test(slug) || !PHOTO_NAME_RE.test(name)) return jsonResponse({ error: 'Invalid name or slug' }, 400);
+    const name = decodePhotoName(slug, previewPhoto[2]);
+    if (!name) return jsonResponse({ error: 'Invalid name or slug' }, 400);
     const obj = (await env.PRIVATE_BUCKET.get(STAGING.photo(slug, name))) ?? (await env.BUCKET.get(PUBLISHED.photo(slug, name)));
     if (!obj) return jsonResponse({ error: 'NOT_FOUND' }, 404);
     // The preview reloads after each save: the browser keeps the photo and asks whether it

@@ -204,6 +204,19 @@ describe('draft routes', () => {
     expect((await call(makeEnv(), 'GET', '/api/admin/staging/notte/%E0%A4%A.webp')).status).toBe(400);
   });
 
+  it('staging and preview use the same 400 response for malformed photo paths', async () => {
+    const env = makeEnv();
+    for (const name of ['%E0%A4%A.webp', '..%2Fx.webp']) {
+      const staging = await call(env, 'GET', `/api/admin/staging/notte/${name}`);
+      const preview = await call(env, 'GET', `/api/admin/preview/photo/notte/${name}`);
+      expect(staging.status).toBe(400);
+      expect(preview.status).toBe(400);
+      expect(await preview.json()).toEqual(await staging.json());
+    }
+    expect(env.BUCKET.store.size).toBe(0);
+    expect(env.PRIVATE_BUCKET.store.size).toBe(0);
+  });
+
   it('preview photos: the waiting one first, then the published one, else 404', async () => {
     const env = makeEnv({ 'notte/a.webp': 'PUBLIC-A', 'notte/b.webp': 'PUBLIC-B' }, { 'staging/notte/a.webp': 'STAGED-A' });
     const a = await call(env, 'GET', '/api/admin/preview/photo/notte/a.webp');

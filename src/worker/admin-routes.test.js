@@ -49,157 +49,34 @@ describe('auth gate', () => {
   });
 });
 
-describe('PUT /api/admin/site', () => {
-  it('salva site.json valido', async () => {
-    const env = makeEnv();
-    const res = await call(env, 'PUT', '/api/admin/site', SITE);
-    expect(res.status).toBe(200);
-    expect(JSON.parse(env.BUCKET.store.get('_site/site.json').text)).toEqual(SITE);
-  });
-  it('400 su shape invalida e su JSON malformato', async () => {
-    const env = makeEnv();
-    expect((await call(env, 'PUT', '/api/admin/site', { name: '' })).status).toBe(400);
-    expect((await call(env, 'PUT', '/api/admin/site', '{non-json')).status).toBe(400);
-    expect(env.BUCKET.store.has('_site/site.json')).toBe(false);
-  });
-  it('errore di scrittura R2 → 500 con JSON pulito, non un unhandled rejection', async () => {
-    const env = makeEnv();
-    env.BUCKET.put = async () => { throw new Error('R2 down'); };
-    const res = await call(env, 'PUT', '/api/admin/site', SITE);
-    expect(res.status).toBe(500);
-    expect(await res.json()).toEqual({ error: 'STORAGE_ERROR' });
-  });
-});
-
-describe('PUT /api/admin/albums', () => {
-  it('salva albums.json valido, anche con uno slug riservato scritto a mano', async () => {
-    const env = makeEnv();
-    expect((await call(env, 'PUT', '/api/admin/albums', ALBUMS)).status).toBe(200);
-    expect(JSON.parse(env.BUCKET.store.get('_data/albums.json').text)).toEqual(ALBUMS);
-    const reserved = { albums: [{ slug: 'admin', title: 'X', description: '', coverName: null }] };
-    expect((await call(env, 'PUT', '/api/admin/albums', reserved)).status).toBe(200);
-  });
-});
-
-describe('PUT /api/admin/albums/:slug/manifest', () => {
-  it('salva manifest valido; 400 su entry invalida; 404 su slug malformato', async () => {
-    const env = makeEnv();
-    const manifest = [{ name: 'a.webp', width: 10, height: 20 }];
-    expect((await call(env, 'PUT', '/api/admin/albums/sport/manifest', manifest)).status).toBe(200);
-    expect(JSON.parse(env.BUCKET.store.get('sport/manifest.json').text)).toEqual(manifest);
-    expect((await call(env, 'PUT', '/api/admin/albums/sport/manifest', [{ name: 'a.jpg', width: 1, height: 1 }])).status).toBe(400);
-    expect((await call(env, 'PUT', '/api/admin/albums/NO SLUG/manifest', manifest)).status).toBe(404);
-  });
-  it('salva il manifest anche per un album con slug riservato', async () => {
-    const env = makeEnv();
-    const manifest = [{ name: 'a.webp', width: 10, height: 20 }];
-    expect((await call(env, 'PUT', '/api/admin/albums/admin/manifest', manifest)).status).toBe(200);
-  });
-});
-
-describe('rotte sconosciute', () => {
-  it('404 su path ignoto; 405 su metodo sbagliato', async () => {
-    const env = makeEnv();
-    expect((await call(env, 'PUT', '/api/admin/boh', {})).status).toBe(404);
-    expect((await call(env, 'GET', '/api/admin/site')).status).toBe(405);
-  });
-});
-
-describe('PUT /api/admin/albums/:slug/photos/:name', () => {
-  const put = (env, path, body, ct = 'image/webp') =>
-    handleAdminRequest(new Request(`https://x.dev${path}`, {
-      method: 'PUT', body, headers: { 'Cf-Access-Jwt-Assertion': token, 'Content-Type': ct },
-    }), env, deps);
-
-  it('salva il body come oggetto webp', async () => {
-    const env = makeEnv();
-    const res = await put(env, '/api/admin/albums/sport/photos/nuova.webp', new Uint8Array([1, 2, 3]));
-    expect(res.status).toBe(200);
-    expect(env.BUCKET.store.has('sport/nuova.webp')).toBe(true);
-    expect(env.BUCKET.store.get('sport/nuova.webp').contentType).toBe('image/webp');
-  });
-
-  it('accetta nomi legacy con maiuscole', async () => {
-    const env = makeEnv();
-    expect((await put(env, '/api/admin/albums/sport/photos/4x5-IMG_8689-.webp', new Uint8Array([1]))).status).toBe(200);
-  });
-
-  it('rifiuta content-type sbagliato (415), nome invalido (400), body oltre 10MB (413)', async () => {
-    const env = makeEnv();
-    expect((await put(env, '/api/admin/albums/sport/photos/a.webp', new Uint8Array([1]), 'image/jpeg')).status).toBe(415);
-    expect((await put(env, '/api/admin/albums/sport/photos/a.jpg', new Uint8Array([1]))).status).toBe(400);
-    const big = new Uint8Array(10 * 1024 * 1024 + 1);
-    expect((await put(env, '/api/admin/albums/sport/photos/a.webp', big)).status).toBe(413);
-  });
-
-  it('PUT: errore R2 → 500 con JSON pulito', async () => {
-    const env = makeEnv();
-    env.BUCKET.put = async () => { throw new Error('R2 down'); };
-    const res = await put(env, '/api/admin/albums/sport/photos/a.webp', new Uint8Array([1]));
-    expect(res.status).toBe(500);
-    expect(await res.json()).toEqual({ error: 'STORAGE_ERROR' });
-  });
-
-  it('carica una foto anche in un album con slug riservato', async () => {
-    const env = makeEnv();
-    expect((await put(env, '/api/admin/albums/admin/photos/a.webp', new Uint8Array([1]))).status).toBe(200);
-  });
-});
-
-describe('DELETE /api/admin/albums/:slug/photos/:name', () => {
-  it('elimina oggetto e entry dal manifest; idempotente se manifest assente', async () => {
+describe('old direct-write routes', () => {
+  it('return 404 and leave both buckets untouched', async () => {
     const env = makeEnv({
-      'sport/a.webp': 'BIN', 'sport/b.webp': 'BIN',
-      'sport/manifest.json': [{ name: 'a.webp', width: 1, height: 1 }, { name: 'b.webp', width: 1, height: 1 }],
-    });
-    const res = await call(env, 'DELETE', '/api/admin/albums/sport/photos/a.webp');
-    expect(res.status).toBe(200);
-    expect(env.BUCKET.store.has('sport/a.webp')).toBe(false);
-    expect(JSON.parse(env.BUCKET.store.get('sport/manifest.json').text)).toEqual([{ name: 'b.webp', width: 1, height: 1 }]);
-    // senza manifest: nessun errore
-    const env2 = makeEnv({ 'sport/c.webp': 'BIN' });
-    expect((await call(env2, 'DELETE', '/api/admin/albums/sport/photos/c.webp')).status).toBe(200);
-  });
+      '_site/site.json': SITE,
+      '_data/albums.json': ALBUMS,
+      'sport/manifest.json': [{ name: 'old.webp', width: 10, height: 20 }],
+      'sport/old.webp': 'IMAGE',
+    }, { '_messages/example.json': { name: 'Mario' } });
+    const publicBefore = new Map(env.BUCKET.store);
+    const privateBefore = new Map(env.PRIVATE_BUCKET.store);
+    const oldWrites = [
+      ['PUT', '/api/admin/site', SITE],
+      ['PUT', '/api/admin/albums', ALBUMS],
+      ['PUT', '/api/admin/albums/sport/manifest', []],
+      ['PUT', '/api/admin/albums/sport/photos/new.webp', new Uint8Array([1])],
+      ['DELETE', '/api/admin/albums/sport/photos/old.webp'],
+      ['DELETE', '/api/admin/albums/sport'],
+    ];
 
-  it('DELETE: errore R2 → 500 con JSON pulito', async () => {
-    const env = makeEnv({ 'sport/a.webp': 'BIN' });
-    env.BUCKET.delete = async () => { throw new Error('R2 down'); };
-    const res = await call(env, 'DELETE', '/api/admin/albums/sport/photos/a.webp');
-    expect(res.status).toBe(500);
-    expect(await res.json()).toEqual({ error: 'STORAGE_ERROR' });
-  });
-});
+    const responses = [];
+    for (const [method, path, body] of oldWrites) {
+      const headers = body instanceof Uint8Array ? { 'Content-Type': 'image/webp' } : {};
+      responses.push(await call(env, method, path, body, headers));
+    }
 
-describe('DELETE /api/admin/albums/:slug', () => {
-  it('cancella >1000 oggetti con paginazione e rimuove la voce da albums.json', async () => {
-    const initial = { '_data/albums.json': ALBUMS };
-    for (let i = 0; i < 1203; i++) initial[`sport/foto-${String(i).padStart(4, '0')}.webp`] = 'BIN';
-    initial['sport/manifest.json'] = [];
-    initial['around/x.webp'] = 'BIN'; // altro album: non deve essere toccato
-    const env = makeEnv(initial);
-    const res = await call(env, 'DELETE', '/api/admin/albums/sport');
-    expect(res.status).toBe(200);
-    expect([...env.BUCKET.store.keys()].filter(k => k.startsWith('sport/'))).toEqual([]);
-    expect(env.BUCKET.store.has('around/x.webp')).toBe(true);
-    expect(JSON.parse(env.BUCKET.store.get('_data/albums.json').text)).toEqual({ albums: [] });
-  });
-
-  it('idempotente: cancellare un album inesistente risponde 200', async () => {
-    expect((await call(makeEnv(), 'DELETE', '/api/admin/albums/fantasma')).status).toBe(200);
-  });
-
-  it('elimina anche un album con slug riservato', async () => {
-    const env = makeEnv({ 'admin/a.webp': 'BIN' });
-    expect((await call(env, 'DELETE', '/api/admin/albums/admin')).status).toBe(200);
-    expect(env.BUCKET.store.has('admin/a.webp')).toBe(false);
-  });
-
-  it('DELETE album: errore R2 durante list → 500 con JSON pulito', async () => {
-    const env = makeEnv({ 'sport/a.webp': 'BIN' });
-    env.BUCKET.list = async () => { throw new Error('R2 down'); };
-    const res = await call(env, 'DELETE', '/api/admin/albums/sport');
-    expect(res.status).toBe(500);
-    expect(await res.json()).toEqual({ error: 'STORAGE_ERROR' });
+    expect.soft(responses.map(response => response.status)).toEqual(oldWrites.map(() => 404));
+    expect(env.BUCKET.store).toEqual(publicBefore);
+    expect(env.PRIVATE_BUCKET.store).toEqual(privateBefore);
   });
 });
 

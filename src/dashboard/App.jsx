@@ -105,7 +105,7 @@ export function Shell() {
         <main className="dash-main">
           {draft.isError ? <p className="dash-error" role="alert">{t.common.loadError}</p> : <Outlet />}
         </main>
-        <PublishBar />
+        {!draft.isError && <PublishBar />}
       </div>
     </UploadProvider>
   );

@@ -97,6 +97,18 @@ describe('dashboard frame', () => {
     expect((await screen.findByRole('alert')).textContent).toBe(texts.admin.common.loadError);
   });
 
+  it('hides publish and discard actions when the draft state is unknown', async () => {
+    fakeWorker({
+      'GET /api/admin/draft': { status: 503, body: { error: 'STORAGE_ERROR' } },
+      'GET /api/admin/draft/status': { hasDraft: true, publishing: false, changes: [{ type: 'site' }] },
+    });
+    renderDashboard('/');
+
+    expect((await screen.findByRole('alert')).textContent).toBe(texts.admin.common.loadError);
+    expect(screen.queryByRole('button', { name: texts.admin.publish.discard })).toBeNull();
+    expect(screen.queryByRole('button', { name: texts.admin.publish.publish })).toBeNull();
+  });
+
   it('keeps a pending upload running and announces it after navigating away and back', async () => {
     let finish;
     const photos = [{ name: 'a.webp', width: 4, height: 3 }];
