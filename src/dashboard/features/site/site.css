@@ -29,3 +29,15 @@
 /* On a computer the sheet opens over the fields: the preview beside it stays in view. */
 .dash-field-sheet--side { margin: 6rem auto auto 1.25rem; width: min(26rem, calc(100vw - 2rem)); }
 .dash-field-sheet--side::backdrop { background: rgb(0 0 0 / 0.25); }
+
+.dash-links { display: grid; gap: 0.5rem; justify-items: start; }
+.dash-links .dash-site-rows { width: 100%; }
+.dash-link-row { display: flex; align-items: stretch; background: var(--admin-surface); }
+.dash-link-row__open { flex: 1; min-width: 0; }
+.dash-link-row__name { display: inline-flex; align-items: center; gap: 0.5rem; font-weight: 500; }
+.dash-link-row__url { font: 0.8rem/1.3 var(--admin-font-mono); color: var(--admin-muted); }
+.dash-link-row__move { display: flex; align-items: center; gap: 0.25rem; padding: 0 0.5rem; }
+.dash-link-row__move button { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--admin-line); background: transparent; color: var(--admin-ink); cursor: pointer; }
+.dash-link-row__move button[aria-disabled="true"] { opacity: 0.4; cursor: default; }
+.dash-link-input { display: flex; align-items: center; gap: 0.5rem; }
+.dash-link-icon { flex: none; }

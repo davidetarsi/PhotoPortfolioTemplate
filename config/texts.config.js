@@ -139,6 +139,13 @@ export const texts = {
       previewPart: 'Just this part',
       done: 'Done',
       emptyValue: 'Empty',
+      linksEmpty: 'No links yet: add your profiles, your website or your email.',
+      addLink: 'Add link', newLink: 'New link', editLink: 'Link',
+      linkUrlLabel: 'Address', linkUrlHint: 'A web address, or an email address.',
+      linkLabelLabel: 'Name shown (optional)', linkLabelHint: 'Empty: "{kind}".',
+      linkUrlInvalid: 'Use a web address (https://…) or an email address.',
+      linkLabelTooLong: 'At most {n} characters.', removeLink: 'Remove link', cancel: 'Cancel',
+      moveLinkEarlier: 'Move {link} up', moveLinkLater: 'Move {link} down', linksFull: 'At most {n} links.',
     },
     albums: {
       sectionTitle: 'Albums',

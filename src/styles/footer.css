@@ -15,9 +15,14 @@
 }
 
 .site-footer__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
   color: var(--color-muted);
   text-decoration: none;
 }
+
+.site-footer__link .link-icon { width: 1.4em; height: 1.4em; flex: none; }
 
 .site-footer__link:hover {
   color: var(--color-text);

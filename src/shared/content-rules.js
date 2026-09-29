@@ -50,6 +50,9 @@ export const MAX_LINKS = 12;
 export const MAX_LINK_LABEL = 40;
 const LINK_URL_RE = /^(https:\/\/[^\s]+|mailto:[^\s]+)$/;
 
+/** Whether an address can be a site link: https:// or mailto:, without spaces. */
+export const isLinkUrl = url => typeof url === 'string' && LINK_URL_RE.test(url);
+
 /**
  * Values of the `data-field` attribute that the dashboard's preview can update and focus:
  * the site's name, bio and links, and every editable text as `texts.<key>`.
@@ -107,7 +110,7 @@ export function validateSiteShape(data) {
     if (data.links.length > MAX_LINKS) return fail(`site.links: at most ${MAX_LINKS} links`);
     for (const link of data.links) {
       if (!isObj(link)) return fail('site.links: each link must be an object');
-      if (typeof link.url !== 'string' || !LINK_URL_RE.test(link.url)) {
+      if (!isLinkUrl(link.url)) {
         return fail(`site.links: "${link.url}" must start with https:// or mailto:`);
       }
       if (link.label !== undefined && (typeof link.label !== 'string' || link.label.length > MAX_LINK_LABEL)) {

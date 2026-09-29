@@ -1,6 +1,7 @@
 import '../styles/footer.css';
 import { html } from '../shared/html.js';
-import { linkLabel } from '../shared/site-links.js';
+import { linkKind, linkLabel } from '../shared/site-links.js';
+import { createLinkIcon } from '../shared/link-icons.js';
 
 /**
  * Renders the site footer with copyright and the site's links.
@@ -24,7 +25,9 @@ export function renderFooter(container, texts, links = []) {
       a.href = link.url;
       a.target = '_blank';
       a.rel = 'noopener noreferrer';
-      a.textContent = linkLabel(link, texts);
+      const label = document.createElement('span');
+      label.textContent = linkLabel(link, texts);
+      a.append(createLinkIcon(linkKind(link.url)), label);
       nav.appendChild(a);
     }
   }

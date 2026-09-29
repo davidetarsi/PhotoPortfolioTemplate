@@ -33,4 +33,13 @@ describe('renderFooter', () => {
     expect(links.map(a => a.getAttribute('href'))).toEqual(['https://instagram.com/x', 'https://github.com/x', 'mailto:a@b.c']);
     expect(links.map(a => a.textContent)).toEqual(['Instagram', 'Codice', 'Email']);
   });
+
+  it('shows the icon of each kind of link, hidden from screen readers', () => {
+    renderFooter(container, { footer: { copyright: '© 2026' } }, [{ url: 'https://instagram.com/x' }, { url: 'mailto:a@b.c' }]);
+    const icons = [...container.querySelectorAll('.site-footer__link svg')];
+    expect(icons).toHaveLength(2);
+    expect(icons.every(svg => svg.getAttribute('aria-hidden') === 'true')).toBe(true);
+    expect(icons[0].querySelector('path').getAttribute('fill')).toBe('currentColor');
+    expect(icons[1].querySelector('path').getAttribute('fill')).toBe('none');
+  });
 });

@@ -6,6 +6,7 @@ import { textFields } from '../../lib/site-fields.js';
 import { useMediaQuery } from '../../ui/useMediaQuery.js';
 import { Button } from '../../ui/Button.jsx';
 import { FieldSheet } from './FieldSheet.jsx';
+import { LinksEditor } from './LinksEditor.jsx';
 import { PreviewFrame } from './PreviewFrame.jsx';
 import { usePreview } from './usePreview.js';
 import './site.css';
@@ -44,6 +45,11 @@ export function SiteScreen() {
     queue.flush().then(() => preview.reset(field.id));
   };
 
+  const changeLinks = update => {
+    if (setSite(prev => ({ ...prev, links: update(prev.links) }), { now: true })) queue.flush().then(() => preview.reload());
+  };
+  const linksOpen = () => { setPage('/'); preview.focus('site.links'); };
+
   const group = (name, title) => (
     <section className="dash-site-group" aria-labelledby={`dash-site-${name}`}>
       <h2 id={`dash-site-${name}`} className="dash-label">{title}</h2>
@@ -69,6 +75,10 @@ export function SiteScreen() {
       <div className="dash-site__fields">
         <h1 className="dash-screen-title">{t.sectionTitle}</h1>
         {group('who', t.groupWho)}
+        <section className="dash-site-group" aria-labelledby="dash-site-links">
+          <h2 id="dash-site-links" className="dash-label">{t.groupLinks}</h2>
+          <LinksEditor links={site?.links} onChange={changeLinks} onOpen={linksOpen} onClose={() => preview.focus(null)} side={wide} />
+        </section>
         {group('home', t.groupHome)}
         {group('contact', t.groupContact)}
       </div>

@@ -4,6 +4,8 @@ import { resolve } from 'node:path';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { texts } from '../../../../config/texts.config.js';
+import { formatText } from '../../../utils/formatText.js';
+import { MAX_LINKS } from '../../../shared/content-rules.js';
 import { routes } from '../../App.jsx';
 import { useSaveQueue } from '../../api/drafts.jsx';
 import { fakeWorker, installDialogPolyfill, makeQueryClient, Providers } from '../../test-utils.jsx';
@@ -120,5 +122,79 @@ describe('Site screen', () => {
     fireEvent.click(await row(t.aboutBodyLabel));
     await waitFor(() => expect(frame.getAttribute('src')).toBe('/about?preview=1'));
     expect(screen.getAllByTitle(t.previewTitle)).toHaveLength(1);
+  });
+
+  describe('links', () => {
+    const withLinks = links => ({ ...DRAFT, site: { ...SITE, links } });
+    function linksWorker(links) {
+      let draft = withLinks(links);
+      return fakeWorker({
+        'GET /api/admin/draft': () => draft,
+        'GET /api/admin/draft/status': STATUS,
+        'PUT /api/admin/draft/site': init => { draft = { ...draft, site: JSON.parse(init.body) }; return { ok: true }; },
+      });
+    }
+    const addButton = async () => {
+      const button = await screen.findByRole('button', { name: t.addLink });
+      await waitFor(() => expect(button.disabled).toBe(false));
+      return button;
+    };
+
+    it('adds a link from a bare address; its icon and name follow the address', async () => {
+      const fetchMock = linksWorker([]);
+      renderSite();
+      expect(await screen.findByText(t.linksEmpty)).toBeTruthy();
+      fireEvent.click(await addButton());
+      const sheet = await screen.findByRole('dialog', { name: t.newLink });
+      fireEvent.change(within(sheet).getByLabelText(t.linkUrlLabel), { target: { value: 'instagram.com/davide' } });
+      expect(within(sheet).getByLabelText(t.linkLabelLabel).getAttribute('placeholder')).toBe('Instagram');
+      fireEvent.click(within(sheet).getByRole('button', { name: t.done }));
+      await waitFor(() => expect(siteSaves(fetchMock).at(-1)?.links).toEqual([{ url: 'https://instagram.com/davide' }]));
+      expect(await screen.findByRole('button', { name: /^Instagram/ })).toBeTruthy();
+    });
+
+    it('refuses an address that is not a web or email address, saying why', async () => {
+      const fetchMock = linksWorker([]);
+      renderSite();
+      fireEvent.click(await addButton());
+      const sheet = await screen.findByRole('dialog', { name: t.newLink });
+      fireEvent.change(within(sheet).getByLabelText(t.linkUrlLabel), { target: { value: 'http://old.example' } });
+      fireEvent.click(within(sheet).getByRole('button', { name: t.done }));
+      expect(within(sheet).getByRole('alert').textContent).toBe(t.linkUrlInvalid);
+      await act(() => queue.flush());
+      expect(siteSaves(fetchMock)).toEqual([]);
+    });
+
+    it('gives a link a name of its own, and removes one', async () => {
+      const fetchMock = linksWorker([{ url: 'https://github.com/d' }, { url: 'mailto:d@example.com' }]);
+      renderSite();
+      fireEvent.click(await screen.findByRole('button', { name: /^GitHub/ }));
+      let sheet = await screen.findByRole('dialog', { name: t.editLink });
+      fireEvent.change(within(sheet).getByLabelText(t.linkLabelLabel), { target: { value: 'Codice' } });
+      fireEvent.click(within(sheet).getByRole('button', { name: t.done }));
+      await waitFor(() => expect(siteSaves(fetchMock).at(-1)?.links[0]).toEqual({ url: 'https://github.com/d', label: 'Codice' }));
+      fireEvent.click(await screen.findByRole('button', { name: /^Email/ }));
+      sheet = await screen.findByRole('dialog', { name: t.editLink });
+      fireEvent.click(within(sheet).getByRole('button', { name: t.removeLink }));
+      await waitFor(() => expect(siteSaves(fetchMock).at(-1)?.links).toEqual([{ url: 'https://github.com/d', label: 'Codice' }]));
+    });
+
+    it('moves a link with the arrows; the arrow keeps its place in the page', async () => {
+      const fetchMock = linksWorker([{ url: 'https://github.com/d' }, { url: 'https://instagram.com/d' }]);
+      renderSite();
+      const up = await screen.findByRole('button', { name: formatText(t.moveLinkEarlier, { link: 'Instagram' }) });
+      fireEvent.click(up);
+      await waitFor(() => expect(siteSaves(fetchMock).at(-1)?.links.map(link => link.url)).toEqual(['https://instagram.com/d', 'https://github.com/d']));
+      // The same button, now at the top: still in the page, marked as unable to move further.
+      await waitFor(() => expect(up.getAttribute('aria-disabled')).toBe('true'));
+      expect(up.isConnected).toBe(true);
+    });
+
+    it('offers no more links past the limit', async () => {
+      linksWorker(Array.from({ length: MAX_LINKS }, (_, i) => ({ url: `https://example.com/${i}` })));
+      renderSite();
+      expect(await screen.findByText(formatText(t.linksFull, { n: MAX_LINKS }))).toBeTruthy();
+      expect(screen.getByRole('button', { name: t.addLink }).disabled).toBe(true);
+    });
   });
 });

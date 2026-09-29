@@ -136,6 +136,13 @@ export const texts = {
       previewPart: 'Solo questo pezzo',
       done: 'Fatto',
       emptyValue: 'Vuoto',
+      linksEmpty: 'Nessun link: aggiungi i tuoi profili, il tuo sito o la tua email.',
+      addLink: 'Aggiungi link', newLink: 'Nuovo link', editLink: 'Link',
+      linkUrlLabel: 'Indirizzo', linkUrlHint: 'Un indirizzo web, oppure un indirizzo email.',
+      linkLabelLabel: 'Nome mostrato (facoltativo)', linkLabelHint: 'Vuoto: "{kind}".',
+      linkUrlInvalid: 'Usa un indirizzo web (https://…) o un indirizzo email.',
+      linkLabelTooLong: 'Al massimo {n} caratteri.', removeLink: 'Togli il link', cancel: 'Annulla',
+      moveLinkEarlier: 'Sposta {link} in su', moveLinkLater: 'Sposta {link} in giù', linksFull: 'Al massimo {n} link.',
       heroNone: 'nessuna',
     },
     albums: {

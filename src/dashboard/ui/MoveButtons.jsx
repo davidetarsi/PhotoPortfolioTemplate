@@ -4,9 +4,9 @@
  * disabled button loses the focus, and a keyboard user who has just moved an item to the top
  * would find themselves back at the start of the page.
  * @param {{index: number, total: number, onMove: (from: number, to: number) => void,
- *   earlierLabel: string, laterLabel: string}} props
+ *   earlierLabel: string, laterLabel: string, vertical?: boolean}} props
  */
-export function MoveButtons({ index, total, onMove, earlierLabel, laterLabel }) {
+export function MoveButtons({ index, total, onMove, earlierLabel, laterLabel, vertical = false }) {
   const arrow = (to, label, symbol) => {
     const blocked = to < 0 || to >= total;
     return (
@@ -16,8 +16,8 @@ export function MoveButtons({ index, total, onMove, earlierLabel, laterLabel }) 
   };
   return (
     <>
-      {arrow(index - 1, earlierLabel, '←')}
-      {arrow(index + 1, laterLabel, '→')}
+      {arrow(index - 1, earlierLabel, vertical ? '↑' : '←')}
+      {arrow(index + 1, laterLabel, vertical ? '↓' : '→')}
     </>
   );
 }

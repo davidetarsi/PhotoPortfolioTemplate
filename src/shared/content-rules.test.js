@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   SLUG_RE, RESERVED_SLUGS, TEMPLATE_ROUTES, PHOTO_NAME_RE, MAX_PHOTO_BYTES, slugifyTitle,
-  validateSiteShape, validateAlbumsShape, validateManifestShape, validateConfigShape,
+  validateSiteShape, validateAlbumsShape, validateManifestShape, validateConfigShape, isLinkUrl,
 } from './content-rules.js';
 
 describe('regex e costanti', () => {
@@ -131,5 +131,15 @@ describe('validateConfigShape', () => {
     expect(validateConfigShape({ r2PublicUrl: 42 }).ok).toBe(false);
     expect(validateConfigShape(null).ok).toBe(false);
     expect(validateConfigShape({}).ok).toBe(false);
+  });
+});
+
+describe('isLinkUrl', () => {
+  it('accepts https:// and mailto: without spaces, as the site validator does', () => {
+    expect(isLinkUrl('https://instagram.com/x')).toBe(true);
+    expect(isLinkUrl('mailto:a@b.c')).toBe(true);
+    expect(isLinkUrl('http://x.com')).toBe(false);
+    expect(isLinkUrl('https://a b')).toBe(false);
+    expect(isLinkUrl(undefined)).toBe(false);
   });
 });
