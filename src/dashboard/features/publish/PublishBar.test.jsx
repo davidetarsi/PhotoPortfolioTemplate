@@ -5,6 +5,7 @@ import { texts } from '../../../../config/texts.config.js';
 import { formatText } from '../../../utils/formatText.js';
 import { MESSAGE_MS, PublishBar, describeChange, describeProblem } from './PublishBar.jsx';
 import { useSaveQueue } from '../../api/drafts.jsx';
+import { useIsPublishing } from '../../api/queries.js';
 import { fakeWorker, installDialogPolyfill, makeQueryClient, renderWithQuery } from '../../test-utils.jsx';
 
 const t = texts.admin.publish;
@@ -12,6 +13,10 @@ beforeAll(installDialogPolyfill);
 
 const STATUS_DRAFT = { hasDraft: true, publishing: false, changes: [{ type: 'site' }, { type: 'album-added', slug: 'notte' }] };
 const STATUS_CLEAN = { hasDraft: false, publishing: false, changes: [] };
+
+function PublicationState() {
+  return <output>{useIsPublishing() ? 'publication-active' : 'publication-idle'}</output>;
+}
 
 describe('PublishBar', () => {
   it('is hidden when everything is published', async () => {
@@ -161,6 +166,21 @@ describe('PublishBar', () => {
     renderWithQuery(<PublishBar />);
     expect(await screen.findByRole('button', { name: t.resume })).toBeTruthy();
     expect(screen.queryByRole('button', { name: t.discard })).toBeNull();
+  });
+
+  it('counts only a publication mutation in this tab as active, even when the server says resume', async () => {
+    let finish;
+    fakeWorker({
+      'GET /api/admin/draft/status': { ...STATUS_DRAFT, publishing: true },
+      'POST /api/admin/publish': () => new Promise(resolve => { finish = () => resolve({ done: true, copied: 0, remaining: 0 }); }),
+    });
+    renderWithQuery(<><PublishBar /><PublicationState /></>);
+
+    fireEvent.click(await screen.findByRole('button', { name: t.resume }));
+    expect(await screen.findByText('publication-active')).toBeTruthy();
+    await act(async () => finish());
+    expect(await screen.findByText('publication-idle')).toBeTruthy();
+    expect(screen.getByRole('button', { name: t.resume })).toBeTruthy();
   });
 
   it('stops asking when the publication does not move forward', async () => {

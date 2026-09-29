@@ -215,6 +215,7 @@ export const texts = {
       movePhotoEarlier: 'Sposta la foto {n} prima',
       movePhotoLater: 'Sposta la foto {n} dopo',
       deletePhotoBody: 'Sparisce dal sito quando pubblichi.',
+      deletePhotoUnpublished: 'Se non è mai stata pubblicata, la copia in attesa viene rimossa subito.',
       deleteAlbum: 'Elimina l\'album',
       deleteAlbumTitle: 'Eliminare «{album}»?',
       deleteAlbumBody: 'L\'album e le sue foto spariscono dal sito quando pubblichi.',

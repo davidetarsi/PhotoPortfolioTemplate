@@ -97,12 +97,12 @@ export function AlbumScreen() {
       )}
 
       <div className="dash-album__danger">
-        <Button variant="danger" onClick={() => setDeletingAlbum(true)} disabled={publishing || uploading}>{t.deleteAlbum}</Button>
+        <Button variant="danger" onClick={() => setDeletingAlbum(true)} disabled={!photos || publishing || uploading}>{t.deleteAlbum}</Button>
       </div>
 
       <ConfirmDialog open={deletingPhoto !== null}
         title={formatText(t.confirmDeletePhoto, { nome: deletingPhoto ?? '' })}
-        body={isHero(deletingPhoto) ? `${t.deletePhotoBody} ${t.heroGoes}` : t.deletePhotoBody}
+        body={`${t.deletePhotoBody} ${t.deletePhotoUnpublished}${isHero(deletingPhoto) ? ` ${t.heroGoes}` : ''}`}
         confirmLabel={t.deletePhoto} cancelLabel={t.cancel}
         onConfirm={() => deletePhoto(deletingPhoto)} onCancel={() => setDeletingPhoto(null)} />
       <ConfirmDialog open={deletingAlbum}

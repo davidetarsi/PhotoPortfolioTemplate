@@ -86,6 +86,7 @@ describe('open album', () => {
     renderAt('/album/notte');
     fireEvent.click(await screen.findByRole('button', { name: `${t.deletePhoto} · Photo 2` }));
     const dialog = await screen.findByRole('alertdialog');
+    expect(dialog.textContent).toContain(t.deletePhotoUnpublished);
     fireEvent.click(within(dialog).getByRole('button', { name: t.deletePhoto }));
     await waitFor(() => expect(photoNames()).toEqual(['a.webp', 'c.webp']));
     await act(() => queue.flush());
@@ -164,6 +165,7 @@ describe('open album', () => {
     renderAt('/album/notte');
     fireEvent.click(await screen.findByRole('button', { name: t.deleteAlbum }));
     const dialog = await screen.findByRole('alertdialog');
+    expect(dialog.textContent).toContain(t.deleteAlbumBody);
     expect(dialog.textContent).toContain(t.heroGoes);
     fireEvent.click(within(dialog).getByRole('button', { name: t.deleteAlbum }));
     await act(() => queue.flush());
@@ -175,5 +177,51 @@ describe('open album', () => {
     renderAt('/album/notte');
     fireEvent.click(await screen.findByRole('button', { name: `${t.deletePhoto} · Photo 2` }));
     expect((await screen.findByRole('alertdialog')).textContent).not.toContain(t.heroGoes);
+  });
+
+  it('distinguishes a failed manifest read from an empty album and blocks deletion with unknown photos', async () => {
+    worker({ 'GET /api/admin/draft/albums/notte/manifest': { status: 500, body: { error: 'STORAGE_ERROR' } } });
+    renderAt('/album/notte');
+    expect((await screen.findByRole('alert')).textContent).toBe(t.manifestError);
+    expect(screen.queryByText(t.empty)).toBeNull();
+    expect(screen.getByRole('button', { name: t.deleteAlbum }).disabled).toBe(true);
+  });
+
+  it('does not lock photo controls for an interrupted server publication', async () => {
+    worker({ 'GET /api/admin/draft/status': { hasDraft: true, publishing: true, changes: [{ type: 'photos-added', slug: 'notte', count: 1 }] } });
+    renderAt('/album/notte');
+    expect(await screen.findByRole('button', { name: `${t.coverAsButton} · Photo 2` })).toBeTruthy();
+    expect(screen.getByRole('button', { name: `${t.coverAsButton} · Photo 2` }).disabled).toBe(false);
+    expect(screen.getByRole('button', { name: `${t.deletePhoto} · Photo 2` }).disabled).toBe(false);
+  });
+
+  it('locks cover and photo deletion only while this tab is resuming publication', async () => {
+    let finish;
+    fakeWorker({
+      'GET /api/admin/draft': DRAFT,
+      'GET /api/admin/draft/status': { hasDraft: true, publishing: true, changes: [{ type: 'photos-added', slug: 'notte', count: 1 }] },
+      'GET /api/admin/draft/albums/notte/manifest': [[photo('a.webp'), photo('b.webp')]],
+      'POST /api/admin/publish': () => new Promise(resolve => { finish = () => resolve({ done: true, copied: 0, remaining: 0 }); }),
+    });
+    const router = createMemoryRouter(routes, { initialEntries: ['/album/notte'] });
+    render(<Providers client={makeQueryClient()}>
+      <QueueSpy />
+      <RouterProvider router={router} />
+    </Providers>);
+
+    const cover = await screen.findByRole('button', { name: `${t.coverAsButton} · Photo 2` });
+    const deletePhoto = screen.getByRole('button', { name: `${t.deletePhoto} · Photo 2` });
+    expect(cover.disabled).toBe(false);
+    expect(deletePhoto.disabled).toBe(false);
+    fireEvent.click(await screen.findByRole('button', { name: texts.admin.publish.resume }));
+    await waitFor(() => {
+      expect(cover.disabled).toBe(true);
+      expect(deletePhoto.disabled).toBe(true);
+    });
+    await act(async () => finish());
+    await waitFor(() => {
+      expect(cover.disabled).toBe(false);
+      expect(deletePhoto.disabled).toBe(false);
+    });
   });
 });

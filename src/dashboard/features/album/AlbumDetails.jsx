@@ -43,6 +43,7 @@ export function AlbumDetails({ album, onChange }) {
       <label htmlFor={titleId} className="dash-label">{t.titleLabel}</label>
       <input id={titleId} className="dash-input dash-album-details__title" value={title}
         aria-invalid={titleMissing ? 'true' : undefined} aria-describedby={titleMissing ? errorId : undefined}
+        onBlur={() => { if (!title.trim()) setTitle(album.title); }}
         onChange={event => { setTitle(event.target.value); change(event.target.value, description); }} />
       {titleMissing && <p id={errorId} className="dash-form__error" role="alert">{t.titleRequired}</p>}
       <label htmlFor={descriptionId} className="dash-label">{t.subtitleLabel}</label>
