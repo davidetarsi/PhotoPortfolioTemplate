@@ -1,0 +1,21 @@
+.dash-messages { width: min(100%, 54rem); margin-inline: auto; }
+.dash-messages__list { display: grid; gap: 0.85rem; }
+.dash-message {
+  min-width: 0; padding: 1rem 1.1rem; border: 1px solid var(--admin-line);
+  border-radius: 0.75rem; background: var(--admin-surface);
+}
+.dash-message__header { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }
+.dash-message__sender { margin: 0; font: 500 1.05rem/1.3 var(--admin-font-display); overflow-wrap: anywhere; }
+.dash-message__date { flex: 0 0 auto; color: var(--admin-muted); font: 0.75rem/1.3 var(--admin-font-mono); }
+.dash-message__subject { margin: 0.8rem 0 0; font-size: 0.95rem; overflow-wrap: anywhere; }
+.dash-message__email { margin: 0.45rem 0 0; color: var(--admin-muted); font-size: 0.85rem; overflow-wrap: anywhere; }
+.dash-message__body { margin: 0.85rem 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.dash-message__actions { display: flex; align-items: center; gap: 1rem; margin-top: 1rem; }
+.dash-message__reply, .dash-message__delete { color: var(--admin-accent); font: inherit; }
+.dash-message__delete { padding: 0; border: 0; background: none; cursor: pointer; text-decoration: underline; }
+.dash-messages__notice { color: var(--admin-ok); }
+
+@media (max-width: 480px) {
+  .dash-message { padding: 0.85rem; }
+  .dash-message__header { align-items: flex-start; flex-direction: column; gap: 0.35rem; }
+}
