@@ -5,7 +5,7 @@ import { formatText } from '../../../utils/formatText.js';
 import { partitionBySupport, processFile } from '../../lib/pipeline.js';
 import { runBatch } from '../../lib/upload-manager.js';
 import { ApiError, request, upload } from '../../api/client.js';
-import { fetchFreshManifest } from '../../api/drafts.jsx';
+import { fetchFreshManifest, fetchFreshManifestSnapshot } from '../../api/drafts.jsx';
 
 const t = texts.admin.album;
 const UploadContext = createContext(null);
@@ -72,15 +72,23 @@ export function UploadProvider({ children }) {
     const mutation = client.getMutationCache().build(client, {
       mutationKey: key,
       mutationFn: async () => {
-        const [processOne, draft, published] = await Promise.all([
+        const [processOne, snapshot, published] = await Promise.all([
           makeProcessFileImpl(),
-          fetchFreshManifest(client, slug),
+          fetchFreshManifestSnapshot(client, slug),
           publishedNames(slug),
         ]);
-        const before = new Set([...draft.map(photo => photo.name), ...published]);
+        const draft = snapshot.manifest;
+        const draftNames = new Set(draft.map(photo => photo.name));
+        const networkOnly = snapshot.network.filter(photo => !draftNames.has(photo.name));
+        const knownDraftNames = new Set([...draftNames, ...snapshot.network.map(photo => photo.name)]);
+        const before = new Set([...knownDraftNames, ...published]);
         return runBatch({
           files: supported,
-          existingManifest: [...draft, ...published.filter(name => !draft.some(photo => photo.name === name)).map(name => ({ name }))],
+          existingManifest: [
+            ...draft,
+            ...networkOnly,
+            ...published.filter(name => !knownDraftNames.has(name)).map(name => ({ name })),
+          ],
           processFile: processOne,
           uploadPhoto: (name, blob) => upload(`/api/admin/staging/${slug}/${encodeURIComponent(name)}`, blob),
           putManifest: async entries => {

@@ -225,7 +225,7 @@ The `/admin` React dashboard is where you edit the site while it's running:
 - **Album view** — upload photos, reorder or delete them, then publish the draft
 - **Messages** — read, reply to, or delete contact form submissions; messages stay in the private bucket
 
-The files in `config/` provide the initial seed. Dashboard edits are saved to a draft in the private R2 bucket and become public only when you choose **Publish**. Publishing changes data in R2; it does not require a code deploy. If a publish is interrupted, resume it from the dashboard. Two windows can be used sequentially: each upload batch rereads saved photo names when it starts. Do not run batches or make edits in both windows simultaneously; concurrent changes are not coordinated.
+The files in `config/` provide the initial seed. Dashboard edits are saved to a draft in the private R2 bucket and become public only when you choose **Publish**. Publishing changes data in R2; it does not require a code deploy. If a publish is interrupted, resume it from the dashboard. Two windows can be used sequentially: each upload batch rereads saved photo names when it starts. Do not run batches or make edits in both windows simultaneously; concurrent changes are not coordinated. For browser QA, run upload, delete, and publish actions only against a demonstrated disposable dataset; never use real staging or production data.
 
 ## 🎨 Customizing
 

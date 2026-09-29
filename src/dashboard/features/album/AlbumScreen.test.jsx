@@ -4,6 +4,7 @@ import { createMemoryRouter, RouterProvider } from 'react-router';
 import { texts } from '../../../../config/texts.config.js';
 import { routes } from '../../App.jsx';
 import { useSaveQueue } from '../../api/drafts.jsx';
+import { keys } from '../../api/queries.js';
 import { fakeWorker, installDialogPolyfill, makeQueryClient, Providers } from '../../test-utils.jsx';
 
 const t = texts.admin.album;
@@ -15,10 +16,12 @@ const STATUS = { hasDraft: false, publishing: false, changes: [] };
 const photo = name => ({ name, width: 4, height: 3 });
 
 let queue;
+let queryClient;
 function QueueSpy() { queue = useSaveQueue(); return null; }
 function renderAt(path) {
   const router = createMemoryRouter(routes, { initialEntries: [path] });
-  render(<Providers client={makeQueryClient()}><QueueSpy /><RouterProvider router={router} /></Providers>);
+  queryClient = makeQueryClient();
+  render(<Providers client={queryClient}><QueueSpy /><RouterProvider router={router} /></Providers>);
   return router;
 }
 function worker(extra = {}) {
@@ -185,6 +188,23 @@ describe('open album', () => {
     expect((await screen.findByRole('alert')).textContent).toBe(t.manifestError);
     expect(screen.queryByText(t.empty)).toBeNull();
     expect(screen.getByRole('button', { name: t.deleteAlbum }).disabled).toBe(true);
+  });
+
+  it('blocks every manifest-dependent action after a refetch fails while stale photos remain visible', async () => {
+    const fetchMock = worker({
+      'GET /api/admin/draft/albums/notte/manifest': [[photo('a.webp'), photo('b.webp')], { status: 500, body: { error: 'STORAGE_ERROR' } }],
+    });
+    renderAt('/album/notte');
+    const cover = await screen.findByRole('button', { name: `${t.coverAsButton} · Photo 2` });
+    await act(() => queryClient.refetchQueries({ queryKey: keys.manifest('notte') }));
+    expect(await screen.findByRole('alert')).toHaveProperty('textContent', t.manifestError);
+    expect(photoNames()).toEqual(['a.webp', 'b.webp']);
+    expect(document.querySelector('input[type=file]').disabled).toBe(true);
+    expect(screen.getByRole('button', { name: texts.admin.albums.reorder }).disabled).toBe(true);
+    expect(cover.disabled).toBe(true);
+    expect(screen.getByRole('button', { name: `${t.deletePhoto} · Photo 2` }).disabled).toBe(true);
+    expect(screen.getByRole('button', { name: t.deleteAlbum }).disabled).toBe(true);
+    expect(fetchMock.mock.calls.some(([path, init]) => path === '/api/admin/staging/notte/b.webp' && init?.method === 'DELETE')).toBe(false);
   });
 
   it('does not lock photo controls for an interrupted server publication', async () => {

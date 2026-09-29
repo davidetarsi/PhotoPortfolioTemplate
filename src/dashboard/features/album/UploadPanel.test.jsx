@@ -249,6 +249,30 @@ describe('UploadPanel', () => {
       .toContain('/api/admin/staging/notte/bosco-2.webp');
   });
 
+  it('reserves a network-saved name even when a stale local queued manifest overlays the reread', async () => {
+    let setLatest;
+    const fetchMock = worker({
+      'GET /api/admin/draft/albums/notte/manifest': [[{ name: 'a.webp' }], [{ name: 'a.webp' }, { name: 'bosco.webp' }]],
+      'GET /api/data/albums/notte/manifest': [[]],
+      'PUT /api/admin/staging/notte/bosco-2.webp': { ok: true },
+    });
+    function RealPanel() {
+      queue = useSaveQueue();
+      const manifest = useManifest('notte');
+      setLatest = manifest.setManifest;
+      if (!manifest.photos) return null;
+      return <UploadPanel slug="notte" photos={manifest.photos} setManifest={manifest.setManifest} makeProcessFileImpl={makeProcessFileImpl} />;
+    }
+    renderUpload(<RealPanel />);
+    await waitFor(() => expect(document.querySelector('input[type=file]')).not.toBeNull());
+    act(() => { queue.pause(); setLatest([{ name: 'a.webp' }, { name: 'stale-local.webp' }]); });
+    choose([file('bosco.jpg')]);
+    await waitFor(() => expect(fetchMock.mock.calls.filter(([path, init]) => init?.method === 'PUT').map(([path]) => path))
+      .toEqual(['/api/admin/staging/notte/bosco-2.webp']));
+    expect(await findSummary(t.uploadSuccessOne)).toBeTruthy();
+    expect(fetchMock.mock.calls.some(([path, init]) => path === '/api/admin/draft/albums/notte/manifest' && init?.method === 'PUT')).toBe(false);
+  });
+
   it('keeps a local reorder and deletion when adding successful uploads', async () => {
     let finishProcessing;
     let setLatest;

@@ -55,16 +55,21 @@ export function overlayUnsaved(queryKey, data, queue) {
   return data;
 }
 
-/** Reads an album manifest from the network and returns its cache value after queued edits are overlaid. */
-export async function fetchFreshManifest(client, slug) {
+/** Reads an album manifest and returns both the network snapshot and the queued cache overlay. */
+export async function fetchFreshManifestSnapshot(client, slug) {
   const queryKey = keys.manifest(slug);
   await client.cancelQueries({ queryKey });
-  await client.fetchQuery({
+  const network = await client.fetchQuery({
     queryKey,
     queryFn: () => request(`/api/admin/draft/albums/${slug}/manifest`),
     staleTime: 0,
   });
-  return client.getQueryData(queryKey);
+  return { network, manifest: client.getQueryData(queryKey) };
+}
+
+/** Reads an album manifest from the network and returns its cache value after queued edits are overlaid. */
+export async function fetchFreshManifest(client, slug) {
+  return (await fetchFreshManifestSnapshot(client, slug)).manifest;
 }
 
 /** Provides the save queue to the dashboard; warns before leaving with unsaved changes. */

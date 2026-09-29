@@ -42,6 +42,14 @@ describe('MessagesScreen', () => {
     expect(within(row).getByRole('link', { name: t.reply }).getAttribute('href')).toBe('mailto:ada@example.test');
   });
 
+  it('does not treat a saved email query as mailto headers', async () => {
+    fakeWorker({ 'GET /api/admin/messages': { messages: [message({ email: 'victim@example.com?bcc=attacker%40example.com' })] } });
+    renderScreen();
+    const row = await screen.findByRole('article');
+    expect(within(row).getByText('victim@example.com?bcc=attacker%40example.com')).toBeTruthy();
+    expect(within(row).queryByRole('link', { name: t.reply })).toBeNull();
+  });
+
   it('omits an absent subject', async () => {
     fakeWorker({ 'GET /api/admin/messages': { messages: [message()] } });
     renderScreen();

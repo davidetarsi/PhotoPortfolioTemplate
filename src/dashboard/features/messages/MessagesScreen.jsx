@@ -6,6 +6,11 @@ import { useDeleteMessage, useMessages } from '../../api/messages.js';
 import { ConfirmDialog } from '../../ui/ConfirmDialog.jsx';
 import './messages.css';
 
+// These URI delimiters can turn visitor data into mailto headers or extra recipients.
+const isReplyableEmail = email => typeof email === 'string'
+  && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+  && !/[?&#%,;\\/]/.test(email);
+
 const t = texts.admin.messages;
 
 /** Messages received through the public contact form. */
@@ -50,7 +55,7 @@ export function MessagesScreen() {
               <p className="dash-message__email">{message.email}</p>
               <p className="dash-message__body">{message.message}</p>
               <div className="dash-message__actions">
-                <a className="dash-message__reply" href={`mailto:${message.email}`}>{t.reply}</a>
+                {isReplyableEmail(message.email) && <a className="dash-message__reply" href={`mailto:${message.email}`}>{t.reply}</a>}
                 <button className="dash-message__delete" type="button" onClick={() => { deletion.reset(); setConfirming(message); }}>
                   {t.delete}
                 </button>

@@ -227,7 +227,7 @@ La dashboard React `/admin` è il posto dove modifichi il sito mentre è in funz
 - **Vista album** — carica foto, riordinale o eliminale, poi pubblica la bozza
 - **Messaggi** — leggi, rispondi o elimina i messaggi del form; restano nel bucket privato
 
-I file in `config/` forniscono il seed iniziale. Le modifiche dalla dashboard si salvano in una bozza nel bucket R2 privato e diventano pubbliche solo scegliendo **Pubblica**. La pubblicazione aggiorna i dati su R2 e non richiede un deploy del codice. Se viene interrotta, riprendila dalla dashboard. Puoi usare due finestre in sequenza: ogni nuovo caricamento rilegge i nomi delle foto già salvati. Non avviare caricamenti o modifiche contemporaneamente nelle due finestre: le modifiche simultanee non sono coordinate.
+I file in `config/` forniscono il seed iniziale. Le modifiche dalla dashboard si salvano in una bozza nel bucket R2 privato e diventano pubbliche solo scegliendo **Pubblica**. La pubblicazione aggiorna i dati su R2 e non richiede un deploy del codice. Se viene interrotta, riprendila dalla dashboard. Puoi usare due finestre in sequenza: ogni nuovo caricamento rilegge i nomi delle foto già salvati. Non avviare caricamenti o modifiche contemporaneamente nelle due finestre: le modifiche simultanee non sono coordinate. Per i test browser, esegui caricamenti, eliminazioni e pubblicazioni solo su un dataset usa e getta di cui hai verificato l'isolamento; mai sui dati reali di staging o produzione.
 
 ## 🎨 Personalizzazione
 

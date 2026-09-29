@@ -53,6 +53,7 @@ export function AlbumScreen() {
   const clearHero = () => setSite(prev => ({ ...prev, hero: null }), { now: true });
 
   const deletePhoto = name => {
+    if (manifestError || !photos) return;
     if (isHero(name)) clearHero();
     setManifest(prev => prev.filter(photo => photo.name !== name));
     if (album.coverName === name) updateAlbum({ coverName: null });
@@ -63,6 +64,7 @@ export function AlbumScreen() {
   };
 
   const deleteAlbum = () => {
+    if (manifestError || !photos) return;
     if (heroHere) clearHero();
     setAlbums(prev => prev.filter(item => item.slug !== slug), { now: true });
     setDeletingAlbum(false);
@@ -79,25 +81,25 @@ export function AlbumScreen() {
         <p className="dash-label">{photos ? photoCount(photos.length) : ''}</p>
         <div className="dash-screen-head__actions">
           {photos?.length > 1 && (
-            <Button onClick={() => setReordering(value => !value)} aria-pressed={reordering}>
+            <Button onClick={() => setReordering(value => !value)} aria-pressed={reordering} disabled={manifestError}>
               {reordering ? texts.admin.albums.reorderDone : texts.admin.albums.reorder}
             </Button>
           )}
         </div>
       </div>
 
-      {photos && <UploadPanel slug={slug} photos={photos} setManifest={setManifest} />}
+      {photos && <UploadPanel slug={slug} setManifest={setManifest} disabled={manifestError} />}
       {manifestError && <p className="dash-form__error" role="alert">{t.manifestError}</p>}
       {photos?.length === 0 && <p className="dash-empty">{t.empty}</p>}
       {photos?.length > 0 && (
-        <PhotoGrid slug={slug} photos={photos} coverName={album.coverName} reordering={reordering} disabled={publishing}
-          onMove={(from, to) => setManifest(prev => moveItem(prev, from, to))}
-          onCover={name => updateAlbum({ coverName: name })}
-          onDelete={name => setDeletingPhoto(name)} />
+        <PhotoGrid slug={slug} photos={photos} coverName={album.coverName} reordering={reordering && !manifestError} disabled={manifestError || publishing}
+          onMove={(from, to) => { if (!manifestError) setManifest(prev => moveItem(prev, from, to)); }}
+          onCover={name => { if (!manifestError) updateAlbum({ coverName: name }); }}
+          onDelete={name => { if (!manifestError) setDeletingPhoto(name); }} />
       )}
 
       <div className="dash-album__danger">
-        <Button variant="danger" onClick={() => setDeletingAlbum(true)} disabled={!photos || publishing || uploading}>{t.deleteAlbum}</Button>
+        <Button variant="danger" onClick={() => setDeletingAlbum(true)} disabled={!photos || manifestError || publishing || uploading}>{t.deleteAlbum}</Button>
       </div>
 
       <ConfirmDialog open={deletingPhoto !== null}
