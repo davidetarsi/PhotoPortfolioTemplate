@@ -2,7 +2,7 @@
 
 # 📷 Photo Portfolio
 
-**Un portfolio fotografico che si aggiorna da solo: carichi le foto da una dashboard, e sono online.**
+**Un portfolio fotografico che aggiorni da una dashboard e pubblichi quando è pronto.**
 
 Niente database. Nessun server da mantenere. Zero euro al mese.
 
@@ -52,16 +52,16 @@ Niente database. Nessun server da mantenere. Zero euro al mese.
 
 I portfolio per fotografi finiscono quasi sempre in uno di due posti: un abbonamento mensile a una piattaforma che decide come deve apparire il tuo lavoro, oppure un sito statico che ti obbliga a ricompilare e ridistribuire ogni volta che aggiungi una foto.
 
-Questo template sta nel mezzo. Il sito è statico e velocissimo, ma le foto vivono su un bucket **Cloudflare R2** e si caricano da una **dashboard protetta da login**: le aggiungi, le riordini, scegli la copertina, e il sito cambia subito — senza toccare il codice, senza fare un deploy.
+Questo template sta nel mezzo. Il sito è statico e velocissimo, ma le foto vivono su un bucket **Cloudflare R2** e si gestiscono da una **dashboard protetta da login**: le aggiungi, le riordini, scegli la copertina, controlli la bozza e pubblichi quando è pronta — senza toccare il codice né ridistribuirlo.
 
 È pensato per **fotografi che sanno programmare**, o per chi allestisce il sito a un amico che fotografa: il primo setup chiede di saper usare git e la console di Cloudflare, tutto il resto no.
 
 ## ✨ Cosa fa
 
 - **Pagine** — home con gli album, pagina album con griglia e lightbox, pagina About con un form di contatto funzionante.
-- **Dashboard `/admin`** — carica foto (compresse nel browser prima dell'invio), riordina per trascinamento o per data, scegli la copertina, crea ed elimina album, modifica nome, bio e social.
-- **Accesso protetto** da Cloudflare Access — si entra con un codice via email, e nessuna password vive nel codice.
-- **Messaggi di contatto privati** — finiscono in un bucket R2 privato, mai in quello pubblico delle foto, e Turnstile tiene fuori lo spam.
+- **Dashboard React `/admin`** — modifica sito e album, guarda l'anteprima, carica e riordina le foto e pubblica quando la bozza è pronta. Le modifiche restano in una bozza privata fino alla pubblicazione.
+- **Accesso protetto** da Cloudflare Access e verifica del JWT nel Worker — le API della dashboard sotto `/api/admin/*` richiedono una sessione autenticata. `/admin` e i suoi sottopercorsi non possono essere incorporati in un frame.
+- **Messaggi di contatto privati** — vengono salvati in un bucket R2 privato e letti o eliminati nella schermata **Messaggi** della dashboard; non finiscono mai nel bucket pubblico delle foto. Turnstile aiuta a tenere fuori lo spam.
 - **Pagine e componenti tuoi** — aggiungi un archivio o una pagina per progetto, oppure sostituisci la landing, la navigazione o la griglia delle foto, da `custom/`, senza modificare i file del template.
 - **Tre aspetti già pronti** per le card degli album, si cambiano con una riga.
 - **Tutto personalizzabile dai file di configurazione** — colori, font, spaziature e testi, compresi quelli della dashboard. L'interfaccia è in inglese, con un preset italiano.
@@ -189,14 +189,16 @@ Il sito e la dashboard partono da questi file: se vuoi, modificali prima, poi fa
 
 ### 7. Entra in `/admin`
 
-Apri `https://il-tuo-dominio/admin`. Cloudflare Access chiede la tua email e ti manda un codice monouso: entrano solo gli indirizzi elencati in `admin_emails`. La prima volta la dashboard parte dal seed: crea un album e salva la sezione del sito, e i dati vengono scritti in R2 — non c'è niente da importare prima. Poi carica qualche foto.
+Apri `https://il-tuo-dominio/admin`. Cloudflare Access chiede la tua email e ti manda un codice monouso: entrano solo gli indirizzi elencati in `admin_emails`. La dashboard React ha le schermate **Album**, **Sito** e **Messaggi**. Le modifiche a sito, album e foto si salvano in una bozza privata; usa **Pubblica** per renderle visibili. **Annulla modifiche** elimina la bozza e le foto in attesa. Una pubblicazione interrotta può essere ripresa dalla dashboard.
+
+Le vecchie route di scrittura diretta della dashboard sono state rimosse. La dashboard usa ora route autenticate per bozza, caricamento, anteprima, pubblicazione e Messaggi sotto `/api/admin/*`; non basare nuove integrazioni sul vecchio flusso di scrittura.
 
 > 💡 `npm run migrate` esiste ancora per un caso: copiare in R2 in un colpo molti album da `config/albums.config.js`. Richiede le credenziali API di R2 in `.env` (vedi `.env.example`), e **lanciarlo dopo aver usato la dashboard riporta tutto al seed**. `npm run upload` usa le stesse credenziali per caricare una cartella già pronta senza passare dalla dashboard.
 
 ### 8. Controlla che tutto funzioni
 
 - La home elenca i tuoi album, e un album mostra le foto che hai caricato.
-- Dalla pagina About mandati un messaggio: compare nella dashboard in **Messaggi**, e come notifica se l'hai configurata.
+- Dalla pagina About mandati un messaggio: compare nella schermata **Messaggi** della dashboard e come notifica se l'hai configurata. Il Worker lo legge dal bucket privato attraverso l'API autenticata dei Messaggi.
 - `https://<worker>.<account>.workers.dev` non risponde più; se hai collegato il dominio a mano o attivato lo staging risponde ancora, e lì `/admin` non deve farti entrare.
 
 Esiste un ambiente di staging facoltativo, ma non è pronto all'uso per una prima installazione: vedi [`docs/staging.md`](docs/staging.md) *(in inglese)*.
@@ -218,14 +220,14 @@ Esiste un ambiente di staging facoltativo, ma non è pronto all'uso per una prim
 
 ## 🖼️ Come si usa il sito una volta online
 
-La dashboard `/admin` è il posto dove dai forma al sito mentre è in funzione:
+La dashboard React `/admin` è il posto dove modifichi il sito mentre è in funzione:
 
-- **Sezione Sito** — modifica nome, bio, hero, link social
-- **Sezione Album** — aggiungi album, modificane titolo e descrizione
-- **Vista album** — carica foto, riordinale, eliminale
-- **Sezione Messaggi** — leggi ed elimina ciò che i visitatori mandano dal form di contatto
+- **Sito** — modifica nome, bio, hero, link e alcuni testi; guarda l'anteprima della bozza
+- **Album** — aggiungi album e modificane titolo e descrizione
+- **Vista album** — carica foto, riordinale o eliminale, poi pubblica la bozza
+- **Messaggi** — leggi, rispondi o elimina i messaggi del form; restano nel bucket privato
 
-I file in `config/` sono solo il seed iniziale — dopo il primo salvataggio da `/admin`, la verità è R2. Le modifiche fatte dalla dashboard sono online subito, senza deploy.
+I file in `config/` forniscono il seed iniziale. Le modifiche dalla dashboard si salvano in una bozza nel bucket R2 privato e diventano pubbliche solo scegliendo **Pubblica**. La pubblicazione aggiorna i dati su R2 e non richiede un deploy del codice. Se viene interrotta, riprendila dalla dashboard. Puoi usare due finestre in sequenza: ogni nuovo caricamento rilegge i nomi delle foto già salvati. Non avviare caricamenti o modifiche contemporaneamente nelle due finestre: le modifiche simultanee non sono coordinate.
 
 ## 🎨 Personalizzazione
 
@@ -250,7 +252,7 @@ src/shared/      ← regole condivise da sito, dashboard e Worker (slug, validaz
 src/api/         ← l'API pubblica: l'unica cosa che custom/ può importare
 src/worker.js    ← Cloudflare Worker
 src/core/        ← registro degli slot e ciclo di vita delle pagine: le parti che un fork può sostituire
-src/admin/       ← la dashboard /admin
+src/dashboard/   ← dashboard React /admin e le sue schermate
 custom.example/  ← esempio di custom/, dove un fork sostituisce parti del sito
 infra/           ← configurazione Terraform (facoltativa)
 scripts/         ← strumenti: setup, setup:secrets, migrate, upload, compress
@@ -298,7 +300,6 @@ Se hai corretto qualcosa nel tuo fork, valuta di aprire una pull request: chi ar
 
 Dove andrà probabilmente. Sono intenzioni, non promesse:
 
-- **Anteprima prima di pubblicare.** Oggi caricare, riordinare ed eliminare foto ha effetto immediato. L'idea è farle restare in bozza, guardabili prima che vadano online — come già funziona per nome e bio.
 - **Anteprime social per home e about.** I link agli album mostrano già titolo e copertina propri. Home e about usano ancora i valori scritti al build; servirle attraverso il Worker permetterebbe anche a loro di seguire le modifiche fatte dalla dashboard, al costo di una chiamata al Worker a ogni visita della home.
 - **Un tema chiaro già pronto.** Ora che ogni colore vive in `theme/tokens.css`, aggiungere una seconda palette è soprattutto questione di scegliere buoni valori.
 - **Altre varianti di card**, se le tre incluse non coprono quello che serve.

@@ -8,9 +8,9 @@ This template handles three distinct customization areas: **content**, **appeara
 
 ### Content — Lives on R2, changed from the dashboard
 
-Photographer name, bio, hero image, albums, photos: all of this at **runtime** lives on R2 and is modified from the **admin dashboard** `/admin`. The files in `config/site.config.js` and `config/albums.config.js` are just the **initial seed**, used once by `npm run migrate` to populate R2 on first run.
+Photographer name, bio, hero image, albums, and photos are edited in the React **admin dashboard** at `/admin`. Changes are saved as a draft in the private R2 bucket; they become public only after you choose **Publish**. The files in `config/site.config.js` and `config/albums.config.js` provide the initial seed used when the site has no saved data.
 
-**Important:** running `npm run migrate` again after using the dashboard will reset the name, bio, hero, and albums to seed values, **erasing all dashboard changes**. The command now refuses to do this without `--force`, and it's crucial to understand why.
+**Important:** running `npm run migrate` again after using the dashboard will reset the name, bio, hero, and albums to seed values, **erasing saved dashboard data**. The command now refuses to do this without `--force`, and it's crucial to understand why.
 
 ### Appearance and UI text — Live in files
 
@@ -40,9 +40,9 @@ Buckets, domains, Access applications: this configuration lives in `infra/variab
 | **Album card appearance** | `theme/card.css`: activate one of three `@import` | `cinematic` (default), `editorial`, `minimal`. See section below |
 | **Home page landing** (hero and album cards) | `custom/`: copy `custom.example/` and replace the `landing` slot | Your own component, no template file edited. See [Replacing a whole part](#replacing-a-whole-part-custom) and `docs/slots.md` |
 | **Admin dashboard background** | `config/admin.config.js`, `backgroundImageUrl` field | URL of a photo already uploaded to R2 |
-| **Who can access `/admin`** | `infra/variables.tf`, `admin_emails` field (Terraform) or dashboard Access for `/admin` and `/api/admin` paths (manual) | Requires Terraform apply or manual Access modification. See [runbook](docs/runbook-cloudflare.md). |
+| **Who can access `/admin`** | `infra/variables.tf`, `admin_emails` field (Terraform) or Cloudflare Access for `/admin` and `/api/admin` paths (manual) | Access protects the dashboard and API; the Worker also validates Access JWTs on every admin API request. See [runbook](docs/runbook-cloudflare.md). |
 | **Photo domain** | `infra/variables.tf`, `custom_photo_domain` (Terraform), or dashboard R2 (manual) | See [runbook section 8](docs/runbook-cloudflare.md#8-custom-domain-for-photos). Do once before production. |
-| **Where contact messages go** | Nothing to configure — the Worker stores them on R2 and you read them in `/admin` | No third-party service, no extra account |
+| **Where contact messages go** | Nothing to configure — the Worker stores them in the private R2 bucket; read them in the dashboard's **Messages** screen | The authenticated Worker API lists and deletes messages; they are never read from the public photo bucket |
 | **Notification when a message arrives** | `npx wrangler secret put CONTACT_NOTIFY_URL` | Any service that accepts a POST. Three recipes in [runbook section 9](docs/runbook-cloudflare.md#9-contact-form-notifications-and-spam-protection) |
 | **Spam protection** | `TURNSTILE_SITEKEY` in `wrangler.json` + `npx wrangler secret put TURNSTILE_SECRET` | An empty sitekey turns it off. See [runbook section 9](docs/runbook-cloudflare.md#9-contact-form-notifications-and-spam-protection) |
 | **Security headers / CSP** | — Do not touch — | Generated from `wrangler.json` during build. See CSP plugin in `vite.config.js`. |
@@ -110,7 +110,7 @@ h1, h2, h3 {
 
 ### Behavior (`src/`)
 
-Files in `src/` are the application's behavior: modifying them creates conflicts on future template merges. Keep customizations in `config/`, `theme/` and `custom/`, the designated extension points: to replace a whole part of the site, use `custom/` (see below) instead of editing `src/`.
+Files in `src/` are the application's behavior: modifying them creates conflicts on future template merges. The React dashboard lives in `src/dashboard/`. Keep customizations in `config/`, `theme/` and `custom/`, the designated extension points: to replace a whole part of the site, use `custom/` (see below) instead of editing `src/`.
 
 Exception: if you fix a bug or add a feature to the template itself, do it in `src/`, but contribute it back to the repository you forked from — so the next fork of your copy has it already.
 
@@ -121,6 +121,8 @@ Names, email addresses and whatever someone chose to write, sitting in your buck
 
 - The dashboard lets you **delete** a message. That is not a convenience — it is the reason you are allowed to keep the others.
 - The notification you receive contains **only the sender's name and a link**, never the message. That is deliberate: a notification channel may be readable by others, and what leaves your bucket does not come back.
+
+The **Messages** screen uses the authenticated Worker API and reads only from the private bucket. The previous direct-write dashboard routes have been removed; site and album changes now go through a private draft, with separate staging and publish steps. `/admin` and all `/admin/*` paths send anti-framing headers, so the dashboard cannot be embedded in an iframe.
 
 ### `wrangler.json`
 
@@ -159,7 +161,7 @@ git push
 
 Deploy starts automatically via Cloudflare Git integration. Changes are live in minutes, no manual work.
 
-Changes made from the dashboard (`/admin`) are already live and need no deploy — they're just data on R2.
+Dashboard changes at `/admin` are saved to a private draft first. Choose **Publish** to apply the draft to the public R2 data; this does not require a code deploy. If publication is interrupted, resume it in the dashboard. Two windows can be used sequentially: each upload batch rereads saved photo names when it starts. Do not run batches or make edits in both windows simultaneously; concurrent changes are not coordinated.
 
 ---
 
@@ -207,7 +209,7 @@ It generates WebP at 1900px on the long side, quality 85 — the same settings t
 
 Title, description, and preview image (WhatsApp, Instagram DM, LinkedIn, iMessage…) come from two places:
 
-- **Album pages** (`/<album>`): the Worker writes the album's own title, description, cover and canonical URL into the page, read live from R2. A change made in the dashboard is used by the next share — social networks may still show their cached copy for a while. An album without a cover uses the site's hero photo, and an album without a description uses the site bio, both taken from the site profile in R2 (the one the dashboard edits). An address that is not an album answers 404.
+- **Album pages** (`/<album>`): the Worker writes the album's own title, description, cover and canonical URL into the page, read live from published R2 data. Changes made in the dashboard apply to the next share after you publish them — social networks may still show their cached copy for a while. An album without a cover uses the site's hero photo, and an album without a description uses the site bio, both taken from the published site profile in R2. An address that is not an album answers 404.
 - **Home and about**: injected **at build time** from `site.config.js`, with the image URL built from the photo domain declared in `wrangler.json`. These pages are static files served before the Worker runs, so they keep the build-time values.
 
 Limits to know:

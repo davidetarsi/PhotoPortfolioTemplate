@@ -2,7 +2,7 @@
 
 # 📷 Photo Portfolio
 
-**A photography portfolio that updates itself: you upload photos from a dashboard, and they're live.**
+**A photography portfolio you update from a dashboard and publish when it's ready.**
 
 No database. No server to maintain. Nothing to pay every month.
 
@@ -50,16 +50,16 @@ No database. No server to maintain. Nothing to pay every month.
 
 Portfolios for photographers usually end up in one of two places: a monthly subscription to a platform that decides how your work should look, or a static site that forces you to rebuild and redeploy every time you add a photo.
 
-This template sits in between. The site is static and very fast, but the photos live in a **Cloudflare R2** bucket and are uploaded from a **login-protected dashboard**: you add them, reorder them, pick the cover, and the site changes right away — without touching the code, without a deploy.
+This template sits in between. The site is static and very fast, but the photos live in a **Cloudflare R2** bucket and are managed from a **login-protected dashboard**: you add them, reorder them, pick the cover, preview the draft, and publish when it's ready — without touching the code or deploying it.
 
 It's meant for **photographers who can code**, or for anyone setting up a site for a friend who takes pictures: the initial setup asks you to know git and the Cloudflare console, nothing after that does.
 
 ## ✨ What it does
 
 - **Pages** — home with the albums, album page with grid and lightbox, an About page with a working contact form.
-- **`/admin` dashboard** — upload photos (compressed in the browser before they're sent), reorder by dragging or by date, pick the cover, create and delete albums, edit name, bio and social links.
-- **Protected access** through Cloudflare Access — you sign in with a code sent by email, and no password lives in the code.
-- **Contact messages kept private** — they go to a private R2 bucket, never to the public photo bucket, and Turnstile keeps spam out.
+- **React `/admin` dashboard** — edit the site and albums, preview changes, upload and reorder photos, and publish when the draft is ready. Changes stay in a private draft until you publish them.
+- **Protected access** through Cloudflare Access and Worker JWT validation — dashboard APIs under `/api/admin/*` require an authenticated session. `/admin` and its subpaths cannot be embedded in a frame.
+- **Contact messages kept private** — they are stored in a private R2 bucket and read or deleted from the dashboard's **Messages** screen; they never go to the public photo bucket. Turnstile helps keep spam out.
 - **Your own pages and components** — add an archive or one page per project, or replace the landing, the navigation or the photo grid, from `custom/`, without editing template files.
 - **Three ready-made looks** for the album cards, switched with a single line.
 - **Everything customizable from the config files** — colors, fonts, spacing and copy, the dashboard's copy included. The interface ships in English, with an Italian preset.
@@ -187,14 +187,16 @@ The site and the dashboard start from these files, so edit them first if you lik
 
 ### 7. Sign in to `/admin`
 
-Open `https://your-domain/admin`. Cloudflare Access asks for your email and sends a one-time code: only the addresses listed in `admin_emails` get in. The first time, the dashboard starts from the seed: create an album and save the site section, and the data is written to R2 — there is nothing to import beforehand. Then upload a few photos.
+Open `https://your-domain/admin`. Cloudflare Access asks for your email and sends a one-time code: only the addresses listed in `admin_emails` get in. The React dashboard has **Albums**, **Site**, and **Messages** screens. Site, album, and photo edits are saved as a private draft; use **Publish** to make them public. **Discard changes** removes the draft and waiting photos. A publication that was interrupted can be resumed from the dashboard.
+
+The previous direct-write dashboard routes have been removed. The dashboard uses authenticated draft, staging, preview, publish, and Messages routes under `/api/admin/*` instead; do not build integrations against the old write flow.
 
 > 💡 `npm run migrate` still exists for one case: copying many albums from `config/albums.config.js` to R2 in one go. It needs R2 API credentials in `.env` (see `.env.example`), and **running it after you've used the dashboard resets everything to the seed**. `npm run upload` uses the same credentials to upload a prepared folder outside the dashboard.
 
 ### 8. Check that everything works
 
 - The home page lists your albums, and an album shows the photos you uploaded.
-- On the About page, send yourself a message: it appears in the dashboard under **Messages**, and as a notification if you configured one.
+- On the About page, send yourself a message: it appears in the dashboard's **Messages** screen, and as a notification if you configured one. The Worker reads it from the private bucket through the authenticated Messages API.
 - `https://<worker>.<account>.workers.dev` no longer answers; if you attached the domain by hand or enabled staging it still does, and there `/admin` must not let you in.
 
 An optional staging environment exists, but it is not turnkey for a first install: see [`docs/staging.md`](docs/staging.md).
@@ -216,14 +218,14 @@ An optional staging environment exists, but it is not turnkey for a first instal
 
 ## 🖼️ Using the site once it's live
 
-The `/admin` dashboard is where you shape the site while it's running:
+The `/admin` React dashboard is where you edit the site while it's running:
 
-- **Site section** — edit name, bio, hero, social links
-- **Albums section** — add albums, edit their title and description
-- **Album view** — upload photos, reorder them, delete them
-- **Messages section** — read and delete what visitors send from the contact form
+- **Site** — edit name, bio, hero, links, and selected page text; preview the draft
+- **Albums** — add albums and edit their title and description
+- **Album view** — upload photos, reorder or delete them, then publish the draft
+- **Messages** — read, reply to, or delete contact form submissions; messages stay in the private bucket
 
-The files in `config/` are only the initial seed — after the first save from `/admin`, R2 is the source of truth. Changes made from the dashboard are live immediately, with no deploy.
+The files in `config/` provide the initial seed. Dashboard edits are saved to a draft in the private R2 bucket and become public only when you choose **Publish**. Publishing changes data in R2; it does not require a code deploy. If a publish is interrupted, resume it from the dashboard. Two windows can be used sequentially: each upload batch rereads saved photo names when it starts. Do not run batches or make edits in both windows simultaneously; concurrent changes are not coordinated.
 
 ## 🎨 Customizing
 
@@ -248,7 +250,7 @@ src/shared/      ← rules shared by site, dashboard and Worker (slugs, validati
 src/api/         ← the public API: the only thing custom/ may import
 src/worker.js    ← Cloudflare Worker
 src/core/        ← slot registry and page lifecycle: the parts a fork can replace
-src/admin/       ← the /admin dashboard
+src/dashboard/   ← the React /admin dashboard and its screens
 custom.example/  ← example of custom/, where a fork replaces parts of the site
 infra/           ← Terraform configuration (optional)
 scripts/         ← tools: setup, setup:secrets, migrate, upload, compress
@@ -296,7 +298,6 @@ If you fixed something in your own fork, consider opening a pull request — the
 
 Where this is likely to go next. These are intentions, not promises:
 
-- **Preview before publishing.** Today, uploading, reordering and deleting photos take effect immediately. The plan is to let those changes sit as a draft you can look at before they go live — the way editing name and bio already works.
 - **Social previews for home and about.** Album links already show their own title and cover. Home and about still use the values baked in at build time; serving them through the Worker would let them follow dashboard edits too, at the cost of a Worker call on every visit to the home page.
 - **A light theme preset.** Now that every color lives in `theme/tokens.css`, shipping a second ready-made palette is mostly a matter of choosing good values.
 - 🃏 **More card variants**, if the three that ship turn out not to cover what people want.

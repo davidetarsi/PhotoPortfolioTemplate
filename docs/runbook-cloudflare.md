@@ -185,8 +185,8 @@ If using a real domain (not `workers.dev`), Cloudflare Access can scope to speci
 3. Name: e.g. `mario-portfolio admin (prod)`
 4. **Add public hostname:**
    - Domain: your domain (e.g. `mario.com`)
-   - Path: `admin`
-   - Repeat to add `/api/admin`
+   - Add paths `admin`, `admin/`, `admin.html`, and `admin/*` for the React dashboard.
+   - Add path `api/admin/*` for its authenticated API.
 5. Access policies → **Create new policy**:
    - Name: `Just me`
    - Decision: **Allow**
@@ -194,6 +194,8 @@ If using a real domain (not `workers.dev`), Cloudflare Access can scope to speci
 6. Identity providers: leave **One-time PIN** (default, needs no setup)
 7. Save and create application
 8. Copy the **Audience (AUD) Tag** value from the application page
+
+The Worker also validates Cloudflare Access JWTs on every `/api/admin/*` request. The dashboard's `/admin`, `/admin/`, `/admin.html` and `/admin/*` responses send `frame-ancestors 'none'` and `X-Frame-Options: DENY`; do not embed the admin UI in another page. Access path patterns are specific: add the dashboard and API entries above so child paths are covered ([Cloudflare path matching](https://developers.cloudflare.com/cloudflare-one/access-controls/policies/app-paths/)). The previous direct-write dashboard routes have been removed. The React dashboard uses authenticated draft, staging, preview, publish, and Messages routes under `/api/admin/`.
 
 For the optional second environment on `workers.dev`, Access protects the entire subdomain; see the [staging guide](staging.md).
 
@@ -369,7 +371,9 @@ Once DNS propagates (a few minutes), follow these steps **in exact order**: the 
 
 ## 9. Contact form: notifications and spam protection
 
-The contact form writes straight to your R2 bucket through the Worker — no third-party service, no extra account. Messages are read in the `/admin` dashboard, next to the albums.
+The contact form sends messages to the Worker, which stores them only in the private R2 bucket — no third-party service, no extra account. Read, reply to, and delete them from the dashboard's **Messages** screen. Its authenticated Messages API reads only the private bucket, never the public photo bucket.
+
+Site, album, and photo edits in `/admin` are saved to a private draft and become public only when you choose **Publish**. Publication can be resumed after an interruption; it updates R2 data and does not deploy code. **Discard changes** removes the draft and staged photos, unless a publication has already started writing public data. Two windows can be used sequentially: each upload batch rereads saved photo names when it starts. Do not run batches or make edits in both windows simultaneously; concurrent changes are not coordinated.
 
 Two things are optional, and both are configured with **secrets, not `vars`**.
 
@@ -377,7 +381,7 @@ Two things are optional, and both are configured with **secrets, not `vars`**.
 
 ### Notification when a message arrives
 
-Without this, messages still arrive and are still readable in the dashboard — you just have to go and look. With it, the Worker attempts a push. A successful form response confirms that R2 stored the message, **not** that the notification arrived.
+Without this, messages are still stored privately and readable in the dashboard — you just have to go and look. With it, the Worker attempts a push. A successful form response confirms that R2 stored the message, **not** that the notification arrived.
 
 ```bash
 npx wrangler versions secret put CONTACT_NOTIFY_URL
