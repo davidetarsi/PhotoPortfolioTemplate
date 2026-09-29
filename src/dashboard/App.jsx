@@ -10,6 +10,7 @@ import { AlbumsScreen } from './features/albums/AlbumsScreen.jsx';
 import { AlbumScreen } from './features/album/AlbumScreen.jsx';
 import { SiteScreen } from './features/site/SiteScreen.jsx';
 import { MessagesScreen } from './features/messages/MessagesScreen.jsx';
+import { UploadProvider } from './features/album/upload-context.jsx';
 import './app.css';
 
 const t = texts.admin;
@@ -87,24 +88,26 @@ export function Shell() {
     { to: '/messages', icon: 'messages', label: t.common.navMessages },
   ];
   return (
-    <div className="dash">
-      <header className="dash-top">
-        <span className="dash-brand">{siteName ?? ''}</span>
-        <DraftState />
-      </header>
-      <nav className="dash-sections" aria-label={t.common.navLabel}>
-        {sections.map(section => (
-          <NavLink key={section.to} to={section.to} end={section.end} className="dash-sections__link">
-            <Icon name={section.icon} />
-            <span>{section.label}</span>
-          </NavLink>
-        ))}
-      </nav>
-      <main className="dash-main">
-        {draft.isError ? <p className="dash-error" role="alert">{t.common.loadError}</p> : <Outlet />}
-      </main>
-      <PublishBar />
-    </div>
+    <UploadProvider>
+      <div className="dash">
+        <header className="dash-top">
+          <span className="dash-brand">{siteName ?? ''}</span>
+          <DraftState />
+        </header>
+        <nav className="dash-sections" aria-label={t.common.navLabel}>
+          {sections.map(section => (
+            <NavLink key={section.to} to={section.to} end={section.end} className="dash-sections__link">
+              <Icon name={section.icon} />
+              <span>{section.label}</span>
+            </NavLink>
+          ))}
+        </nav>
+        <main className="dash-main">
+          {draft.isError ? <p className="dash-error" role="alert">{t.common.loadError}</p> : <Outlet />}
+        </main>
+        <PublishBar />
+      </div>
+    </UploadProvider>
   );
 }
 

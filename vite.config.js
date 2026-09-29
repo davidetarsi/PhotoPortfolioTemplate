@@ -82,6 +82,7 @@ export default defineConfig({
   ],
   test: {
     environment: 'jsdom',
+    setupFiles: ['./src/dashboard/test-setup.js'],
     exclude: [...configDefaults.exclude, '**/.worktrees/**'],
   },
   build: {

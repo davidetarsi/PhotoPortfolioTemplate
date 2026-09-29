@@ -192,6 +192,9 @@ export const texts = {
       deletePhoto: 'Elimina',
       manifestError: "Impossibile caricare l'elenco delle foto.",
       unsavedChanges: 'Ci sono modifiche non salvate. Uscire comunque?',
+      uploadAnnouncementLabel: 'Stato caricamento foto',
+      uploadStartedOne: 'Caricamento avviato per 1 foto.',
+      uploadStarted: 'Caricamento avviato per {n} foto.',
       uploadProgress: '{nome} — {fase}',
       uploadPhases: {
         processing: 'compressione',

@@ -194,6 +194,9 @@ export const texts = {
       deletePhoto: 'Delete',
       manifestError: 'Could not load the photo list.',
       unsavedChanges: 'There are unsaved changes. Leave anyway?',
+      uploadAnnouncementLabel: 'Photo upload status',
+      uploadStartedOne: 'Upload started for 1 photo.',
+      uploadStarted: 'Upload started for {n} photos.',
       uploadProgress: '{nome} — {fase}',
       uploadPhases: {
         processing: 'compressing',
