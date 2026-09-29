@@ -65,12 +65,14 @@ export function buildHeaders(config, options = {}) {
     '  Referrer-Policy: strict-origin-when-cross-origin',
     '  Permissions-Policy: geolocation=(), microphone=(), camera=()',
     '',
-    // The site may be framed by itself (the dashboard's preview), the dashboard never:
-    // a second policy is enforced together with the first, and the stricter one wins.
-    '/admin',
-    "  Content-Security-Policy: frame-ancestors 'none'",
-    '/admin.html',
-    "  Content-Security-Policy: frame-ancestors 'none'",
+    // `/admin` is mapped by the Worker to `/admin.html`; match both request paths,
+    // the slash variant, and any future dashboard subroutes.
+    ...['/admin', '/admin/', '/admin.html', '/admin/*'].flatMap(path => [
+      path,
+      "  Content-Security-Policy: frame-ancestors 'none'",
+      '  ! X-Frame-Options',
+      '  X-Frame-Options: DENY',
+    ]),
     '',
   ].join('\n');
 }

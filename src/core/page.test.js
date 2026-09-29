@@ -63,6 +63,28 @@ describe('page lifecycle owner', () => {
     expect(destroy).not.toHaveBeenCalled();
   });
 
+  it('announces lifecycle start before the initial ready and keeps BFCache ready distinct', () => {
+    const target = pageTarget();
+    const events = [];
+    const bus = { emit: (type, detail) => events.push({ type, detail }) };
+    const owner = createPageLifecycle({ bus, target })('home');
+    owner.ready({ source: 'initial' });
+
+    const hide = new Event('pagehide');
+    Object.defineProperty(hide, 'persisted', { value: true });
+    target.dispatchEvent(hide);
+    const show = new Event('pageshow');
+    Object.defineProperty(show, 'persisted', { value: true });
+    target.dispatchEvent(show);
+
+    expect(events).toEqual([
+      { type: 'page:start', detail: { page: 'home' } },
+      { type: 'page:ready', detail: { page: 'home', source: 'initial' } },
+      { type: 'page:leave', detail: { page: 'home', persisted: true } },
+      { type: 'page:ready', detail: { page: 'home', source: 'initial', restored: true } },
+    ]);
+  });
+
   it('destroys on non-persisted pagehide and unregisters lifecycle listeners', () => {
     const target = pageTarget();
     const start = createPageLifecycle({ target });

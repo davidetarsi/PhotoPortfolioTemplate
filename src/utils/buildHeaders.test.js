@@ -29,9 +29,9 @@ describe('buildHeaders', () => {
     const h = buildHeaders(CONFIG);
     expect(h).toContain("frame-ancestors 'self'");
     expect(h).toContain('X-Frame-Options: SAMEORIGIN');
-    // The dashboard itself can never be framed.
-    expect(h).toMatch(/\/admin\n  Content-Security-Policy: frame-ancestors 'none'/);
-    expect(h).toMatch(/\/admin\.html\n  Content-Security-Policy: frame-ancestors 'none'/);
+    for (const path of ['/admin', '/admin/', '/admin.html', '/admin/*']) {
+      expect(h).toContain(`${path}\n  Content-Security-Policy: frame-ancestors 'none'\n  ! X-Frame-Options\n  X-Frame-Options: DENY`);
+    }
     expect(h).toContain("object-src 'none'");
     expect(h).toContain('X-Content-Type-Options: nosniff');
     expect(h).toContain('Strict-Transport-Security');

@@ -89,6 +89,7 @@ export function createPageLifecycle({ setup, bus = defaultBus, target = globalTh
     }
 
     pages.set(page, owner);
+    bus.emit('page:start', { page });
     target?.addEventListener?.('pagehide', onPageHide);
     target?.addEventListener?.('pageshow', onPageShow);
     if (typeof setup === 'function') {

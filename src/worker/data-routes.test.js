@@ -79,6 +79,8 @@ describe('routing worker', () => {
     const env = makeEnv();
     const res = await get(env, '/admin');
     expect(await res.text()).toBe('ASSET:/admin.html');
+    expect(await (await get(env, '/admin/')).text()).toBe('ASSET:/admin.html');
+    expect(await (await get(env, '/admin.html')).text()).toBe('ASSET:/admin.html');
   });
 
   it('slug album continua a servire album.html; statiche invariate', async () => {

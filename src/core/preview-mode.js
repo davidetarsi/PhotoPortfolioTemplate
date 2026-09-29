@@ -44,6 +44,7 @@ const fieldsNamed = (doc, field) =>
 export function startPreviewBridge({ win = window, doc = document, draft, on = onEvent }) {
   let focused = null;
   let announced = false;
+  let lifecycleStarted = false;
   const inFrame = win.parent !== win;
   const reduceMotion = () => win.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
@@ -116,7 +117,8 @@ export function startPreviewBridge({ win = window, doc = document, draft, on = o
     }
   };
   const onLoad = () => {
-    Promise.resolve(draft()).then(() => { if (!announced) announce(); });
+    if (lifecycleStarted || announced) return;
+    Promise.resolve(draft()).then(() => { if (!announced && !lifecycleStarted) announce(); });
   };
   // Back from the back/forward cache the page would show an old draft: read it again.
   const onPageShow = event => {
@@ -129,7 +131,10 @@ export function startPreviewBridge({ win = window, doc = document, draft, on = o
   doc.addEventListener('click', onClick, true);
   doc.addEventListener('auxclick', onClick, true); // middle click: a new tab, still in preview
   doc.addEventListener('submit', onSubmit, true);
-  const stopReady = on('page:ready', detail => announce(detail ?? {}));
+  const stopStart = on('page:start', () => { lifecycleStarted = true; });
+  const stopReady = on('page:ready', detail => {
+    if (detail?.restored || !announced) announce(detail ?? {});
+  });
 
   // Without the dashboard's sign-in the draft cannot be read: say so instead of
   // showing the published site as if it were the preview.
@@ -150,6 +155,7 @@ export function startPreviewBridge({ win = window, doc = document, draft, on = o
     doc.removeEventListener('click', onClick, true);
     doc.removeEventListener('auxclick', onClick, true);
     doc.removeEventListener('submit', onSubmit, true);
+    if (typeof stopStart === 'function') stopStart();
     if (typeof stopReady === 'function') stopReady();
   };
 }

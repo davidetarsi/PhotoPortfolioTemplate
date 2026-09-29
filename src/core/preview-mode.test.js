@@ -1,13 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { isAdminPath, isPreview, startPreviewBridge } from './preview-mode.js';
 import { texts } from '../../config/texts.config.js';
+import { createPageLifecycle } from './page.js';
+import * as bus from './events.js';
 
 const flush = () => new Promise(resolve => setTimeout(resolve, 0));
 const ORIGIN = window.location.origin;
 
 // A frame window: its own listeners, a separate parent, the page's origin.
 function makeFrameWindow() {
-  const listeners = {};
+  const listeners = new Map();
   const parent = { postMessage: vi.fn() };
   const win = {
     parent,
@@ -16,11 +18,18 @@ function makeFrameWindow() {
     scrollY: 0,
     innerHeight: 600,
     scrollTo: vi.fn(),
-    addEventListener: (type, fn) => { listeners[type] = fn; },
-    removeEventListener: type => { delete listeners[type]; },
+    addEventListener: (type, fn) => {
+      if (!listeners.has(type)) listeners.set(type, new Set());
+      listeners.get(type).add(fn);
+    },
+    removeEventListener: (type, fn) => listeners.get(type)?.delete(fn),
   };
-  const send = (data, { origin = ORIGIN, source = parent } = {}) => listeners.message?.({ data, origin, source });
-  const fire = (type, event = {}) => listeners[type]?.(event);
+  const send = (data, { origin = ORIGIN, source = parent } = {}) => {
+    for (const listener of listeners.get('message') ?? []) listener({ data, origin, source });
+  };
+  const fire = (type, event = {}) => {
+    for (const listener of listeners.get(type) ?? []) listener(event);
+  };
   return { win, parent, send, fire };
 }
 
@@ -52,6 +61,7 @@ describe('startPreviewBridge', () => {
   let stop;
 
   beforeEach(() => {
+    bus.reset();
     document.body.innerHTML = `
       <h1 data-field="site.name">Old name</h1>
       <a data-field="site.name" href="/">Old name</a>
@@ -124,11 +134,11 @@ describe('startPreviewBridge', () => {
     expect(event.defaultPrevented).toBe(true);
   });
 
-  it('back from the back/forward cache, the page reads the draft again', () => {
+  it('back from the back/forward cache, reloads the page to read the current draft', () => {
     frame.fire('pageshow', { persisted: false });
     expect(frame.win.location.reload).not.toHaveBeenCalled();
     frame.fire('pageshow', { persisted: true });
-    expect(frame.win.location.reload).toHaveBeenCalledTimes(1);
+    expect(frame.win.location.reload).toHaveBeenCalledOnce();
   });
 
   it('reload: only when the parent asks', () => {
@@ -160,6 +170,8 @@ describe('startPreviewBridge', () => {
 });
 
 describe('page ready and availability', () => {
+  afterEach(() => bus.reset());
+
   it('tells the embedding page when the page is ready', () => {
     const frame = makeFrameWindow();
     let listener;
@@ -174,7 +186,9 @@ describe('page ready and availability', () => {
     frame.win.location.pathname = '/archive';
     const stop = startPreviewBridge({ win: frame.win, doc: document, draft: async () => ({ ok: true }), on: () => () => {} });
     frame.fire('load');
+    frame.fire('load');
     await flush();
+    expect(frame.parent.postMessage).toHaveBeenCalledTimes(1);
     expect(frame.parent.postMessage).toHaveBeenCalledWith({ type: 'preview:ready', page: null, restored: false, path: '/archive' }, ORIGIN);
     stop();
   });
@@ -187,6 +201,36 @@ describe('page ready and availability', () => {
     frame.fire('load');
     await flush();
     expect(frame.parent.postMessage).toHaveBeenCalledTimes(1);
+    stop();
+  });
+
+  it('a lifecycle owns the initial ready signal, even when load arrives first', async () => {
+    const frame = makeFrameWindow();
+    const stop = startPreviewBridge({ win: frame.win, doc: document, draft: async () => ({ ok: true }) });
+    const owner = createPageLifecycle({ bus, target: frame.win })('home');
+    frame.fire('load');
+    await flush();
+    owner.ready();
+    owner.ready();
+    expect(frame.parent.postMessage).toHaveBeenCalledTimes(1);
+    expect(frame.parent.postMessage).toHaveBeenCalledWith({ type: 'preview:ready', page: 'home', restored: false, path: '/' }, ORIGIN);
+    stop();
+  });
+
+  it('a lifecycle restore sends a distinct restored ready before the BFCache reload', () => {
+    const frame = makeFrameWindow();
+    const stop = startPreviewBridge({ win: frame.win, doc: document, draft: async () => ({ ok: true }) });
+    const owner = createPageLifecycle({ bus, target: frame.win })('home');
+    owner.ready();
+    const hide = new Event('pagehide');
+    Object.defineProperty(hide, 'persisted', { value: true });
+    const show = new Event('pageshow');
+    Object.defineProperty(show, 'persisted', { value: true });
+    frame.fire('pagehide', hide);
+    frame.fire('pageshow', show);
+    expect(frame.win.location.reload).toHaveBeenCalledOnce();
+    expect(frame.parent.postMessage).toHaveBeenCalledTimes(2);
+    expect(frame.parent.postMessage).toHaveBeenLastCalledWith({ type: 'preview:ready', page: 'home', restored: true, path: '/' }, ORIGIN);
     stop();
   });
 
