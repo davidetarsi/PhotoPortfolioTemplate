@@ -8,8 +8,8 @@ describe('public API for custom/', () => {
     // Pinned on purpose: removing or renaming an export breaks forks and must be a
     // deliberate change, announced in docs/upgrading.md. Adding one is safe.
     expect(Object.keys(api).sort()).toEqual([
-      'PREVIEW_FIELDS', 'albumsToCards', 'fetchAlbums', 'fetchConfig', 'fetchManifest', 'fetchSite', 'linkKind', 'linkLabel', 'on',
-      'photosFromManifest', 'resolveAlbums', 'resolveSiteContent', 'siteConfig', 'slot', 'slugFromPath', 'texts',
+      'PREVIEW_FIELDS', 'albumsToCards', 'fetchAlbums', 'fetchConfig', 'fetchManifest', 'fetchSite', 'linkKind', 'linkLabel',
+      'mergeTexts', 'on', 'photosFromManifest', 'resolveAlbums', 'resolveSiteContent', 'siteConfig', 'slot', 'slugFromPath', 'texts',
     ]);
   });
 
@@ -55,6 +55,11 @@ describe('public API for custom/', () => {
     expect(api.texts.about.heading).toBeTruthy();
     expect(api.siteConfig.name).toBeTruthy();
     expect(api.on('public-api-test', () => {})).toEqual(expect.any(Function));
+  });
+
+  it('merges editable site copy through the supported custom API', () => {
+    expect(api.mergeTexts(api.texts, { 'landing.albumsSectionHeading': 'Selected work' }).landing.albumsSectionHeading)
+      .toBe('Selected work');
   });
 
   describe('slugFromPath', () => {
