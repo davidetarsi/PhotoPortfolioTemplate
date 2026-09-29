@@ -4,22 +4,28 @@ import { createMemoryRouter, RouterProvider } from 'react-router';
 import { texts } from '../../../../config/texts.config.js';
 import { routes } from '../../App.jsx';
 import { useSaveQueue } from '../../api/drafts.jsx';
+import { keys } from '../../api/queries.js';
 import { fakeWorker, installDialogPolyfill, makeQueryClient, Providers } from '../../test-utils.jsx';
 
 const t = texts.admin.albums;
 beforeAll(installDialogPolyfill);
 
 const album = (slug, extra = {}) => ({ slug, title: slug[0].toUpperCase() + slug.slice(1), description: '', coverName: null, ...extra });
-const DRAFT = { site: { name: 'D', bio: '', hero: null }, albums: [album('notte', { coverName: 'c.webp' }), album('viaggio')], hasDraft: false };
+const DRAFT = {
+  site: { name: 'D', bio: '', hero: null },
+  albums: [album('notte', { coverName: 'c.webp' }), album('viaggio')],
+  albumSummaries: { notte: { photoCount: 2, firstPhoto: 'a.webp' }, viaggio: { photoCount: 0, firstPhoto: null } },
+  hasDraft: false,
+};
 const STATUS = { hasDraft: false, publishing: false, changes: [] };
-const photo = name => ({ name, width: 4, height: 3 });
-
 let queue;
 function QueueSpy() { queue = useSaveQueue(); return null; }
 
 function renderAt(path = '/') {
   const router = createMemoryRouter(routes, { initialEntries: [path] });
-  render(<Providers client={makeQueryClient()}><QueueSpy /><RouterProvider router={router} /></Providers>);
+  const client = makeQueryClient();
+  router.queryClient = client;
+  render(<Providers client={client}><QueueSpy /><RouterProvider router={router} /></Providers>);
   return router;
 }
 
@@ -27,8 +33,6 @@ function worker(extra = {}) {
   return fakeWorker({
     'GET /api/admin/draft': DRAFT,
     'GET /api/admin/draft/status': STATUS,
-    'GET /api/admin/draft/albums/notte/manifest': [[photo('a.webp'), photo('c.webp')]],
-    'GET /api/admin/draft/albums/viaggio/manifest': [[]],
     'PUT /api/admin/draft/albums': { ok: true },
     ...extra,
   });
@@ -44,7 +48,7 @@ const puts = (fetchMock, path) => fetchMock.mock.calls
 
 describe('albums gallery', () => {
   it('shows each album with its cover and number of photos, linking to it', async () => {
-    worker();
+    const fetchMock = worker();
     renderAt('/');
     const notte = await screen.findByRole('link', { name: /Notte/ });
     expect(notte.getAttribute('href')).toBe('/album/notte');
@@ -53,10 +57,35 @@ describe('albums gallery', () => {
     const viaggio = screen.getByRole('link', { name: /Viaggio/ });
     expect(await within(viaggio).findByText(t.photoCountNone)).toBeTruthy();
     expect(viaggio.querySelector('img')).toBeNull();
+    expect(fetchMock.mock.calls.some(([path]) => path.includes('/manifest'))).toBe(false);
+  });
+
+  it('uses the first photo in the draft summary and the singular count', async () => {
+    const fetchMock = worker({
+      'GET /api/admin/draft': {
+        ...DRAFT,
+        albums: [album('viaggio')],
+        albumSummaries: { viaggio: { photoCount: 1, firstPhoto: 'first.webp' } },
+      },
+    });
+    renderAt('/');
+    const viaggio = await screen.findByRole('link', { name: /Viaggio/ });
+    expect(viaggio.querySelector('img').getAttribute('src')).toBe('/api/admin/preview/photo/viaggio/first.webp');
+    expect(await within(viaggio).findByText('1 photo')).toBeTruthy();
+    expect(fetchMock.mock.calls.some(([path]) => path.includes('/manifest'))).toBe(false);
   });
 
   it('creates an album with an empty manifest and opens it', async () => {
-    const fetchMock = worker({ 'PUT /api/admin/draft/albums/luci/manifest': { ok: true }, 'GET /api/admin/draft/albums/luci/manifest': [[]] });
+    const createdDraft = {
+      ...DRAFT,
+      albums: [...DRAFT.albums, album('luci')],
+      albumSummaries: { ...DRAFT.albumSummaries, luci: { photoCount: 0, firstPhoto: null } },
+    };
+    const fetchMock = worker({
+      'GET /api/admin/draft': [DRAFT, createdDraft],
+      'PUT /api/admin/draft/albums/luci/manifest': { ok: true },
+      'GET /api/admin/draft/albums/luci/manifest': [[]],
+    });
     const router = renderAt('/');
     fireEvent.click(await createButton());
     const sheet = await screen.findByRole('dialog', { name: t.create });
@@ -66,6 +95,8 @@ describe('albums gallery', () => {
     await act(() => queue.flush());
     expect(puts(fetchMock, '/api/admin/draft/albums').at(-1).albums.map(a => a.slug)).toEqual(['notte', 'viaggio', 'luci']);
     expect(puts(fetchMock, '/api/admin/draft/albums/luci/manifest')).toEqual([[]]);
+    expect(router.queryClient.getQueryData(keys.draft).albumSummaries.luci)
+      .toEqual({ photoCount: 0, firstPhoto: null });
   });
 
   it('offers a new album only once the albums have loaded: a list built from nothing would replace them all', async () => {

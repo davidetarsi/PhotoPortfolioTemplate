@@ -12,7 +12,7 @@ import { ConfirmDialog } from '../../ui/ConfirmDialog.jsx';
 import { AlbumDetails } from './AlbumDetails.jsx';
 import { PhotoGrid } from './PhotoGrid.jsx';
 import { UploadPanel } from './UploadPanel.jsx';
-import { photoCount } from '../albums/AlbumCard.jsx';
+import { photoCount } from '../../lib/album-summary.js';
 import './album.css';
 
 const t = texts.admin.album;

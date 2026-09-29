@@ -98,9 +98,21 @@ export async function handleDraftRequest(request, env, pathname) {
         readJson(env.BUCKET, PUBLISHED.albums),
         hasDraft(env),
       ]);
+      const albums = (draftAlbums ?? pubAlbums)?.albums ?? [];
+      let albumSummaries;
+      try {
+        albumSummaries = Object.fromEntries(await Promise.all(albums.map(async ({ slug }) => {
+          const draftManifest = await readJson(env.PRIVATE_BUCKET, DRAFT.manifest(slug));
+          const manifest = draftManifest ?? await readJson(env.BUCKET, PUBLISHED.manifest(slug)) ?? [];
+          return [slug, { photoCount: manifest.length, firstPhoto: manifest[0]?.name ?? null }];
+        })));
+      } catch {
+        return jsonResponse({ error: 'STORAGE_ERROR' }, 500);
+      }
       return jsonResponse({
         site: draftSite ?? pubSite,
-        albums: (draftAlbums ?? pubAlbums)?.albums ?? [],
+        albums,
+        albumSummaries,
         hasDraft: pending,
       });
     }

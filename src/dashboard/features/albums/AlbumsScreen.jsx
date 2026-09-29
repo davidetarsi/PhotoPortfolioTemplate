@@ -15,7 +15,7 @@ const t = texts.admin.albums;
 
 /** The gallery of albums: covers, number of photos, new album, order on the site. */
 export function AlbumsScreen() {
-  const { albums, setAlbums, isPending } = useAlbums();
+  const { albums, albumSummaries, setAlbums, isPending } = useAlbums();
   const queue = useSaveQueue();
   const client = useQueryClient();
   const navigate = useNavigate();
@@ -31,6 +31,10 @@ export function AlbumsScreen() {
     // A new album starts with an empty manifest in the draft (spec, plan-2 rules): it
     // never inherits the photos of a removed album with the same address.
     client.setQueryData(keys.manifest(album.slug), []);
+    client.setQueryData(keys.draft, old => old ? {
+      ...old,
+      albumSummaries: { ...old.albumSummaries, [album.slug]: { photoCount: 0, firstPhoto: null } },
+    } : old);
     queue.set(`manifest:${album.slug}`, [], { now: true });
     setCreating(false);
     navigate(`/album/${album.slug}`);
@@ -54,7 +58,7 @@ export function AlbumsScreen() {
       {!isPending && albums?.length === 0 && <p className="dash-empty">{t.empty}</p>}
       <ul ref={listRef} className={`dash-album-grid${reordering ? ' dash-album-grid--reordering' : ''}`}>
         {(albums ?? []).map((album, index) => (
-          <AlbumCard key={album.slug} album={album} index={index} total={albums.length}
+          <AlbumCard key={album.slug} album={album} summary={albumSummaries?.[album.slug]} index={index} total={albums.length}
             reordering={reordering} onMove={move} />
         ))}
       </ul>

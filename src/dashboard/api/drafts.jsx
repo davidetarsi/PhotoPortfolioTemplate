@@ -14,6 +14,7 @@ import { SaveQueueContext } from './save-context.js';
 import { SLUG_RE } from '../../shared/content-rules.js';
 import { siteConfig } from '../../../config/site.config.js';
 import { siteForEditing } from '../lib/site.js';
+import { summarizeManifest } from '../lib/album-summary.js';
 
 /** Where each queued resource is saved. */
 export function savePath(key) {
@@ -36,6 +37,15 @@ export function overlayUnsaved(queryKey, data, queue) {
     let next = data;
     if (queue.holds('albums')) next = { ...next, albums: queue.valueOf('albums').albums };
     if (queue.holds('site')) next = { ...next, site: queue.valueOf('site') };
+    let summaries;
+    for (const { slug } of next.albums ?? []) {
+      const key = `manifest:${slug}`;
+      if (queue.holds(key)) {
+        summaries ??= { ...(next.albumSummaries ?? {}) };
+        summaries[slug] = summarizeManifest(queue.valueOf(key));
+      }
+    }
+    if (summaries) next = { ...next, albumSummaries: summaries };
     return next;
   }
   if (queryKey[0] === 'draft-manifest') {
@@ -55,7 +65,8 @@ export function SaveQueueProvider({ children, delay }) {
       client.invalidateQueries({ queryKey: keys.status });
       // A fetch that started before this save could still answer with the older value, now
       // that the queue no longer holds it: read the resource again, which drops that fetch.
-      client.invalidateQueries({ queryKey: key.startsWith('manifest:') ? keys.manifest(key.slice('manifest:'.length)) : keys.draft });
+      if (key.startsWith('manifest:')) client.invalidateQueries({ queryKey: keys.manifest(key.slice('manifest:'.length)) });
+      client.invalidateQueries({ queryKey: keys.draft });
     },
   }), [client, delay]);
 
@@ -114,13 +125,17 @@ export function useAlbums() {
     const current = client.getQueryData(keys.draft)?.albums;
     if (!current) return false;
     const albums = resolve(next, current);
+    const albumSummaries = client.getQueryData(keys.draft)?.albumSummaries ?? {};
+    const summariesForAlbums = Object.fromEntries(albums
+      .filter(album => Object.hasOwn(albumSummaries, album.slug))
+      .map(album => [album.slug, albumSummaries[album.slug]]));
     // A fetch already running would answer with the old list: drop it.
     client.cancelQueries({ queryKey: keys.draft });
-    client.setQueryData(keys.draft, old => ({ ...old, albums }));
+    client.setQueryData(keys.draft, old => ({ ...old, albums, albumSummaries: summariesForAlbums }));
     queue.set('albums', { albums }, options);
     return true;
   };
-  return { ...draft, albums: draft.data?.albums, setAlbums };
+  return { ...draft, albums: draft.data?.albums, albumSummaries: draft.data?.albumSummaries, setAlbums };
 }
 
 /**
@@ -142,7 +157,12 @@ export function useManifest(slug) {
     if (!current) return false;
     const entries = resolve(next, current);
     client.cancelQueries({ queryKey: keys.manifest(slug) });
+    client.cancelQueries({ queryKey: keys.draft });
     client.setQueryData(keys.manifest(slug), entries);
+    client.setQueryData(keys.draft, old => old ? {
+      ...old,
+      albumSummaries: { ...old.albumSummaries, [slug]: summarizeManifest(entries) },
+    } : old);
     queue.set(`manifest:${slug}`, entries, options);
     return true;
   };
@@ -170,4 +190,3 @@ export function useSite() {
   };
   return { ...draft, site, setSite };
 }
-

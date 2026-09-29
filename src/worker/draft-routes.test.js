@@ -44,21 +44,78 @@ describe('draft routes', () => {
   });
 
   it('GET /draft: the published site when there is no draft, then the draft', async () => {
-    const env = makeEnv({ '_site/site.json': SITE, '_data/albums.json': { albums: [ALBUM] } });
+    const env = makeEnv({
+      '_site/site.json': SITE,
+      '_data/albums.json': { albums: [ALBUM] },
+      'notte/manifest.json': [{ name: 'a.webp', width: 1, height: 1 }],
+    });
     expect(await (await call(env, 'GET', '/api/admin/draft')).json())
-      .toEqual({ site: SITE, albums: [ALBUM], hasDraft: false });
+      .toEqual({ site: SITE, albums: [ALBUM], albumSummaries: { notte: { photoCount: 1, firstPhoto: 'a.webp' } }, hasDraft: false });
 
     const edited = { ...SITE, bio: 'Bozza' };
     expect((await call(env, 'PUT', '/api/admin/draft/site', edited)).status).toBe(200);
     expect(await (await call(env, 'GET', '/api/admin/draft')).json())
-      .toEqual({ site: edited, albums: [ALBUM], hasDraft: true });
+      .toEqual({ site: edited, albums: [ALBUM], albumSummaries: { notte: { photoCount: 1, firstPhoto: 'a.webp' } }, hasDraft: true });
     // Saving the draft never touches the published site.
     expect(JSON.parse(env.BUCKET.store.get('_site/site.json').text)).toEqual(SITE);
   });
 
   it('GET /draft on a new installation: no site, no albums', async () => {
     expect(await (await call(makeEnv(), 'GET', '/api/admin/draft')).json())
-      .toEqual({ site: null, albums: [], hasDraft: false });
+      .toEqual({ site: null, albums: [], albumSummaries: {}, hasDraft: false });
+  });
+
+  it('GET /draft reads each effective album manifest once, preferring draft over published and treating missing or empty as empty', async () => {
+    const album2 = { ...ALBUM, slug: 'mare', title: 'Mare' };
+    const album3 = { ...ALBUM, slug: 'citta', title: 'Città' };
+    const album4 = { ...ALBUM, slug: 'senigallia', title: 'Senigallia' };
+    const env = makeEnv({
+      '_data/albums.json': { albums: [ALBUM, album2, album3, album4] },
+      'notte/manifest.json': [{ name: 'published.webp', width: 1, height: 1 }],
+      'mare/manifest.json': [{ name: 'sea.webp', width: 1, height: 1 }],
+      'citta/manifest.json': [{ name: 'unused.webp', width: 1, height: 1 }],
+    }, {
+      'draft/albums.json': { albums: [ALBUM, album2, album4] },
+      'draft/albums/notte/manifest.json': [{ name: 'draft.webp', width: 1, height: 1 }, { name: 'second.webp', width: 1, height: 1 }],
+      'draft/albums/mare/manifest.json': [],
+    });
+    const publicGets = [];
+    const privateGets = [];
+    const publicGet = env.BUCKET.get.bind(env.BUCKET);
+    const privateGet = env.PRIVATE_BUCKET.get.bind(env.PRIVATE_BUCKET);
+    env.BUCKET.get = async key => { publicGets.push(key); return publicGet(key); };
+    env.PRIVATE_BUCKET.get = async key => { privateGets.push(key); return privateGet(key); };
+    const res = await call(env, 'GET', '/api/admin/draft');
+    expect(await res.json()).toEqual({
+      site: null,
+      albums: [ALBUM, album2, album4],
+      albumSummaries: {
+        notte: { photoCount: 2, firstPhoto: 'draft.webp' },
+        mare: { photoCount: 0, firstPhoto: null },
+        senigallia: { photoCount: 0, firstPhoto: null },
+      },
+      hasDraft: true,
+    });
+    expect(publicGets).not.toContain('citta/manifest.json');
+    expect(privateGets).not.toContain('draft/albums/citta/manifest.json');
+  });
+
+  it('GET /draft fails when reading an effective album manifest fails', async () => {
+    const env = makeEnv({ '_data/albums.json': { albums: [ALBUM] } });
+    env.PRIVATE_BUCKET.get = async key => key === 'draft/albums/notte/manifest.json' ? null : null;
+    env.BUCKET.get = async key => {
+      if (key === 'notte/manifest.json') throw new Error('storage offline');
+      if (key === '_data/albums.json') return { json: async () => ({ albums: [ALBUM] }) };
+      return null;
+    };
+    const res = await call(env, 'GET', '/api/admin/draft');
+    expect(res.status).toBe(500);
+  });
+
+  it('PUT albums persists only the albums array, never response summaries', async () => {
+    const env = makeEnv();
+    expect((await call(env, 'PUT', '/api/admin/draft/albums', { albums: [ALBUM] })).status).toBe(200);
+    expect(JSON.parse(env.PRIVATE_BUCKET.store.get('draft/albums.json').text)).toEqual({ albums: [ALBUM] });
   });
 
   it('validates what it saves', async () => {

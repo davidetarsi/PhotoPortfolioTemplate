@@ -1,11 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { overlayUnsaved, savePath, useAlbums, useManifest, useSaveQueue, useSaveState, useSite } from './drafts.jsx';
-import { keys } from './queries.js';
+import { keys, useDiscard, usePublish } from './queries.js';
 import { siteConfig } from '../../../config/site.config.js';
 import { fakeWorker, makeQueryClient, Providers } from '../test-utils.jsx';
 
-const DRAFT = { site: { name: 'D', bio: '', hero: null }, albums: [{ slug: 'notte', title: 'Notte', description: '', coverName: null }], hasDraft: false };
+const DRAFT = {
+  site: { name: 'D', bio: '', hero: null },
+  albums: [{ slug: 'notte', title: 'Notte', description: '', coverName: null }],
+  albumSummaries: { notte: { photoCount: 1, firstPhoto: 'a.webp' } },
+  hasDraft: false,
+};
 const DRAFT_EDITED = { ...DRAFT, albums: [{ ...DRAFT.albums[0], title: 'Edited' }] };
 const wrapper = client => ({ children }) => <Providers client={client}>{children}</Providers>;
 
@@ -43,6 +48,13 @@ describe('unsaved values win over the server', () => {
     expect(overlayUnsaved(keys.draft, DRAFT, queue).site).toBe(DRAFT.site);
     expect(overlayUnsaved(keys.manifest('notte'), [{ name: 'a.webp' }], queue)).toEqual([]);
     expect(overlayUnsaved(keys.status, { hasDraft: true }, queue)).toEqual({ hasDraft: true });
+  });
+
+  it('overlays summaries from queued manifests onto a draft refetch', () => {
+    const queuedManifest = [{ name: 'new.webp' }, { name: 'next.webp' }];
+    const queue = { holds: key => key === 'manifest:notte', valueOf: () => queuedManifest };
+    expect(overlayUnsaved(keys.draft, DRAFT, queue).albumSummaries.notte)
+      .toEqual({ photoCount: 2, firstPhoto: 'new.webp' });
   });
 
   it('a refetch while a change waits (another tab, after publishing) does not show the old list', async () => {
@@ -153,6 +165,83 @@ describe('useManifest', () => {
     await act(() => result.current.queue.flush());
     expect(fetchMock.mock.calls.some(([path, init]) => path === '/api/admin/draft/albums/notte/manifest' && init?.method === 'PUT')).toBe(true);
   });
+
+  it('updates the gallery summary immediately and persists it only with the manifest', async () => {
+    const fetchMock = fakeWorker({
+      'GET /api/admin/draft': DRAFT,
+      'GET /api/admin/draft/albums/notte/manifest': [[{ name: 'a.webp' }]],
+      'PUT /api/admin/draft/albums/notte/manifest': { ok: true },
+    });
+    const client = makeQueryClient();
+    const { result } = renderHook(() => ({ ...useManifest('notte'), albums: useAlbums(), queue: useSaveQueue() }), { wrapper: wrapper(client) });
+    await waitFor(() => expect(result.current.photos).toHaveLength(1));
+    await waitFor(() => expect(client.getQueryData(keys.draft)?.albumSummaries?.notte?.photoCount).toBe(1));
+    act(() => { result.current.setManifest([{ name: 'b.webp' }, { name: 'c.webp' }]); });
+    await waitFor(() => expect(client.getQueryData(keys.draft).albumSummaries.notte)
+      .toEqual({ photoCount: 2, firstPhoto: 'b.webp' }));
+    await act(() => result.current.queue.flush());
+    expect(fetchMock.mock.calls.filter(([path, init]) => path.endsWith('/manifest') && init?.method === 'PUT'))
+      .toHaveLength(1);
+    expect(JSON.parse(fetchMock.mock.calls.find(([path, init]) => path.endsWith('/manifest') && init?.method === 'PUT')[1].body))
+      .toEqual([{ name: 'b.webp' }, { name: 'c.webp' }]);
+  });
+
+  it('overlays a pending manifest after refetch and invalidates both caches on save', async () => {
+    let resolveRefetch;
+    const refreshed = { ...DRAFT, albumSummaries: { notte: { photoCount: 2, firstPhoto: 'fresh.webp' } } };
+    const fetchMock = fakeWorker({
+      'GET /api/admin/draft': [DRAFT, () => new Promise(resolve => { resolveRefetch = resolve; }), refreshed],
+      'GET /api/admin/draft/albums/notte/manifest': [[{ name: 'a.webp' }]],
+      'PUT /api/admin/draft/albums/notte/manifest': { ok: true },
+    });
+    const client = makeQueryClient();
+    const { result } = renderHook(() => ({ ...useManifest('notte'), albums: useAlbums(), queue: useSaveQueue() }), { wrapper: wrapper(client) });
+    await waitFor(() => expect(result.current.photos).toHaveLength(1));
+    await waitFor(() => expect(client.getQueryData(keys.draft)).toBeDefined());
+    act(() => result.current.queue.pause());
+    act(() => result.current.setManifest([{ name: 'fresh.webp' }, { name: 'second.webp' }]));
+    act(() => { client.refetchQueries({ queryKey: keys.draft }); });
+    await waitFor(() => expect(resolveRefetch).toBeTypeOf('function'));
+    await act(async () => resolveRefetch(new Response(JSON.stringify(DRAFT), { status: 200 })));
+    expect(client.getQueryData(keys.draft).albumSummaries.notte)
+      .toEqual({ photoCount: 2, firstPhoto: 'fresh.webp' });
+    act(() => result.current.queue.resume());
+    await act(() => result.current.queue.flush());
+    await waitFor(() => expect(fetchMock.mock.calls.filter(([path]) => path === '/api/admin/draft').length).toBe(3));
+    await waitFor(() => expect(fetchMock.mock.calls.filter(([path]) => path.endsWith('/manifest')).length).toBeGreaterThanOrEqual(2));
+    await waitFor(() => expect(client.getQueryData(keys.draft).albumSummaries.notte)
+      .toEqual(refreshed.albumSummaries.notte));
+  });
+});
+
+describe('draft refresh after discard and publish', () => {
+  it('replaces gallery summaries with the server state after discard', async () => {
+    const fresh = { ...DRAFT, albumSummaries: { notte: { photoCount: 0, firstPhoto: null } } };
+    const fetchMock = fakeWorker({
+      'GET /api/admin/draft': [DRAFT, fresh],
+      'DELETE /api/admin/draft': { ok: true },
+    });
+    const client = makeQueryClient();
+    const { result } = renderHook(() => ({ albums: useAlbums(), discard: useDiscard() }), { wrapper: wrapper(client) });
+    await waitFor(() => expect(result.current.albums.data).toBeDefined());
+    act(() => result.current.discard.mutate());
+    await waitFor(() => expect(client.getQueryData(keys.draft).albumSummaries.notte).toEqual(fresh.albumSummaries.notte));
+    expect(fetchMock.mock.calls.some(([path, init]) => path === '/api/admin/draft' && init?.method === 'DELETE')).toBe(true);
+  });
+
+  it('replaces gallery summaries with the server state after publish', async () => {
+    const fresh = { ...DRAFT, albumSummaries: { notte: { photoCount: 0, firstPhoto: null } } };
+    const fetchMock = fakeWorker({
+      'GET /api/admin/draft': [DRAFT, fresh],
+      'POST /api/admin/publish': { done: true, copied: 0, remaining: 0 },
+    });
+    const client = makeQueryClient();
+    const { result } = renderHook(() => ({ albums: useAlbums(), publish: usePublish() }), { wrapper: wrapper(client) });
+    await waitFor(() => expect(result.current.albums.data).toBeDefined());
+    act(() => result.current.publish.mutate());
+    await waitFor(() => expect(client.getQueryData(keys.draft).albumSummaries.notte).toEqual(fresh.albumSummaries.notte));
+    expect(fetchMock.mock.calls.some(([path, init]) => path === '/api/admin/publish' && init?.method === 'POST')).toBe(true);
+  });
 });
 
 describe('useSite', () => {
@@ -212,4 +301,3 @@ describe('useSite', () => {
     expect(result.current.site.site.name).toBe('');
   });
 });
-
