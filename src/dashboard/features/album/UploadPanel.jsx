@@ -8,13 +8,13 @@ const t = texts.admin.album;
 const isFileDrag = event => Boolean(event.dataTransfer?.types?.includes('Files'));
 
 /** Uploads photos to the album and displays the job kept by the dashboard shell. */
-export function UploadPanel({ slug, photos, setManifest, makeProcessFileImpl }) {
+export function UploadPanel({ slug, setManifest, makeProcessFileImpl }) {
   const publishing = useIsPublishing();
   const { rows, summary, uploading, start } = useUpload(slug);
   const inputId = useId();
   const [dragging, setDragging] = useState(false);
   const disabled = publishing || uploading;
-  const begin = files => start({ files, photos, setManifest, makeProcessFileImpl });
+  const begin = files => start({ files, setManifest, makeProcessFileImpl });
 
   return (
     <div

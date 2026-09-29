@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import { texts } from '../../../../config/texts.config.js';
 import { formatText } from '../../../utils/formatText.js';
-import { useSaveQueue } from '../../api/drafts.jsx';
+import { useManifest, useSaveQueue } from '../../api/drafts.jsx';
 import { PublishBar } from '../publish/PublishBar.jsx';
 import { fakeWorker, renderWithQuery } from '../../test-utils.jsx';
 import { UploadProvider } from './upload-context.jsx';
@@ -19,13 +19,17 @@ function Panel(props) {
   return <UploadPanel slug="notte" photos={[{ name: 'a.webp', width: 4, height: 3 }]} makeProcessFileImpl={makeProcessFileImpl} {...props} />;
 }
 const choose = files => fireEvent.change(document.querySelector('input[type=file]'), { target: { files } });
-const renderUpload = ui => renderWithQuery(<UploadProvider>{ui}</UploadProvider>);
+const renderUpload = ui => {
+  const result = renderWithQuery(<UploadProvider>{ui}</UploadProvider>);
+  return { ...result, rerender: next => result.rerender(<UploadProvider>{next}</UploadProvider>) };
+};
+const worker = answers => fakeWorker({ 'GET /api/admin/draft/albums/notte/manifest': [[{ name: 'a.webp', width: 4, height: 3 }]], ...answers });
 const findSummary = text => screen.findByText(text, { selector: '.dash-upload__summary p' });
 
 describe('UploadPanel', () => {
   it('compresses, sends each photo to the waiting area, then adds them to the draft', async () => {
     const setManifest = vi.fn(() => true);
-    const fetchMock = fakeWorker({
+    const fetchMock = worker({
       'PUT /api/admin/staging/notte/bosco.webp': { ok: true },
       'PUT /api/admin/staging/notte/a-2.webp': { ok: true },
     });
@@ -42,14 +46,14 @@ describe('UploadPanel', () => {
   });
 
   it('says which files the browser cannot upload', async () => {
-    fakeWorker({});
+    worker({});
     renderUpload(<Panel setManifest={vi.fn(() => true)} />);
     choose([file('IMG_1.HEIC', '')]);
     expect((await screen.findByRole('alert')).textContent).toContain('IMG_1.HEIC');
   });
 
   it('lists the photos that failed, with the reason', async () => {
-    fakeWorker({ 'PUT /api/admin/staging/notte/bosco.webp': { status: 413, body: { error: 'File over 10MB' } } });
+    worker({ 'PUT /api/admin/staging/notte/bosco.webp': { status: 413, body: { error: 'File over 10MB' } } });
     renderUpload(<Panel setManifest={vi.fn(() => true)} />);
     choose([file('bosco.jpg')]);
     const alert = await screen.findByRole('alert');
@@ -59,7 +63,7 @@ describe('UploadPanel', () => {
 
   it('Publish waits while photos are being uploaded', async () => {
     let finish;
-    fakeWorker({
+    worker({
       'GET /api/admin/draft/status': { hasDraft: true, publishing: false, changes: [{ type: 'site' }] },
       'PUT /api/admin/staging/notte/bosco.webp': () => new Promise(resolve => { finish = resolve; }),
     });
@@ -73,7 +77,7 @@ describe('UploadPanel', () => {
 
   it('never gives a new photo the name of a published one, even one deleted from the draft', async () => {
     const setManifest = vi.fn(() => true);
-    const fetchMock = fakeWorker({
+    const fetchMock = worker({
       'GET /api/data/albums/notte/manifest': [[{ name: 'a.webp', width: 4, height: 3 }, { name: 'bosco.webp', width: 4, height: 3 }]],
       'PUT /api/admin/staging/notte/bosco-2.webp': { ok: true },
     });
@@ -88,7 +92,7 @@ describe('UploadPanel', () => {
 
   it('says so when the upload cannot start, and offers to try again', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
-    const fetchMock = fakeWorker({ 'PUT /api/admin/staging/notte/bosco.webp': { ok: true } });
+    const fetchMock = worker({ 'PUT /api/admin/staging/notte/bosco.webp': { ok: true } });
     let loads = 0;
     const flaky = async () => { loads += 1; if (loads === 1) throw new Error('Failed to fetch dynamically imported module'); return makeProcessFileImpl(); };
     renderUpload(<Panel setManifest={vi.fn(() => true)} makeProcessFileImpl={flaky} />);
@@ -102,7 +106,7 @@ describe('UploadPanel', () => {
 
   it('offers to try again the photos that failed', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
-    fakeWorker({ 'PUT /api/admin/staging/notte/bosco.webp': [{ status: 500, body: { error: 'STORAGE_ERROR' } }, { ok: true }] });
+    worker({ 'PUT /api/admin/staging/notte/bosco.webp': [{ status: 500, body: { error: 'STORAGE_ERROR' } }, { ok: true }] });
     renderUpload(<Panel setManifest={vi.fn(() => true)} />);
     choose([file('bosco.jpg')]);
     fireEvent.click(await screen.findByRole('button', { name: t.retry }));
@@ -110,7 +114,7 @@ describe('UploadPanel', () => {
   });
 
   it('keeps the list of files it cannot upload next to the result of the others', async () => {
-    fakeWorker({ 'PUT /api/admin/staging/notte/bosco.webp': { ok: true } });
+    worker({ 'PUT /api/admin/staging/notte/bosco.webp': { ok: true } });
     renderUpload(<Panel setManifest={vi.fn(() => true)} />);
     choose([file('IMG.HEIC', ''), file('bosco.jpg')]);
     await waitFor(() => expect(screen.getByRole('alert').textContent).toContain(t.uploadSuccessOne));
@@ -119,7 +123,7 @@ describe('UploadPanel', () => {
 
   it('one batch at a time per album, even from another copy of the screen (left and reopened)', async () => {
     let finish;
-    fakeWorker({ 'PUT /api/admin/staging/notte/bosco.webp': () => new Promise(resolve => { finish = resolve; }) });
+    worker({ 'PUT /api/admin/staging/notte/bosco.webp': () => new Promise(resolve => { finish = resolve; }) });
     renderUpload(<><Panel setManifest={vi.fn(() => true)} /><Panel setManifest={vi.fn(() => true)} /></>);
     const [first, second] = document.querySelectorAll('input[type=file]');
     fireEvent.change(first, { target: { files: [file('bosco.jpg')] } });
@@ -130,7 +134,7 @@ describe('UploadPanel', () => {
 
   it('a photo dropped while uploads wait does not leave the dashboard, and is not uploaded', async () => {
     let finish;
-    const fetchMock = fakeWorker({ 'PUT /api/admin/staging/notte/bosco.webp': () => new Promise(resolve => { finish = resolve; }) });
+    const fetchMock = worker({ 'PUT /api/admin/staging/notte/bosco.webp': () => new Promise(resolve => { finish = resolve; }) });
     renderUpload(<Panel setManifest={vi.fn(() => true)} />);
     choose([file('bosco.jpg')]);
     await waitFor(() => expect(document.querySelector('input[type=file]').disabled).toBe(true));
@@ -144,9 +148,28 @@ describe('UploadPanel', () => {
     expect(fetchMock.mock.calls.filter(([, init]) => init?.method === 'PUT').map(([path]) => path)).toEqual(['/api/admin/staging/notte/bosco.webp']);
   });
 
+  it('shows the pending upload and keeps file input blocked after returning to its album', async () => {
+    let finish;
+    worker({
+      'GET /api/admin/draft/albums/notte/manifest': [[{ name: 'a.webp' }]],
+      'GET /api/data/albums/notte/manifest': [[]],
+      'PUT /api/admin/staging/notte/bosco.webp': () => new Promise(resolve => { finish = resolve; }),
+    });
+    const Route = ({ showAlbum }) => showAlbum ? <Panel setManifest={vi.fn(() => true)} photos={[{ name: 'a.webp' }, { name: 'local.webp' }]} /> : null;
+    const { rerender } = renderUpload(<Route showAlbum />);
+    choose([file('bosco.jpg')]);
+    const pendingRow = await screen.findByRole('listitem');
+    rerender(<Route showAlbum={false} />);
+    rerender(<Route showAlbum />);
+    expect(document.querySelector('input[type=file]').disabled).toBe(true);
+    expect(screen.getByRole('listitem').textContent).toBe(pendingRow.textContent);
+    await act(async () => { finish(new Response('{"ok":true}', { status: 200 })); });
+    expect(await findSummary(t.uploadSuccessOne)).toBeTruthy();
+  });
+
   it('uploads are held from the click on Publish, while the changes still waiting are saved', async () => {
     let saved;
-    fakeWorker({
+    worker({
       'GET /api/admin/draft/status': { hasDraft: true, publishing: false, changes: [{ type: 'site' }] },
       'PUT /api/admin/draft/site': () => new Promise(resolve => { saved = resolve; }),
       'POST /api/admin/publish': { done: true, copied: 0, remaining: 0 },
@@ -163,7 +186,7 @@ describe('UploadPanel', () => {
 
   it('blocks uploads while this tab has an active publication mutation', async () => {
     let finish;
-    fakeWorker({
+    worker({
       'GET /api/admin/draft/status': { hasDraft: true, publishing: false, changes: [{ type: 'site' }] },
       'POST /api/admin/publish': () => new Promise(resolve => { finish = resolve; }),
     });
@@ -175,9 +198,9 @@ describe('UploadPanel', () => {
   });
 
   it('photos uploaded after their album left the cache still reach the draft', async () => {
-    // The first call finds no list (the screen was left long ago); the second, after reading it again, does.
+    // The first setter cannot find the cache; after its network reread, the second setter can add the upload.
     const setManifest = vi.fn().mockReturnValueOnce(false).mockReturnValue(true);
-    const fetchMock = fakeWorker({
+    const fetchMock = worker({
       'PUT /api/admin/staging/notte/bosco.webp': { ok: true },
       'GET /api/admin/draft/albums/notte/manifest': [[{ name: 'a.webp', width: 4, height: 3 }]],
     });
@@ -186,5 +209,104 @@ describe('UploadPanel', () => {
     expect(await findSummary(t.uploadSuccessOne)).toBeTruthy();
     expect(fetchMock.mock.calls.some(([path]) => path === '/api/admin/draft/albums/notte/manifest')).toBe(true);
     expect(setManifest).toHaveBeenCalledTimes(2);
+  });
+
+  it('chooses names from a fresh draft manifest after another window saved a photo', async () => {
+    const fetchMock = worker({
+      'GET /api/admin/draft/albums/notte/manifest': [[{ name: 'a.webp' }, { name: 'bosco.webp' }]],
+      'GET /api/data/albums/notte/manifest': [[]],
+      'PUT /api/admin/staging/notte/bosco-2.webp': { ok: true },
+    });
+    renderUpload(<Panel setManifest={vi.fn(() => true)} />);
+    choose([file('bosco.jpg')]);
+    expect(await findSummary(t.uploadSuccessOne)).toBeTruthy();
+    expect(fetchMock.mock.calls.filter(([path, init]) => init?.method === 'PUT').map(([path]) => path))
+      .toEqual(['/api/admin/staging/notte/bosco-2.webp']);
+    expect(fetchMock.mock.calls.findIndex(([path]) => path === '/api/admin/draft/albums/notte/manifest'))
+      .toBeLessThan(fetchMock.mock.calls.findIndex(([path]) => path === '/api/admin/staging/notte/bosco-2.webp'));
+  });
+
+  it('uses queued local manifest entries when choosing names after a fresh read', async () => {
+    let setLatest;
+    const fetchMock = worker({
+      'GET /api/admin/draft/albums/notte/manifest': [[{ name: 'a.webp' }]],
+      'GET /api/data/albums/notte/manifest': [[]],
+      'PUT /api/admin/staging/notte/bosco-2.webp': { ok: true },
+    });
+    function RealPanel() {
+      queue = useSaveQueue();
+      const manifest = useManifest('notte');
+      setLatest = manifest.setManifest;
+      if (!manifest.photos) return null;
+      return <UploadPanel slug="notte" photos={manifest.photos} setManifest={manifest.setManifest} makeProcessFileImpl={makeProcessFileImpl} />;
+    }
+    renderUpload(<RealPanel />);
+    await waitFor(() => expect(document.querySelector('input[type=file]')).not.toBeNull());
+    act(() => { queue.pause(); setLatest([{ name: 'a.webp' }, { name: 'bosco.webp' }]); });
+    choose([file('bosco.jpg')]);
+    expect(await findSummary(t.uploadSuccessOne)).toBeTruthy();
+    expect(fetchMock.mock.calls.filter(([path, init]) => init?.method === 'PUT').map(([path]) => path))
+      .toContain('/api/admin/staging/notte/bosco-2.webp');
+  });
+
+  it('keeps a local reorder and deletion when adding successful uploads', async () => {
+    let finishProcessing;
+    let setLatest;
+    const fetchMock = worker({
+      'GET /api/admin/draft/albums/notte/manifest': [[{ name: 'a.webp' }, { name: 'b.webp' }, { name: 'c.webp' }]],
+      'GET /api/data/albums/notte/manifest': [[]],
+      'PUT /api/admin/staging/notte/new.webp': { ok: true },
+      'PUT /api/admin/draft/albums/notte/manifest': { ok: true },
+    });
+    const process = async () => async () => {
+      await new Promise(resolve => { finishProcessing = resolve; });
+      return { blob: new Blob(['w'], { type: 'image/webp' }), width: 4, height: 3, uploadedAt: 1 };
+    };
+    function RealPanel() {
+      queue = useSaveQueue();
+      const manifest = useManifest('notte');
+      setLatest = manifest.setManifest;
+      if (!manifest.photos) return null;
+      return <UploadPanel slug="notte" photos={manifest.photos} setManifest={manifest.setManifest} makeProcessFileImpl={process} />;
+    }
+    renderUpload(<RealPanel />);
+    await waitFor(() => expect(document.querySelector('input[type=file]')).not.toBeNull());
+    choose([file('new.jpg')]);
+    await waitFor(() => expect(finishProcessing).toBeTypeOf('function'));
+    act(() => { setLatest([{ name: 'c.webp' }, { name: 'a.webp' }]); });
+    await act(async () => finishProcessing());
+    expect(await findSummary(t.uploadSuccessOne)).toBeTruthy();
+    expect(JSON.parse(fetchMock.mock.calls.find(([path, init]) => path === '/api/admin/draft/albums/notte/manifest' && init?.method === 'PUT')[1].body)
+      .map(photo => photo.name)).toEqual(['c.webp', 'a.webp', 'new.webp']);
+  });
+
+  it('explains the Worker NAME_PUBLISHED response in localized upload copy', async () => {
+    worker({
+      'GET /api/admin/draft/albums/notte/manifest': [[]],
+      'GET /api/data/albums/notte/manifest': [[]],
+      'PUT /api/admin/staging/notte/bosco.webp': { status: 409, body: { error: 'NAME_PUBLISHED' } },
+    });
+    renderUpload(<Panel setManifest={vi.fn(() => true)} />);
+    choose([file('bosco.jpg')]);
+    const alert = await screen.findByRole('alert');
+    expect(alert.textContent).toContain(t.namePublished);
+    expect(alert.textContent).not.toContain('NAME_PUBLISHED');
+  });
+
+  it('logs a failed post-upload manifest reread and offers a retry', async () => {
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+    log.mockClear();
+    const fetchMock = worker({
+      'GET /api/admin/draft/albums/notte/manifest': [[], { status: 500, body: { error: 'STORAGE_ERROR' } }],
+      'GET /api/data/albums/notte/manifest': [[]],
+      'PUT /api/admin/staging/notte/bosco.webp': { ok: true },
+    });
+    renderUpload(<Panel setManifest={vi.fn(() => false)} />);
+    choose([file('bosco.jpg')]);
+    const alert = await screen.findByRole('alert');
+    expect(alert.textContent).toContain(t.uploadManifestError);
+    expect(log).toHaveBeenCalledWith('Could not reread draft manifest after upload:', expect.any(Error));
+    expect(screen.getByRole('button', { name: t.retry })).toBeTruthy();
+    expect(fetchMock.mock.calls.filter(([path]) => path === '/api/admin/draft/albums/notte/manifest')).toHaveLength(2);
   });
 });

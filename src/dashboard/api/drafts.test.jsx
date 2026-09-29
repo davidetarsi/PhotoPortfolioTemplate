@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { overlayUnsaved, savePath, useAlbums, useManifest, useSaveQueue, useSaveState, useSite } from './drafts.jsx';
+import { fetchFreshManifest, overlayUnsaved, savePath, useAlbums, useManifest, useSaveQueue, useSaveState, useSite } from './drafts.jsx';
 import { keys, useDiscard, usePublish } from './queries.js';
 import { siteConfig } from '../../../config/site.config.js';
 import { fakeWorker, makeQueryClient, Providers } from '../test-utils.jsx';
@@ -144,6 +144,15 @@ describe('after a save', () => {
 });
 
 describe('useManifest', () => {
+  it('forces a network read even when the query cache already contains a fresh-looking list', async () => {
+    const fetchMock = fakeWorker({ 'GET /api/admin/draft/albums/notte/manifest': [[{ name: 'from-window-a.webp' }]] });
+    const client = makeQueryClient();
+    client.setQueryData(keys.manifest('notte'), [{ name: 'old.webp' }]);
+
+    await expect(fetchFreshManifest(client, 'notte')).resolves.toEqual([{ name: 'from-window-a.webp' }]);
+    expect(fetchMock.mock.calls.filter(([path]) => path === '/api/admin/draft/albums/notte/manifest')).toHaveLength(1);
+  });
+
   it('never reads an address that is not an album address (it comes from the URL)', async () => {
     const fetchMock = fakeWorker({});
     const { result } = renderHook(() => useManifest('..%2Fstatus'), { wrapper: wrapper(makeQueryClient()) });

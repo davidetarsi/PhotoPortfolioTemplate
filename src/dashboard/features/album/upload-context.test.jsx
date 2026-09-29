@@ -7,6 +7,7 @@ import { UploadProvider, useUpload } from './upload-context.jsx';
 const t = texts.admin.album;
 const file = new File(['x'], 'bosco.jpg', { type: 'image/jpeg' });
 const process = async () => async () => ({ blob: new Blob(['webp']), width: 4, height: 3, uploadedAt: 1 });
+const worker = answers => fakeWorker({ 'GET /api/admin/draft/albums/notte/manifest': [[]], ...answers });
 
 function Job({ setManifest }) {
   const upload = useUpload('notte');
@@ -24,7 +25,7 @@ function Job({ setManifest }) {
 describe('upload context', () => {
   it('keeps the active job and its completed outcome when the album consumer unmounts', async () => {
     let finish;
-    fakeWorker({ 'PUT /api/admin/staging/notte/bosco.webp': () => new Promise(resolve => { finish = resolve; }) });
+    worker({ 'PUT /api/admin/staging/notte/bosco.webp': () => new Promise(resolve => { finish = resolve; }) });
     const setManifest = vi.fn(() => true);
     const first = renderWithQuery(<UploadProvider><Job setManifest={setManifest} /></UploadProvider>);
     fireEvent.click(screen.getByRole('button', { name: 'Start upload' }));
@@ -43,7 +44,7 @@ describe('upload context', () => {
   });
 
   it('starts with no upload result after the dashboard provider is recreated', async () => {
-    fakeWorker({ 'PUT /api/admin/staging/notte/bosco.webp': { ok: true } });
+    worker({ 'PUT /api/admin/staging/notte/bosco.webp': { ok: true } });
     const first = renderWithQuery(<UploadProvider><Job setManifest={vi.fn(() => true)} /></UploadProvider>);
     fireEvent.click(screen.getByRole('button', { name: 'Start upload' }));
     expect((await screen.findByTestId('summary')).textContent).toContain(t.uploadSuccessOne);

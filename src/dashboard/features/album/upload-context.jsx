@@ -5,6 +5,7 @@ import { formatText } from '../../../utils/formatText.js';
 import { partitionBySupport, processFile } from '../../../admin/pipeline.js';
 import { runBatch } from '../../../admin/upload-manager.js';
 import { ApiError, request, upload } from '../../api/client.js';
+import { fetchFreshManifest } from '../../api/drafts.jsx';
 
 const t = texts.admin.album;
 const UploadContext = createContext(null);
@@ -51,7 +52,7 @@ export function UploadProvider({ children }) {
     [slug]: { ...(current[slug] ?? { rows: [], summary: null }), ...update },
   }));
 
-  const start = ({ slug, files, photos, setManifest, makeProcessFileImpl = makeProcessFile }) => {
+  const start = ({ slug, files, setManifest, makeProcessFileImpl = makeProcessFile }) => {
     const { supported, unsupported } = partitionBySupport([...files]);
     const refused = unsupported.length
       ? [formatText(t.unsupportedFormat, { elenco: unsupported.map(file => file.name).join(', ') })]
@@ -71,8 +72,11 @@ export function UploadProvider({ children }) {
     const mutation = client.getMutationCache().build(client, {
       mutationKey: key,
       mutationFn: async () => {
-        const [processOne, published] = await Promise.all([makeProcessFileImpl(), publishedNames(slug)]);
-        const draft = photos ?? [];
+        const [processOne, draft, published] = await Promise.all([
+          makeProcessFileImpl(),
+          fetchFreshManifest(client, slug),
+          publishedNames(slug),
+        ]);
         const before = new Set([...draft.map(photo => photo.name), ...published]);
         return runBatch({
           files: supported,
@@ -82,7 +86,14 @@ export function UploadProvider({ children }) {
           putManifest: async entries => {
             const add = prev => [...prev, ...entries.filter(entry => !before.has(entry.name) && !prev.some(photo => photo.name === entry.name))];
             if (setManifest(add, { now: true })) return;
-            await client.fetchQuery({ queryKey: ['draft-manifest', slug], queryFn: () => request(`/api/admin/draft/albums/${slug}/manifest`) });
+            try {
+              await fetchFreshManifest(client, slug);
+            } catch (error) {
+              console.error('Could not reread draft manifest after upload:', error);
+              const refreshError = new Error(t.manifestError, { cause: error });
+              refreshError.name = 'ManifestRefreshError';
+              throw refreshError;
+            }
             if (!setManifest(add, { now: true })) throw new Error(t.manifestError);
           },
           onProgress: (name, phase) => {
@@ -101,7 +112,12 @@ export function UploadProvider({ children }) {
     });
 
     mutation.execute().then(({ uploaded, failed }) => {
-      const failures = [...refused, ...failed.map(item => formatText(t.uploadFailedItem, { nome: item.name, motivo: item.error?.message ?? String(item.error) }))];
+      const failures = [...refused, ...failed.map(item => formatText(t.uploadFailedItem, {
+        nome: item.name,
+        motivo: item.error instanceof ApiError && item.error.status === 409 && item.error.body.error === 'NAME_PUBLISHED'
+          ? t.namePublished
+          : item.error?.message ?? String(item.error),
+      }))];
       const done = uploaded.length === 1 ? t.uploadSuccessOne : formatText(t.uploadSuccess, { n: uploaded.length });
       const summary = failed.length === 0
         ? { text: done, tone: refused.length ? 'error' : 'ok', failures, retry: [] }
@@ -109,8 +125,14 @@ export function UploadProvider({ children }) {
       setAlbum(slug, { summary });
       announce(summary.text);
     }).catch(error => {
-      console.error('Upload could not start:', error);
-      const summary = { text: formatText(t.uploadError, { message: error.message }), tone: 'error', failures: refused, retry: supported };
+      const manifestRefreshFailed = error.name === 'ManifestRefreshError';
+      if (!manifestRefreshFailed) console.error('Upload could not start:', error);
+      const summary = {
+        text: manifestRefreshFailed ? t.uploadManifestError : formatText(t.uploadError, { message: error.message }),
+        tone: 'error',
+        failures: refused,
+        retry: supported,
+      };
       setAlbum(slug, { summary });
       announce(summary.text);
     });
