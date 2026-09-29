@@ -153,6 +153,36 @@ describe('Site screen', () => {
       expect(await screen.findByRole('button', { name: /^Instagram/ })).toBeTruthy();
     });
 
+    it('reloads the preview after a confirmed link is saved', async () => {
+      vi.stubGlobal('matchMedia', () => ({ matches: true, addEventListener() {}, removeEventListener() {} }));
+      linksWorker([]);
+      renderSite();
+      const frame = await screen.findByTitle(t.previewTitle);
+      const postMessage = vi.spyOn(frame.contentWindow, 'postMessage');
+      fireEvent.click(await addButton());
+      const sheet = await screen.findByRole('dialog', { name: t.newLink });
+      fireEvent.change(within(sheet).getByLabelText(t.linkUrlLabel), { target: { value: 'example.com' } });
+      postMessage.mockClear();
+      fireEvent.click(within(sheet).getByRole('button', { name: t.done }));
+      await waitFor(() => expect(postMessage.mock.calls.some(([message]) => message?.type === 'preview:reload')).toBe(true));
+    });
+
+    it('does not reload the preview when saving a confirmed link fails and keeps the queue error visible', async () => {
+      vi.stubGlobal('matchMedia', () => ({ matches: true, addEventListener() {}, removeEventListener() {} }));
+      worker({ 'PUT /api/admin/draft/site': { status: 503, body: { error: 'STORAGE_ERROR' } } });
+      renderSite();
+      const frame = await screen.findByTitle(t.previewTitle);
+      const postMessage = vi.spyOn(frame.contentWindow, 'postMessage');
+      fireEvent.click(await addButton());
+      const sheet = await screen.findByRole('dialog', { name: t.newLink });
+      fireEvent.change(within(sheet).getByLabelText(t.linkUrlLabel), { target: { value: 'example.com' } });
+      postMessage.mockClear();
+      fireEvent.click(within(sheet).getByRole('button', { name: t.done }));
+      const alert = await screen.findByRole('alert');
+      await waitFor(() => expect(alert.textContent).toContain('STORAGE_ERROR'));
+      expect(postMessage.mock.calls.filter(([message]) => message?.type === 'preview:reload')).toEqual([]);
+    });
+
     it('refuses an address that is not a web or email address, saying why', async () => {
       const fetchMock = linksWorker([]);
       renderSite();

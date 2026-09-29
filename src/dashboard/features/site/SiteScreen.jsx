@@ -28,7 +28,8 @@ export function SiteScreen() {
   const [editing, setEditing] = useState(null);
   const [page, setPage] = useState('/');
   const [full, setFull] = useState(false);
-  const preview = usePreview({ draftVersion: dataUpdatedAt, fieldOpen: Boolean(editing) });
+  const [linksSaving, setLinksSaving] = useState(false);
+  const preview = usePreview({ draftVersion: linksSaving ? undefined : dataUpdatedAt, fieldOpen: Boolean(editing) || linksSaving });
 
   const open = field => {
     setEditing(field);
@@ -46,7 +47,13 @@ export function SiteScreen() {
   };
 
   const changeLinks = update => {
-    if (setSite(prev => ({ ...prev, links: update(prev.links) }), { now: true })) queue.flush().then(() => preview.reload());
+    setLinksSaving(true);
+    if (setSite(prev => ({ ...prev, links: update(prev.links) }), { now: true })) {
+      queue.flush().then(() => {
+        setLinksSaving(false);
+        if (!queue.holds('site')) preview.reload();
+      });
+    } else setLinksSaving(false);
   };
   const linksOpen = () => { setPage('/'); preview.focus('site.links'); };
 
