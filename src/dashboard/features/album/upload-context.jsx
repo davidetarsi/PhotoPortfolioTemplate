@@ -2,8 +2,8 @@ import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { useIsMutating, useQueryClient } from '@tanstack/react-query';
 import { texts } from '../../../../config/texts.config.js';
 import { formatText } from '../../../utils/formatText.js';
-import { partitionBySupport, processFile } from '../../../admin/pipeline.js';
-import { runBatch } from '../../../admin/upload-manager.js';
+import { partitionBySupport, processFile } from '../../lib/pipeline.js';
+import { runBatch } from '../../lib/upload-manager.js';
 import { ApiError, request, upload } from '../../api/client.js';
 import { fetchFreshManifest } from '../../api/drafts.jsx';
 
@@ -12,7 +12,7 @@ const UploadContext = createContext(null);
 
 /** The browser's compression (WebP, at most 1900 px), loaded only when a photo is uploaded. */
 export async function makeProcessFile() {
-  const { makeProcessDeps } = await import('../../../admin/encoder.js');
+  const { makeProcessDeps } = await import('../../lib/encoder.js');
   const deps = await makeProcessDeps();
   return file => processFile(file, deps);
 }

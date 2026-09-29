@@ -3,7 +3,7 @@ import { texts } from '../../../../config/texts.config.js';
 import { formatText } from '../../../utils/formatText.js';
 import { MAX_LINKS } from '../../../shared/content-rules.js';
 import { linkKind, linkLabel } from '../../../shared/site-links.js';
-import { moveItem } from '../../../admin/sortable.js';
+import { moveItem } from '../../lib/sortable.js';
 import { Button } from '../../ui/Button.jsx';
 import { LinkIcon } from '../../ui/LinkIcon.jsx';
 import { MoveButtons } from '../../ui/MoveButtons.jsx';

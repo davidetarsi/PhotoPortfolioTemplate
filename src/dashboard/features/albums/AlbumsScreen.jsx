@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { texts } from '../../../../config/texts.config.js';
-import { moveItem } from '../../../admin/sortable.js';
+import { moveItem } from '../../lib/sortable.js';
 import { useAlbums, useSaveQueue } from '../../api/drafts.jsx';
 import { keys } from '../../api/queries.js';
 import { Button } from '../../ui/Button.jsx';

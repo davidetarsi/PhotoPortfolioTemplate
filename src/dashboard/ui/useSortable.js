@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { attachSortable } from '../../admin/sortable.js';
+import { attachSortable } from '../lib/sortable.js';
 
 /**
  * Drag and drop reordering of a container's children (the ones with draggable="true"):

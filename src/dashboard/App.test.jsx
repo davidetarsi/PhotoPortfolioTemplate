@@ -7,7 +7,7 @@ import { formatText } from '../utils/formatText.js';
 import { useSaveQueue } from './api/drafts.jsx';
 import { fakeWorker, installDialogPolyfill, makeQueryClient, Providers, renderWithQuery } from './test-utils.jsx';
 
-vi.mock('../admin/encoder.js', () => ({
+vi.mock('./lib/encoder.js', () => ({
   makeProcessDeps: async () => ({
     decode: async () => ({ bitmap: {}, width: 4, height: 3 }),
     encode: async () => new Blob(['webp'], { type: 'image/webp' }),

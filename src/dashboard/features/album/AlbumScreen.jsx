@@ -3,7 +3,7 @@ import { useIsMutating } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from 'react-router';
 import { texts } from '../../../../config/texts.config.js';
 import { formatText } from '../../../utils/formatText.js';
-import { moveItem } from '../../../admin/sortable.js';
+import { moveItem } from '../../lib/sortable.js';
 import { request } from '../../api/client.js';
 import { useAlbums, useManifest, useSite } from '../../api/drafts.jsx';
 import { useIsPublishing } from '../../api/queries.js';

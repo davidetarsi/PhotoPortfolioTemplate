@@ -1,4 +1,4 @@
-// src/admin/pipeline.test.js
+// src/dashboard/lib/pipeline.test.js
 import { describe, it, expect, vi } from 'vitest';
 import { targetDimensions, shouldUploadAsIs, processFile, partitionBySupport, MAX_DIMENSION, WEBP_QUALITY } from './pipeline.js';
 
