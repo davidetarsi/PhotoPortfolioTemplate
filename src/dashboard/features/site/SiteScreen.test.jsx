@@ -227,4 +227,39 @@ describe('Site screen', () => {
       expect(screen.getByRole('button', { name: t.addLink }).disabled).toBe(true);
     });
   });
+
+  describe('home image', () => {
+    function heroWorker(hero) {
+      let draft = { site: { ...SITE, hero }, albums: [{ slug: 'notte', title: 'Notte', description: '', coverName: null }], hasDraft: false };
+      return fakeWorker({
+        'GET /api/admin/draft': () => draft,
+        'GET /api/admin/draft/status': STATUS,
+        'GET /api/admin/draft/albums/notte/manifest': [[{ name: 'a.webp', width: 4, height: 3 }, { name: 'b.webp', width: 4, height: 3 }]],
+        'PUT /api/admin/draft/site': init => { draft = { ...draft, site: JSON.parse(init.body) }; return { ok: true }; },
+      });
+    }
+
+    it('picks a photo of an album as the home image, and saves it at once', async () => {
+      const fetchMock = heroWorker(null);
+      renderSite();
+      const heroRow = await row(t.heroLabel);
+      expect(heroRow.textContent).toContain(t.heroNoImage);
+      fireEvent.click(heroRow);
+      const sheet = await screen.findByRole('dialog', { name: t.heroLabel });
+      fireEvent.click(await within(sheet).findByRole('button', { name: formatText(t.heroPick, { n: 2, album: 'Notte' }) }));
+      await waitFor(() => expect(siteSaves(fetchMock).at(-1)?.hero).toEqual({ album: 'notte', name: 'b.webp' }));
+      expect((await row(t.heroLabel)).querySelector('img').getAttribute('src')).toBe('/api/admin/preview/photo/notte/b.webp');
+    });
+
+    it('shows the chosen photo, and can leave the home without an image', async () => {
+      const fetchMock = heroWorker({ album: 'notte', name: 'a.webp' });
+      renderSite();
+      fireEvent.click(await row(t.heroLabel));
+      const sheet = await screen.findByRole('dialog', { name: t.heroLabel });
+      const chosen = await within(sheet).findByRole('button', { name: formatText(t.heroPick, { n: 1, album: 'Notte' }) });
+      expect(chosen.getAttribute('aria-pressed')).toBe('true');
+      fireEvent.click(within(sheet).getByRole('button', { name: t.heroNoImage }));
+      await waitFor(() => expect(siteSaves(fetchMock).at(-1)?.hero).toBeNull());
+    });
+  });
 });

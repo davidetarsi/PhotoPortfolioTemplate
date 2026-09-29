@@ -41,3 +41,10 @@
 .dash-link-row__move button[aria-disabled="true"] { opacity: 0.4; cursor: default; }
 .dash-link-input { display: flex; align-items: center; gap: 0.5rem; }
 .dash-link-icon { flex: none; }
+
+.dash-hero-row__value { display: flex; align-items: center; gap: 0.6rem; }
+.dash-hero-row__value img { width: 3rem; height: 2.25rem; object-fit: cover; border-radius: 4px; flex: none; }
+.dash-hero-grid { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; grid-template-columns: repeat(auto-fill, minmax(6rem, 1fr)); max-height: 50dvh; overflow: auto; }
+.dash-hero-grid__photo { display: block; width: 100%; aspect-ratio: 4 / 3; padding: 0; border: 0; border-radius: 6px; overflow: hidden; background: var(--admin-raised); cursor: pointer; }
+.dash-hero-grid__photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.dash-hero-grid__photo[aria-pressed="true"] { outline: 3px solid var(--admin-accent); outline-offset: 2px; }

@@ -7,6 +7,7 @@ import { useMediaQuery } from '../../ui/useMediaQuery.js';
 import { Button } from '../../ui/Button.jsx';
 import { FieldSheet } from './FieldSheet.jsx';
 import { LinksEditor } from './LinksEditor.jsx';
+import { HeroField } from './HeroField.jsx';
 import { PreviewFrame } from './PreviewFrame.jsx';
 import { usePreview } from './usePreview.js';
 import './site.css';
@@ -29,7 +30,8 @@ export function SiteScreen() {
   const [page, setPage] = useState('/');
   const [full, setFull] = useState(false);
   const [linksSaving, setLinksSaving] = useState(false);
-  const preview = usePreview({ draftVersion: linksSaving ? undefined : dataUpdatedAt, fieldOpen: Boolean(editing) || linksSaving });
+  const [heroSaving, setHeroSaving] = useState(false);
+  const preview = usePreview({ draftVersion: linksSaving || heroSaving ? undefined : dataUpdatedAt, fieldOpen: Boolean(editing) || linksSaving || heroSaving });
 
   const open = field => {
     setEditing(field);
@@ -55,12 +57,22 @@ export function SiteScreen() {
       });
     } else setLinksSaving(false);
   };
+  const changeHero = hero => {
+    setHeroSaving(true);
+    if (setSite(prev => ({ ...prev, hero }), { now: true })) {
+      queue.flush().then(() => {
+        setHeroSaving(false);
+        if (!queue.holds('site')) preview.reload();
+      });
+    } else setHeroSaving(false);
+  };
   const linksOpen = () => { setPage('/'); preview.focus('site.links'); };
 
-  const group = (name, title) => (
+  const group = (name, title, first = null) => (
     <section className="dash-site-group" aria-labelledby={`dash-site-${name}`}>
       <h2 id={`dash-site-${name}`} className="dash-label">{title}</h2>
       <ul className="dash-site-rows">
+        {first && <li>{first}</li>}
         {FIELDS.filter(field => field.group === name).map(field => {
           const value = site ? field.read(site) : '';
           return (
@@ -86,7 +98,10 @@ export function SiteScreen() {
           <h2 id="dash-site-links" className="dash-label">{t.groupLinks}</h2>
           <LinksEditor links={site?.links} onChange={changeLinks} onOpen={linksOpen} onClose={() => preview.focus(null)} side={wide} />
         </section>
-        {group('home', t.groupHome)}
+        {group('home', t.groupHome, (
+          <HeroField hero={site?.hero} onChange={changeHero} side={wide}
+            onOpen={() => { setPage('/'); preview.focus(null); }} onClose={() => {}} />
+        ))}
         {group('contact', t.groupContact)}
       </div>
       {wide && (

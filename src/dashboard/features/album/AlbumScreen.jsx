@@ -5,7 +5,7 @@ import { texts } from '../../../../config/texts.config.js';
 import { formatText } from '../../../utils/formatText.js';
 import { moveItem } from '../../../admin/sortable.js';
 import { request } from '../../api/client.js';
-import { useAlbums, useManifest } from '../../api/drafts.jsx';
+import { useAlbums, useManifest, useSite } from '../../api/drafts.jsx';
 import { useIsPublishing } from '../../api/queries.js';
 import { Button } from '../../ui/Button.jsx';
 import { ConfirmDialog } from '../../ui/ConfirmDialog.jsx';
@@ -26,6 +26,7 @@ export function AlbumScreen() {
   const navigate = useNavigate();
   const { albums, setAlbums, isPending: albumsPending } = useAlbums();
   const { photos, setManifest, isError: manifestError } = useManifest(slug);
+  const { site, setSite } = useSite();
   const publishing = useIsPublishing();
   // An upload still running would add its photos to the album after it is deleted.
   const uploading = useIsMutating({ mutationKey: ['draft-save', 'upload', slug] }) > 0;
@@ -47,7 +48,12 @@ export function AlbumScreen() {
   // Changes are functions of the latest list: quick successive changes never undo each other.
   const updateAlbum = fields => setAlbums(prev => prev.map(item => (item.slug === slug ? { ...item, ...fields } : item)));
 
+  const heroHere = site?.hero?.album === slug;
+  const isHero = name => heroHere && site.hero.name === name;
+  const clearHero = () => setSite(prev => ({ ...prev, hero: null }), { now: true });
+
   const deletePhoto = name => {
+    if (isHero(name)) clearHero();
     setManifest(prev => prev.filter(photo => photo.name !== name));
     if (album.coverName === name) updateAlbum({ coverName: null });
     // A photo still waiting to be published is removed from the waiting area now; a
@@ -57,6 +63,7 @@ export function AlbumScreen() {
   };
 
   const deleteAlbum = () => {
+    if (heroHere) clearHero();
     setAlbums(prev => prev.filter(item => item.slug !== slug), { now: true });
     setDeletingAlbum(false);
     navigate('/');
@@ -94,11 +101,13 @@ export function AlbumScreen() {
       </div>
 
       <ConfirmDialog open={deletingPhoto !== null}
-        title={formatText(t.confirmDeletePhoto, { nome: deletingPhoto ?? '' })} body={t.deletePhotoBody}
+        title={formatText(t.confirmDeletePhoto, { nome: deletingPhoto ?? '' })}
+        body={isHero(deletingPhoto) ? `${t.deletePhotoBody} ${t.heroGoes}` : t.deletePhotoBody}
         confirmLabel={t.deletePhoto} cancelLabel={t.cancel}
         onConfirm={() => deletePhoto(deletingPhoto)} onCancel={() => setDeletingPhoto(null)} />
       <ConfirmDialog open={deletingAlbum}
-        title={formatText(t.deleteAlbumTitle, { album: album.title })} body={t.deleteAlbumBody}
+        title={formatText(t.deleteAlbumTitle, { album: album.title })}
+        body={heroHere ? `${t.deleteAlbumBody} ${t.heroGoes}` : t.deleteAlbumBody}
         confirmLabel={t.deleteAlbum} cancelLabel={t.cancel}
         onConfirm={deleteAlbum} onCancel={() => setDeletingAlbum(false)} />
     </section>

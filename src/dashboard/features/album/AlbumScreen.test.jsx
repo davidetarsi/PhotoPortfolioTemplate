@@ -140,4 +140,40 @@ describe('open album', () => {
     await act(() => queue.flush());
     expect(lastPut(fetchMock, '/api/admin/draft/albums').albums[0]).toEqual({ ...NOTTE, description: 'Cieli stellati' });
   });
+
+  it('deleting the home image says so, and leaves the home without one (publishing would stop otherwise)', async () => {
+    const fetchMock = worker({
+      'GET /api/admin/draft': { ...DRAFT, site: { ...DRAFT.site, hero: { album: 'notte', name: 'b.webp' } } },
+      'PUT /api/admin/draft/site': { ok: true },
+      'DELETE /api/admin/staging/notte/b.webp': { ok: true },
+    });
+    renderAt('/album/notte');
+    fireEvent.click(await screen.findByRole('button', { name: `${t.deletePhoto} · Photo 2` }));
+    const dialog = await screen.findByRole('alertdialog');
+    expect(dialog.textContent).toContain(t.heroGoes);
+    fireEvent.click(within(dialog).getByRole('button', { name: t.deletePhoto }));
+    await act(() => queue.flush());
+    expect(lastPut(fetchMock, '/api/admin/draft/site').hero).toBeNull();
+  });
+
+  it('deleting the album of the home image does the same', async () => {
+    const fetchMock = worker({
+      'GET /api/admin/draft': { ...DRAFT, site: { ...DRAFT.site, hero: { album: 'notte', name: 'a.webp' } } },
+      'PUT /api/admin/draft/site': { ok: true },
+    });
+    renderAt('/album/notte');
+    fireEvent.click(await screen.findByRole('button', { name: t.deleteAlbum }));
+    const dialog = await screen.findByRole('alertdialog');
+    expect(dialog.textContent).toContain(t.heroGoes);
+    fireEvent.click(within(dialog).getByRole('button', { name: t.deleteAlbum }));
+    await act(() => queue.flush());
+    expect(lastPut(fetchMock, '/api/admin/draft/site').hero).toBeNull();
+  });
+
+  it('deleting another photo leaves the home image alone', async () => {
+    worker({ 'GET /api/admin/draft': { ...DRAFT, site: { ...DRAFT.site, hero: { album: 'notte', name: 'a.webp' } } } });
+    renderAt('/album/notte');
+    fireEvent.click(await screen.findByRole('button', { name: `${t.deletePhoto} · Photo 2` }));
+    expect((await screen.findByRole('alertdialog')).textContent).not.toContain(t.heroGoes);
+  });
 });
