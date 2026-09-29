@@ -8,7 +8,13 @@ export const messages = ['messages'];
 export function useMessages() {
   return useQuery({
     queryKey: messages,
-    queryFn: async () => (await request('/api/admin/messages')).messages,
+    queryFn: async () => {
+      const body = await request('/api/admin/messages');
+      if (!Array.isArray(body?.messages)) {
+        throw new ApiError(200, { error: 'INVALID_MESSAGES_RESPONSE' });
+      }
+      return body.messages;
+    },
     retry: (failureCount, error) => !(error instanceof ApiError) && failureCount < 1,
   });
 }

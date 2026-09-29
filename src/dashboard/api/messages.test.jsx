@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { act, renderHook, waitFor } from '@testing-library/react';
+import { ApiError } from './client.js';
 import { useDeleteMessage, useMessages } from './messages.js';
 import { fakeWorker, makeQueryClient, Providers } from '../test-utils.jsx';
 
@@ -13,6 +14,20 @@ describe('message queries', () => {
 
     await waitFor(() => expect(result.current.data).toEqual(messages));
     expect(fetchMock).toHaveBeenCalledWith('/api/admin/messages', expect.objectContaining({ method: 'GET' }));
+  });
+
+  it.each([
+    ['missing messages', {}],
+    ['non-array messages', { messages: { id: 'one' } }],
+  ])('rejects a 200 response with %s', async (_description, body) => {
+    fakeWorker({ 'GET /api/admin/messages': body });
+    const { result } = renderHook(() => useMessages(), { wrapper: wrapper(makeQueryClient()) });
+
+    await waitFor(() => expect(result.current.error).toBeInstanceOf(ApiError));
+    expect(result.current.error).toMatchObject({
+      status: 200,
+      body: { error: 'INVALID_MESSAGES_RESPONSE' },
+    });
   });
 
   it('deletes a message and invalidates the messages query', async () => {
