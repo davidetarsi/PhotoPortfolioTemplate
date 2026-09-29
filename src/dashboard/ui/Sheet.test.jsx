@@ -25,6 +25,7 @@ describe('Sheet', () => {
     const dialog = screen.getByRole('dialog');
     fireEvent(dialog, new Event('cancel', { cancelable: true }));
     fireEvent.pointerDown(dialog);
+    fireEvent.pointerUp(dialog);
     fireEvent.click(dialog);
     fireEvent.click(screen.getByRole('button', { name: 'inside' }));
     expect(onClose).toHaveBeenCalledTimes(2);
@@ -35,6 +36,18 @@ describe('Sheet', () => {
     render(<Sheet open onClose={onClose} title="T"><input aria-label="field" /></Sheet>);
     const dialog = screen.getByRole('dialog');
     fireEvent.pointerDown(screen.getByLabelText('field'));
+    fireEvent.click(dialog);
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('does not close when a press starts on the backdrop and is released inside', () => {
+    const onClose = vi.fn();
+    render(<Sheet open onClose={onClose} title="T"><input aria-label="field" /></Sheet>);
+    const dialog = screen.getByRole('dialog');
+    const field = screen.getByLabelText('field');
+    fireEvent.pointerDown(dialog);
+    fireEvent.pointerUp(field);
+    // The browser targets this click at the common ancestor of the press and release.
     fireEvent.click(dialog);
     expect(onClose).not.toHaveBeenCalled();
   });

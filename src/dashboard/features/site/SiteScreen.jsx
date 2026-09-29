@@ -21,13 +21,13 @@ export const WIDE = '(min-width: 900px)';
  * fields on a computer, above the field in the sheet on a phone.
  */
 export function SiteScreen() {
-  const { site, setSite } = useSite();
+  const { site, setSite, dataUpdatedAt } = useSite();
   const queue = useSaveQueue();
   const wide = useMediaQuery(WIDE);
-  const preview = usePreview();
   const [editing, setEditing] = useState(null);
   const [page, setPage] = useState('/');
   const [full, setFull] = useState(false);
+  const preview = usePreview({ draftVersion: dataUpdatedAt, fieldOpen: Boolean(editing) });
 
   const open = field => {
     setEditing(field);
@@ -41,7 +41,7 @@ export function SiteScreen() {
     setEditing(null);
     preview.focus(null);
     // Leaving a field saves it at once (spec); then the page shows the saved text itself.
-    queue.flush().then(() => preview.forget(field.id));
+    queue.flush().then(() => preview.reset(field.id));
   };
 
   const group = (name, title) => (

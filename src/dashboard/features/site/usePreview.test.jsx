@@ -5,18 +5,18 @@ import { usePreview } from './usePreview.js';
 afterEach(cleanup);
 
 let preview;
-function Frame() {
-  preview = usePreview();
+function Frame({ draftVersion, fieldOpen }) {
+  preview = usePreview({ draftVersion, fieldOpen });
   return <iframe ref={preview.frameRef} title="preview" />;
 }
 
-function setup() {
-  render(<Frame />);
+function setup(props = {}) {
+  const view = render(<Frame {...props} />);
   const frame = document.querySelector('iframe');
   const posted = vi.spyOn(frame.contentWindow, 'postMessage').mockImplementation(() => {});
   const ready = (source = frame.contentWindow, origin = window.location.origin) =>
     act(() => { window.dispatchEvent(new MessageEvent('message', { data: { type: 'preview:ready' }, origin, source })); });
-  return { frame, posted, ready };
+  return { frame, posted, ready, rerender: next => view.rerender(<Frame {...next} />) };
 }
 
 describe('usePreview', () => {
@@ -53,6 +53,33 @@ describe('usePreview', () => {
     preview.focus(null);
     posted.mockClear();
     ready();
+    expect(posted).not.toHaveBeenCalled();
+  });
+
+  it('clears an invalid live value and reloads the saved draft when the field closes', () => {
+    const { posted, ready } = setup();
+    preview.field('site.name', '');
+    posted.mockClear();
+    preview.reset('site.name');
+    expect(posted.mock.calls).toEqual([
+      [{ type: 'preview:reload' }, window.location.origin],
+    ]);
+    posted.mockClear();
+    ready();
+    expect(posted).not.toHaveBeenCalled();
+  });
+
+  it('reloads after the saved draft changes while no field is open', () => {
+    const { posted, rerender } = setup({ draftVersion: 1, fieldOpen: false });
+    posted.mockClear();
+    rerender({ draftVersion: 2, fieldOpen: false });
+    expect(posted).toHaveBeenCalledWith({ type: 'preview:reload' }, window.location.origin);
+  });
+
+  it('does not reload the iframe for draft changes while a field is open', () => {
+    const { posted, rerender } = setup({ draftVersion: 1, fieldOpen: true });
+    posted.mockClear();
+    rerender({ draftVersion: 2, fieldOpen: true });
     expect(posted).not.toHaveBeenCalled();
   });
 

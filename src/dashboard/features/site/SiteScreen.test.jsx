@@ -1,10 +1,13 @@
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { texts } from '../../../../config/texts.config.js';
 import { routes } from '../../App.jsx';
 import { useSaveQueue } from '../../api/drafts.jsx';
 import { fakeWorker, installDialogPolyfill, makeQueryClient, Providers } from '../../test-utils.jsx';
+const siteStyles = readFileSync(resolve(process.cwd(), 'src/dashboard/features/site/site.css'), 'utf8');
 
 const t = texts.admin.site;
 beforeAll(installDialogPolyfill);
@@ -18,7 +21,9 @@ let queue;
 function QueueSpy() { queue = useSaveQueue(); return null; }
 function renderSite() {
   const router = createMemoryRouter(routes, { initialEntries: ['/site'] });
-  render(<Providers client={makeQueryClient()}><QueueSpy /><RouterProvider router={router} /></Providers>);
+  const client = makeQueryClient();
+  render(<Providers client={client}><QueueSpy /><RouterProvider router={router} /></Providers>);
+  return client;
 }
 // A Worker that keeps what is saved, as the real one does: a refetch after a save reads it back.
 function worker(extra = {}) {
@@ -94,6 +99,16 @@ describe('Site screen', () => {
     expect(within(sheet).getByText(t.formNote)).toBeTruthy();
     fireEvent.click(within(sheet).getByRole('button', { name: t.previewFull }));
     expect(frame.className).toContain('dash-preview--full');
+  });
+
+  it('on a phone the field sheet uses the full viewport width', async () => {
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 390 });
+    worker();
+    renderSite();
+    fireEvent.click(await row(t.bioLabel));
+    const sheet = await screen.findByRole('dialog', { name: t.bioLabel });
+    expect(sheet.classList.contains('dash-field-sheet')).toBe(true);
+    expect(siteStyles).toMatch(/@media\s*\(max-width:\s*640px\)[\s\S]*?\.dash-sheet\.dash-field-sheet\s*\{[^}]*width:\s*100%/);
   });
 
   it('on a computer the preview stands beside the fields and follows the field being edited', async () => {

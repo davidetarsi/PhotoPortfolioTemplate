@@ -19,6 +19,7 @@ export function Sheet({ open, onClose, title, children, className = '', role, de
   // Where the pointer went down: selecting text inside and releasing outside is not a click
   // on the backdrop, and must not close the panel (with what was being typed).
   const downOnBackdrop = useRef(false);
+  const upOnBackdrop = useRef(false);
 
   // A <dialog> is opened with a method, not an attribute: this is where React talks to the DOM.
   useEffect(() => {
@@ -45,10 +46,19 @@ export function Sheet({ open, onClose, title, children, className = '', role, de
       // Some browsers close the dialog anyway (a second Esc): keep the parent in step.
       onClose={() => { if (openRef.current) onClose(); }}
       // A press and a release on the backdrop both land on the dialog element itself.
-      onPointerDown={event => { downOnBackdrop.current = event.target === ref.current; }}
-      onClick={event => {
-        const onBackdrop = event.target === ref.current && downOnBackdrop.current;
+      onPointerDown={event => {
+        downOnBackdrop.current = event.target === ref.current;
+        upOnBackdrop.current = false;
+      }}
+      onPointerUp={event => { upOnBackdrop.current = event.target === ref.current; }}
+      onPointerCancel={() => {
         downOnBackdrop.current = false;
+        upOnBackdrop.current = false;
+      }}
+      onClick={event => {
+        const onBackdrop = event.target === ref.current && downOnBackdrop.current && upOnBackdrop.current;
+        downOnBackdrop.current = false;
+        upOnBackdrop.current = false;
         if (dismissible && onBackdrop) onClose();
       }}
     >

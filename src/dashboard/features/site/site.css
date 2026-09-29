@@ -23,7 +23,9 @@
 .dash-site-row__badge { grid-column: 2; grid-row: 1 / span 2; align-self: center; font: 0.7rem/1 var(--admin-font-mono); color: var(--admin-muted); text-transform: uppercase; letter-spacing: 0.06em; }
 .dash-site__slice { display: grid; gap: 0.5rem; justify-items: end; }
 .dash-field-sheet { width: min(40rem, calc(100vw - 2rem)); }
+@media (max-width: 640px) {
+  .dash-sheet.dash-field-sheet { width: 100%; max-width: none; }
+}
 /* On a computer the sheet opens over the fields: the preview beside it stays in view. */
 .dash-field-sheet--side { margin: 6rem auto auto 1.25rem; width: min(26rem, calc(100vw - 2rem)); }
 .dash-field-sheet--side::backdrop { background: rgb(0 0 0 / 0.25); }
-

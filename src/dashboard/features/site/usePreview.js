@@ -11,17 +11,33 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
  *   otherwise come back into the page).
  * The page says `preview:ready` each time it (re)loads, possibly more than once: every time
  * the texts typed and not yet saved, and the focused field, are sent again. Messages are
- * accepted only from the iframe itself, on this origin.
- * @returns {{frameRef: {current: HTMLIFrameElement|null}, field: Function, focus: Function, forget: Function, reload: Function}}
+ * accepted only from the iframe itself, on this origin. A saved-draft refetch while no
+ * field is open clears stale live text and reloads the page. Closing a field calls `reset`
+ * after its save finishes, so an invalid preview value returns to the saved text.
+ * @param {{draftVersion?: number, fieldOpen?: boolean}} [state]
+ * @returns {{frameRef: {current: HTMLIFrameElement|null}, field: Function, focus: Function, forget: Function, reset: Function, reload: Function}}
  */
-export function usePreview() {
+export function usePreview({ draftVersion, fieldOpen } = {}) {
   const frameRef = useRef(null);
   const live = useRef(new Map()); // field → text typed, sent again on every ready
   const focused = useRef(null);
+  const previousDraft = useRef({ draftVersion, fieldOpen });
 
   const post = useCallback(message => {
     frameRef.current?.contentWindow?.postMessage(message, window.location.origin);
   }, []);
+
+  useEffect(() => {
+    const previous = previousDraft.current;
+    const changed = previous.draftVersion !== undefined && draftVersion !== undefined
+      && previous.draftVersion !== draftVersion;
+    previousDraft.current = { draftVersion, fieldOpen };
+    if (changed && !fieldOpen && !previous.fieldOpen) {
+      live.current.clear();
+      focused.current = null;
+      post({ type: 'preview:reload' });
+    }
+  }, [draftVersion, fieldOpen, post]);
 
   useEffect(() => {
     const onMessage = event => {
@@ -46,6 +62,10 @@ export function usePreview() {
     },
     forget(name) {
       live.current.delete(name);
+    },
+    reset(name) {
+      live.current.delete(name);
+      post({ type: 'preview:reload' });
     },
     reload() {
       // After a reload the page shows what is saved: the texts typed are sent again on ready.
